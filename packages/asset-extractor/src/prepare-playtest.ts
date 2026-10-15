@@ -51,6 +51,11 @@ if (
   navigation.resources.length !== 78
 )
   throw new Error('Navigation sources differ: repeat BOXDET and walking verification');
+const layers = JSON.parse(
+  await readFile(join(root, 'reports/scenes/layers/manifest.json'), 'utf8'),
+);
+if (layers.executableSha256 !== exeHash || layers.resources.length !== 78)
+  throw new Error('Repeat scene-layers extraction');
 const scenes = [];
 for (const row of report.results) {
   const background = await prepare(
@@ -58,11 +63,25 @@ for (const row of report.results) {
     `fondos/${row.output}.png`,
     true,
   );
+  const layer = layers.resources.find(
+    (r: { resourceId: number }) => r.resourceId === row.resourceId,
+  );
+  const layerAssets = [];
+  for (const asset of layer.assets)
+    layerAssets.push({
+      ...(await prepare(
+        asset.file,
+        `escenario/${String(row.resourceId).padStart(3, '0')}/${asset.frame}.png`,
+        false,
+      )),
+      frame: asset.frame,
+    });
   scenes.push({
     id: row.resourceId,
     name: row.map.replace(/\.MAP$/i, ''),
     background,
     animationLayers: [],
+    layers: { actors: layer.actors, foreground: layer.foreground, assets: layerAssets },
     navigation: {
       ...navigation.resources.find((r: { resourceId: number }) => r.resourceId === row.resourceId),
       regions: boxdet.resources.find((r: { resourceId: number }) => r.resourceId === row.resourceId)
@@ -80,6 +99,8 @@ for (let index = 0; index < 27; index++)
       false,
     ),
   );
+const title = await prepare('reports/TITLE.png', 'interfaz/title.png', true);
+await mkdir(join(mods, 'remaster/interfaz'), { recursive: true });
 await mkdir(join(mods, 'remaster/fondos'), { recursive: true });
 await mkdir(join(mods, 'remaster/ben'), { recursive: true });
 await mkdir(join(mods, 'referencias'), { recursive: true });
@@ -87,12 +108,13 @@ await writeFile(
   join(mods, 'manifest.json'),
   JSON.stringify(
     {
-      schemaVersion: 3,
+      schemaVersion: 4,
       logicalWidth: 320,
       logicalHeight: 200,
       scene: 'STUDY',
       scope: 'STD walking and BOXDET test viewer; no room scripts, object use or action execution',
       background,
+      title,
       scenes,
       player,
       navigationProfile: {

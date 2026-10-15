@@ -27,3 +27,5 @@ export {
 } from './navigation.js';
 
 export * from './original-walk.js';
+
+export * from './scene-order.js';
