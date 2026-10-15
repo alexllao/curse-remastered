@@ -17,7 +17,8 @@
     "spr-layout": "tsx src/spr-layout.ts",
     "spr-rows": "tsx src/spr-rows.ts",
     "spr-preview": "tsx src/spr-preview.ts",
-    "spr-compare": "tsx src/spr-compare.ts"
+    "spr-compare": "tsx src/spr-compare.ts",
+    "analyze-exe": "tsx src/analyze-exe.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
