@@ -15,7 +15,8 @@
     "spr-index": "tsx src/spr-index.ts",
     "spr-stream": "tsx src/spr-stream.ts",
     "spr-layout": "tsx src/spr-layout.ts",
-    "spr-rows": "tsx src/spr-rows.ts"
+    "spr-rows": "tsx src/spr-rows.ts",
+    "spr-preview": "tsx src/spr-preview.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
