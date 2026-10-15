@@ -12,7 +12,10 @@ const first = data.readUInt16LE(0) * 16;
 if (first < 16 || first > data.length || first % 2 !== 0) throw new Error('Invalid SPR index');
 const starts: number[] = [];
 for (let i = 0; i < first; i += 2) {
-  const start = data.readUInt16LE(i) * 16;
+  const unit = data.readUInt16LE(i);
+  // The offset table may end with zero padding up to the first 16-byte block.
+  if (unit === 0) break;
+  const start = unit * 16;
   if (start < first || start >= data.length || (starts.length && start <= starts[starts.length - 1])) throw new Error('Invalid sprite offset table');
   starts.push(start);
 }
