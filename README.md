@@ -68,10 +68,10 @@ A **palette** is a table of available colors. Instead of storing three color cha
 Por ejemplo:
 
 | Índice del píxel | Entrada de paleta (R, G, B) | Interpretación                |
-| ----------- | ----------------------- | ----------------------------- |
-| 0           | (0, 0, 0)               | Negro                         |
-| 1           | (63, 0, 0)              | Rojo intenso en unidades VGA   |
-| 2           | (0, 63, 0)              | Verde intenso en unidades VGA |
+| ---------------- | --------------------------- | ----------------------------- |
+| 0                | (0, 0, 0)                   | Negro                         |
+| 1                | (63, 0, 0)                  | Rojo intenso en unidades VGA  |
+| 2                | (0, 63, 0)                  | Verde intenso en unidades VGA |
 
 Son **ejemplos ilustrativos**, no los valores reales comprobados de `TITLE.PAL`.
 
@@ -103,16 +103,16 @@ Esta distribución por filas se ha confirmado para la pantalla de título. Otros
 
 Un archivo RNC habitual empieza con una **cabecera de 18 bytes**:
 
-| Desplazamiento | Bytes | Significado                             |
-| ------ | ----: | ----------------------------------- |
-| 0      |     3 | Firma ASCII `RNC`               |
-| 3      |     1 | Método de compresión (1 or 2)         |
-| 4      |     4 | Tamaño descomprimido, big-endian       |
-| 8      |     4 | Tamaño comprimido, big-endian |
-| 12     |     2 | CRC16 de los datos descomprimidos          |
-| 14     |     2 | CRC16 de los datos comprimidos            |
-| 16     |     1 | Margen adicional                        |
-| 17     |     1 | Número de bloques             |
+| Desplazamiento | Bytes | Significado                       |
+| -------------- | ----: | --------------------------------- |
+| 0              |     3 | Firma ASCII `RNC`                 |
+| 3              |     1 | Método de compresión (1 or 2)     |
+| 4              |     4 | Tamaño descomprimido, big-endian  |
+| 8              |     4 | Tamaño comprimido, big-endian     |
+| 12             |     2 | CRC16 de los datos descomprimidos |
+| 14             |     2 | CRC16 de los datos comprimidos    |
+| 16             |     1 | Margen adicional                  |
+| 17             |     1 | Número de bloques                 |
 
 **Big-endian** significa que el byte más significativo se almacena primero. Por ejemplo, `00 00 FA 00` representa `0xFA00` en hexadecimal, es decir, **64.000** en decimal.
 
@@ -124,17 +124,17 @@ RNC1 utiliza códigos Huffman y referencias a datos anteriores: los patrones fre
 
 Estos valores se comprobaron en los archivos originales de la pantalla de título:
 
-| Propiedad                    | Valor observado       |
-| --------------------------- | -------------------- |
-| Firma                   | `RNC\x01` (method 1) |
-| Tamaño total de `TITLE.DAT` | 47,064 bytes         |
-| Datos comprimidos          | 47,046 bytes         |
-| Datos descomprimidos        | 64,000 bytes         |
-| CRC16 descomprimido              | `51cb`               |
-| CRC16 comprimido                | `af5f`               |
-| Bloques indicados en cabecera          | 6                    |
-| Tamaño de `TITLE.PAL`          | 768 bytes            |
-| Dimensiones de imagen   | 320 × 200 pixels     |
+| Propiedad                     | Valor observado      |
+| ----------------------------- | -------------------- |
+| Firma                         | `RNC\x01` (method 1) |
+| Tamaño total de `TITLE.DAT`   | 47,064 bytes         |
+| Datos comprimidos             | 47,046 bytes         |
+| Datos descomprimidos          | 64,000 bytes         |
+| CRC16 descomprimido           | `51cb`               |
+| CRC16 comprimido              | `af5f`               |
+| Bloques indicados en cabecera | 6                    |
+| Tamaño de `TITLE.PAL`         | 768 bytes            |
+| Dimensiones de imagen         | 320 × 200 pixels     |
 
 La cabecera de 18 bytes y los 47.046 bytes comprimidos suman los 47.064 bytes del archivo. Los 64.000 bytes descomprimidos corresponden a 320 × 200 píxeles indexados de 8 bits. Al aplicar la paleta de 256 colores obtenemos la imagen original del título.
 
@@ -154,14 +154,14 @@ PNG es un formato moderno de imagen compatible con editores y motores gráficos.
 
 El juego original contiene archivos con estas extensiones. Su estructura interna **todavía no se ha documentado completamente**.
 
-| Extensión | Hipótesis de trabajo                               | Qué falta comprobar                           |
-| --------- | ------------------------------------------------ | ---------------------------------------------------- |
-| `.MAP`    | Datos de escenas, fondos o mapas                     | Compresión, dimensiones, capas y paletas |
-| `.SPR`    | Sprites o colecciones de sprites                    | Fotogramas, desplazamientos, transparencias y paletas     |
-| `.BRD`    | Posibles animaciones u otros recursos estructurados | Firma, records, purpose and decoder              |
-| `.SFX`    | Efectos de sonido                                    | Codificación, frecuencia de muestreo, canales y reproducción  |
-| `.DAT`    | Datos generales del juego                        | Pueden estar comprimidos o tener estructuras propias    |
-| `.PAL`    | Datos de paleta                                     | Asociación con recursos y codificación de canales  |
+| Extensión | Hipótesis de trabajo                                | Qué falta comprobar                                          |
+| --------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| `.MAP`    | Datos de escenas, fondos o mapas                    | Compresión, dimensiones, capas y paletas                     |
+| `.SPR`    | Sprites o colecciones de sprites                    | Fotogramas, desplazamientos, transparencias y paletas        |
+| `.BRD`    | Posibles animaciones u otros recursos estructurados | Firma, records, purpose and decoder                          |
+| `.SFX`    | Efectos de sonido                                   | Codificación, frecuencia de muestreo, canales y reproducción |
+| `.DAT`    | Datos generales del juego                           | Pueden estar comprimidos o tener estructuras propias         |
+| `.PAL`    | Datos de paleta                                     | Asociación con recursos y codificación de canales            |
 
 **Importante:** las extensiones son pistas, no especificaciones. Verificaremos cada formato examinando cabeceras, patrones de bytes, resultados visuales y, cuando sea necesario, el ejecutable original. El extractor debe indicar los formatos no compatibles en vez de generar imágenes engañosas.
 
@@ -187,7 +187,7 @@ En el modo original, el escalado por **vecino más cercano** mantiene los bordes
 
 ### 9. ¿Por qué no aplicamos el upscaling inmediatamente?
 
-El *upscaling* amplía la imagen creando o interpolando píxeles; **no recupera información original perdida**. Aplicarlo antes de terminar la extracción dificultaría comprobar que los gráficos recuperados son fieles.
+El _upscaling_ amplía la imagen creando o interpolando píxeles; **no recupera información original perdida**. Aplicarlo antes de terminar la extracción dificultaría comprobar que los gráficos recuperados son fieles.
 
 Los modos previstos son:
 
@@ -199,24 +199,24 @@ Los fondos y los sprites animados requieren tratamientos distintos. Todos los fo
 
 ### 10. Glosario
 
-| Término           | Significado                                                         |
-| -------------- | --------------------------------------------------------------- |
-| Asset          | Recurso del juego, como una imagen, sprite, sonido o mapa          |
-| Byte           | Ocho bits; pueden representar un índice de paleta de 0 a 255 |
-| Bit            | Un dígito binario (0 o 1)                                  |
-| Hexadecimal    | Sistema de base 16 para representar bytes; `0xFA00` = 64.000       |
-| Indexed color  | Los píxeles guardan índices de paleta en lugar de valores RGB        |
-| Palette        | Tabla que relaciona índices de píxeles con colores RGB                |
-| RGB            | Canales rojo, verde y azul                              |
-| VGA DAC        | Conversor de colores de las tarjetas VGA clásicas         |
-| RNC            | Formato de compresión de datos                      |
-| Huffman coding | Codificación de longitud variable utilizada en RNC1                             |
-| Back-reference | Instrucción para reutilizar bytes ya descomprimidos              |
-| CRC            | Código de comprobación para detectar errores                               |
-| PNG            | Formato moderno de imagen sin pérdida                                    |
-| Sprite         | Imagen o fotograma de un objeto o personaje       |
-| Hotspot        | Zona interactiva de una escena                                   |
-| Upscaling      | Ampliación de imágenes generando o interpolando píxeles        |
+| Término        | Significado                                                   |
+| -------------- | ------------------------------------------------------------- |
+| Asset          | Recurso del juego, como una imagen, sprite, sonido o mapa     |
+| Byte           | Ocho bits; pueden representar un índice de paleta de 0 a 255  |
+| Bit            | Un dígito binario (0 o 1)                                     |
+| Hexadecimal    | Sistema de base 16 para representar bytes; `0xFA00` = 64.000  |
+| Indexed color  | Los píxeles guardan índices de paleta en lugar de valores RGB |
+| Palette        | Tabla que relaciona índices de píxeles con colores RGB        |
+| RGB            | Canales rojo, verde y azul                                    |
+| VGA DAC        | Conversor de colores de las tarjetas VGA clásicas             |
+| RNC            | Formato de compresión de datos                                |
+| Huffman coding | Codificación de longitud variable utilizada en RNC1           |
+| Back-reference | Instrucción para reutilizar bytes ya descomprimidos           |
+| CRC            | Código de comprobación para detectar errores                  |
+| PNG            | Formato moderno de imagen sin pérdida                         |
+| Sprite         | Imagen o fotograma de un objeto o personaje                   |
+| Hotspot        | Zona interactiva de una escena                                |
+| Upscaling      | Ampliación de imágenes generando o interpolando píxeles       |
 
 ## Resultado de la extracción: 15 de octubre de 2026
 
