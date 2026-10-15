@@ -275,3 +275,7 @@ Las asociaciones de paleta son **hipótesis basadas en los nombres**, todavía p
 | `CORE.DAT` | `CORE.PAL` (pendiente de inspección visual) |
 
 `MENU.DAT` se omite porque tiene 10.240 bytes y no es una pantalla completa de 320 × 200. El conversor rechaza paletas que no tengan 768 bytes o que incluyan componentes superiores a 63, en lugar de inventar colores. **Una conversión técnicamente correcta no demuestra por sí sola que la paleta elegida sea la adecuada.**
+
+### Resultado de la primera conversión por lotes
+
+La ejecución local comunicada por el usuario produjo **18 PNG**, **1 recurso omitido** y **0 errores**. La omisión prevista es `MENU.DAT` (10.240 bytes, no corresponde a una pantalla completa de 320 × 200). Falta confirmar en el manifiesto de imágenes el nombre exacto del archivo omitido y revisar visualmente las imágenes y las paletas candidatas antes de dar por validadas las escenas.
