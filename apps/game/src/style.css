@@ -122,3 +122,8 @@ footer {
   font: 11px/1.2 monospace;
   opacity: 0.8;
 }
+
+.panorama-controls {
+  margin-top: 9px;
+  justify-content: flex-end;
+}

@@ -10,22 +10,31 @@
       <header>
         <div>
           <h1>CURSE <span>REMASTERED</span></h1>
-          <p>El estudio · Primera prueba jugable</p>
+          <p id="scene-name">STUDY · Galería de fondos</p>
         </div>
         <div class="controls">
-          <button id="visual-mode" disabled>F2 · Original</button
-          ><button id="restart" disabled>Reiniciar</button
+          <button id="visual-mode" disabled>F2 · Original</button>
+          <button id="previous-scene" disabled>‹ Anterior</button>
+          <button id="next-scene" disabled>F3 · Siguiente ›</button>
+          <button id="restart" disabled>Reiniciar</button
           ><button id="fullscreen">Pantalla completa</button>
         </div>
       </header>
       <div id="viewport"><p id="loading">Cargando el estudio…</p></div>
+      <div class="controls panorama-controls">
+        <button id="pan-left" disabled>← Panorama</button
+        ><button id="pan-right" disabled>Panorama →</button>
+      </div>
       <footer>
         <p id="status" role="status" aria-live="polite">
           Haz clic en la alfombra para mover a Ben.
         </p>
         <p id="mode">Original</p>
       </footer>
-      <p>Zona de paseo provisional. Las interacciones y salidas todavía están en preparación.</p>
+      <p>
+        F3 / Mayús+F3: escenarios · F2: paquete gráfico · Flechas: panoramas. Paseo provisional solo
+        en STUDY.
+      </p>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

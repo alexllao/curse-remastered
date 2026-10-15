@@ -7,7 +7,7 @@ El juego original y los recursos derivados siguen fuera de Git. Esta carpeta con
 1. Abre `mods/original/fondos/070-STUDY.png` con Codex.
 2. Remasteriza el fondo manteniendo su composición, perspectiva, puertas, mobiliario y suelo. No añadas a Ben, objetos de inventario, texto ni elementos nuevos. Esta imagen es el fondo; las capas y personajes se dibujan aparte.
 3. Guarda el resultado en **`mods/remaster/fondos/070-STUDY.png`** como PNG de **1280 × 800** (4× el original de 320 × 200), sin márgenes añadidos.
-4. Durante la prueba jugable, pulsa **F2** para alternar Original, Escalado y Remaster. Si ya estabas en Remaster, sal de ese modo y vuelve para recargar el fondo.
+4. Durante la prueba jugable, pulsa **F2** para alternar Original y Remaster. Si ya estabas en Remaster, sal de ese modo y vuelve para recargar el fondo.
 
 Si Codex genera otra resolución, habrá que ajustarla o recortarla con cuidado al tamaño acordado antes de considerarla terminada. No cambies la posición de los elementos para adaptarla: las coordenadas de la escena deben seguir encajando. La mera presencia del archivo no equivale a una revisión visual aprobada.
 
@@ -16,12 +16,11 @@ Solo necesitas dejar la imagen con ese nombre. No hace falta editar código, ins
 ## Carpetas
 
 - `original/`: copias locales preparadas desde los recursos extraídos. No editarlas.
-- `escalado/`: variantes Scale2x generadas automáticamente; no son imágenes creadas por IA.
 - `remaster/`: tus PNG terminados, con la misma ruta y nombre que sus originales.
 - `referencias/`: referencias locales del estilo deseado.
 - `manifest.json`: catálogo generado para la prueba, con dimensiones lógicas y procedencia. También es local.
 
-En Remaster se decide por recurso: usa su PNG mejorado si existe y tiene la misma proporción; si falta o no se puede cargar, muestra el original interpolado. Los sprites pueden seguir siendo originales mientras los fondos ya están remasterizados. Las variantes deben conservar transparencia, punto de apoyo y dimensiones lógicas. Por ahora solo se encarga el fondo STUDY; los fotogramas de Ben se preparan para la prueba, no como una petición de remasterizarlos todos.
+En Remaster se decide por recurso: usa su PNG mejorado si existe y tiene la misma proporción; si falta o no se puede cargar, muestra el original sin interpolar. Los sprites pueden seguir siendo originales mientras los fondos ya están remasterizados. Las variantes deben conservar transparencia, punto de apoyo y dimensiones lógicas. Por ahora solo se encarga el fondo STUDY; los fotogramas de Ben se preparan para la prueba, no como una petición de remasterizarlos todos.
 
 ## Preparación local
 
@@ -46,8 +45,16 @@ Los 27 fotogramas de paseo preparados en `mods/original/ben/` miden 32 × 48; pa
 
 ## Prueba artística instalada
 
-Se ha generado una primera variante con la herramienta integrada imagegen: fondo STUDY y pose frontal parada de Ben (STD-009). Son propuestas visuales para revisión, no una reconstrucción artística ya aprobada. La herramienta entregó el fondo a 1586 × 992 y el personaje a 1024 × 1536; se conserva esa resolución nativa sin editar los originales. El motor admite el pequeño redondeo de proporción del fondo (hasta dos píxeles nativos) y mantiene los tamaños lógicos originales. Para futuras entregas manuales se recomienda el objetivo 4× indicado arriba.
+El fondo STUDY generado con imagegen está instalado en `remaster/fondos/070-STUDY.png`. Es una propuesta visual para revisión. La herramienta entregó 1586 × 992 y se conserva esa resolución nativa sin editar el original. El motor admite un pequeño redondeo de proporción de hasta dos píxeles nativos y mantiene los tamaños lógicos originales. Para futuras entregas manuales se recomienda el objetivo 4× indicado arriba.
 
-Los otros 26 fotogramas de paseo todavía usan el original interpolado en Remaster: cambiarán de aspecto durante el movimiento hasta completar y revisar la animación. La pose frontal y el fondo están en `remaster/ben/STD-009.png` y `remaster/fondos/070-STUDY.png`. El contador FPS de la esquina superior derecha se actualiza aproximadamente cada medio segundo y no bloquea los clics. Mide la cadencia de la aplicación en esta sesión, sin prometer una tasa concreta en otros equipos.
+El usuario ha descartado la propuesta del sprite de Ben: se ha retirado de `remaster/ben/` y se conserva únicamente en `referencias/ben-frente-descartado.png`. **Todos los sprites permanecen originales, sin interpolar; por ahora no se generan nuevas versiones de personajes.** F2 alterna exclusivamente Original y Remaster. No hay modo de escalado intermedio.
+
+El contador FPS de la esquina superior derecha se actualiza aproximadamente cada medio segundo y no bloquea los clics. Mide la cadencia de la aplicación en esta sesión, sin prometer una tasa concreta en otros equipos.
 
 `remaster2k/` y `remaster4k/` quedan contempladas como variantes futuras y protegidas por la exclusión `mods/remaster*/`. Todavía no son modos disponibles con F2. No se sustituye la prueba actual hasta valorar su estilo y encaje.
+
+## Prueba de luces en STUDY
+
+F4 activa o desactiva luces suaves en las velas y la chimenea del fondo remasterizado. Son capas aditivas con variación continua de intensidad y pequeñas variaciones de llama; el PNG, las coordenadas de juego y los sprites originales se mantienen intactos. Solo se activan cuando el fondo Remaster de STUDY se ha cargado. En Original o si falta el remaster, quedan deshabilitadas. La preferencia del navegador de reducir movimiento las deja apagadas inicialmente; F4 permite elegir explícitamente.
+
+Esta propuesta de luces se revisará antes de continuar con otros fondos. La galería de 78 fondos y la navegación F3/Mayús+F3 quedan como siguiente trabajo, todavía no implementado. Para los panoramas habrá que conservar el ancho completo y poder recorrerlos; no se deben recortar ni forzar a 320 píxeles de ancho.
