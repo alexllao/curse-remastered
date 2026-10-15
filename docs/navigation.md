@@ -83,7 +83,7 @@ pnpm --filter @curse/asset-extractor navigation-verify
 pnpm mods:prepare
 ```
 
-`walking-profile.json` y `walking-verification.json` se generan en `reports/navigation/`. Los programas derivados del ejecutable y las posiciones originales se copian al manifiesto local de `mods/`; no se incorporan a Git. F2 conserva posición y encuadre. F3 cambia de recurso y el botón «Mostrar límites» ayuda a comprobar contactos sin activar acciones. La ocultación por piezas de escenario ya está contrastada por separado; la actualización de sus actores sigue pendiente; el paseo normal no implica que todos los scripts de animación estén implementados.
+`walking-profile.json` y `walking-verification.json` se generan en `reports/navigation/`. Los programas derivados del ejecutable y las posiciones originales se copian al manifiesto local de `mods/`; no se incorporan a Git. F2 conserva posición y encuadre. F3 cambia de recurso y el botón «Mostrar límites» ayuda a comprobar contactos sin activar acciones. La ocultación por piezas de escenario ya está contrastada por separado; los canales iniciales de sus actores se contrastan ahora por separado; el paseo normal no implica que todos los scripts de animación estén implementados.
 
 ## Objetos y primeros planos originales
 
@@ -103,11 +103,11 @@ pnpm --filter @curse/asset-extractor navigation-verify
 pnpm mods:prepare
 ```
 
-Las imágenes se generan en `reports/scenes/layers/` y se copian a `mods/original/escenario/`. Son recursos derivados locales, excluidos de Git. Los objetos se dibujan, pero todavía no pueden usarse y sus animaciones ambientales permanecen en el fotograma inicial exportado. Los scripts pueden cambiar visibilidad, fotogramas, posición y condiciones durante una partida; esos cambios dinámicos siguen pendientes. Tampoco se declaran terminados los obstáculos dinámicos que esos scripts puedan modificar.
+Las imágenes se generan en `reports/scenes/layers/` y se copian a `mods/original/escenario/`. Son recursos derivados locales, excluidos de Git. Los objetos todavía no pueden usarse. Los canales ambientales iniciales ya cambian visibilidad, fotogramas y posición en los recursos contrastados. Los controladores de interacción pueden alterar esos programas y condiciones durante una partida; esa fase sigue pendiente. Tampoco se declaran terminados los obstáculos dinámicos que esos scripts puedan modificar.
 
 ## Siguientes bloques del original
 
-La base de revisión es Original. Quedan las entradas especiales, las animaciones ambientales y sus desplazamientos, los obstáculos dinámicos, la cadencia de la partida y las transiciones completas. El uso de objetos queda fuera de la prueba actual. La presentación ya alterna los fotogramas y repeticiones de la traza original; faltan el audio, medir su duración física en DOS y enlazar con la secuencia especial inicial de DUNGEON.
+La base de revisión es Original. Quedan las entradas especiales, los controladores de sala y sus reacciones, los obstáculos dinámicos, la cadencia física de la partida y las transiciones completas. El uso de objetos queda fuera de la prueba actual. La presentación ya alterna los fotogramas y repeticiones de la traza original; faltan el audio, medir su duración física en DOS y completar la acción para liberar a Ben en DUNGEON.
 
 ## Portada y presentación ordenadas
 
@@ -124,7 +124,7 @@ pnpm --filter @curse/asset-extractor navigation-verify
 pnpm mods:prepare
 ```
 
-Los informes derivados se guardan en `reports/navigation/`; el manifiesto local pasa a versión 5. Si el visor avisa de datos antiguos, repetir la preparación. Nunca se publican imágenes originales ni derivadas en Git.
+Los informes derivados se guardan en `reports/navigation/`; el manifiesto local pasa a versión 6. Si el visor avisa de datos antiguos, repetir la preparación. Nunca se publican imágenes originales ni derivadas en Git.
 
 ## Primera sala: entrada encadenada y canales ambientales
 
@@ -132,7 +132,7 @@ El inicio lógico -1 de DUNGEON usa MANA.BRD, fotograma 0 (16 × 57), en X=125, 
 
 `trace-dungeon.py` ejecuta la carga original y 1.000 ciclos aislados de `0x85DE–0x8A21`. `verify-dungeon.mts` compara byte a byte los 69 registros de actores con el intérprete TypeScript, además de 32 casos del generador aleatorio y cinco casos del umbral de temporizador. Las ranuras 8 y 9 cambian visualmente en esa captura. El visor reproduce sus canales de fotograma, posición y visibilidad y aplica la ordenación y los primeros planos ya contrastados. No reproduce una grabación finita: ejecuta los programas locales.
 
-La espera principal exige al menos cinco pulsos. DUNGEON usa una referencia de 70 Hz dividida entre esos cinco pulsos; falta medir la cadencia física en DOS. El paseo STD de las otras salas mantiene su cadencia provisional de diez ciclos por segundo. La comparación aislada no demuestra todavía el comportamiento de los controladores de sala, las acciones, el audio o los obstáculos dinámicos. El cambio de banco F8 permanece rechazado hasta contrastarlo; este perfil no lo necesita. Las otras 77 salas conservan sus objetos iniciales estáticos.
+La espera principal exige al menos cinco pulsos. DUNGEON usa una referencia de 70 Hz dividida entre esos cinco pulsos; falta medir la cadencia física en DOS. El paseo STD de las otras salas mantiene su cadencia provisional de diez ciclos por segundo. La comparación aislada no demuestra todavía el comportamiento de los controladores de sala, las acciones, el audio o los obstáculos dinámicos. El cambio de banco F8 permanece rechazado hasta contrastarlo; este perfil no lo necesita. La ampliación ambiental descrita a continuación conserva separado el paseo STD de las otras salas.
 
 ```powershell
 python tools/reverse-engineering/trace-dungeon.py
@@ -141,3 +141,17 @@ pnpm mods:prepare
 ```
 
 `pnpm assets:prepare` incluye la captura y su comparación antes de preparar los recursos. Los programas, semillas, tablas y capturas resultantes permanecen exclusivamente en las carpetas locales excluidas de Git.
+
+## Canales ambientales de las 78 salas
+
+`trace-ambient.py` carga los objetos de cada recurso con el cargador original, excluye al protagonista y ejecuta 1.000 ciclos del intérprete original por recurso. Guarda un hash SHA-256 de los 69 registros de actores después de cada ciclo. `verify-ambient.mts` ejecuta el intérprete TypeScript y compara los 78.000 hashes. También exige las 78 identificaciones de recurso en orden, 1.000 muestras por recurso y los hashes de los archivos fuente. La preparación rechaza una auditoría que no corresponda al informe de comparación.
+
+Se observaron cambios visuales en 32 recursos, contando DUNGEON. Esos canales se ejecutan en el visor con sus periodos, pausas, desplazamientos, visibilidad y selección aleatoria. El paseo STD, su cámara y los primeros planos permanecen activos donde ya había una entrada transitable contrastada. Las consultas condicionadas a registros de actores leen ahora sus valores actuales; esto no implementa los controladores de obstáculos dinámicos. Se exportan todos los fotogramas del banco SPR de esas salas para que una elección aleatoria posterior no dependa únicamente de los fotogramas aparecidos durante la captura. F2 y los cambios de sala conservan los estados; Reiniciar recupera los estados iniciales.
+
+```powershell
+python tools/reverse-engineering/trace-ambient.py
+pnpm --filter @curse/asset-extractor exec tsx ../../tools/reverse-engineering/verify-ambient.mts
+pnpm mods:prepare
+```
+
+Los informes `ambient-audit.json` y `ambient-verification.json` son locales y están excluidos de Git. El manifiesto comparte una sola copia de los programas. La captura usa la semilla inicial del ejecutable, no una partida viva: no demuestra que todos los recorridos aleatorios, las variantes de entrada o las reacciones de enemigos estén completos. Las otras 46 salas no mostraron cambios visuales en esta prueba; esto no significa que carezcan de animaciones activadas mediante acciones. Los canales auditados no necesitaron F8. Los eventos de sonido y cambio de sala se registran, pero todavía no se ejecutan.

@@ -34,6 +34,7 @@ interface SceneRecord {
   animationLayers: unknown[];
   animation?: ActorPrograms & {
     assets: (VisualAsset & { bank: number; frame: number })[];
+    includePlayer: boolean;
     cyclePulses: number;
     referenceHz: number;
   };
@@ -68,6 +69,7 @@ interface Manifest {
     events: PresentationEvent[];
   };
   navigationProfile: WalkProfile;
+  actorPrograms: number[];
 }
 const viewport = document.querySelector<HTMLDivElement>('#viewport')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;
@@ -89,8 +91,9 @@ async function start() {
     throw new Error('Prepare local assets');
   const manifest: Manifest = await response.json();
   if (
-    manifest.schemaVersion !== 5 ||
+    manifest.schemaVersion !== 6 ||
     !manifest.title ||
+    !manifest.actorPrograms?.length ||
     manifest.presentation?.length !== 16 ||
     !manifest.presentationPlayback?.events.length ||
     manifest.player.length !== 27 ||
@@ -343,8 +346,11 @@ async function start() {
   function resetActor() {
     animationState =
       !showingStatic && scene().animation ? structuredClone(scene().animation!) : null;
+    if (animationState && !animationState.programs.length)
+      animationState.programs = manifest.actorPrograms;
     animationElapsed = 0;
-    const spawn = showingStatic || animationState ? null : scene().navigation.spawn;
+    const spawn =
+      showingStatic || scene().animation?.includePlayer ? null : scene().navigation.spawn;
     actor = spawn ? createWalkActor(spawn.x + spawn.cameraX, spawn.y, spawn.frame) : null;
     cameraX = spawn ? Math.max(0, Math.min(scene().background.width - 320, spawn.cameraX)) : 0;
     renderCameraX = cameraX;
@@ -360,7 +366,7 @@ async function start() {
         : `${staticScreens[staticIndex].name}. Imagen de revisión. Puedes reproducir la presentación o avanzar con F3.`
       : actor
         ? 'Haz clic para caminar. Las acciones y salidas se señalarán sin ejecutarlas.'
-        : scene().animation
+        : scene().animation?.includePlayer
           ? 'Ben empieza encadenado, como en el original. Su liberación requiere una acción todavía pendiente; las animaciones de la sala ya avanzan.'
           : scene().navigation.entryStatus === 'hidden-player'
             ? 'El original oculta a Ben en esta pantalla. Vista del escenario sin paseo.'
@@ -392,7 +398,7 @@ async function start() {
     background.height = 200;
     sceneContent.x = -renderCameraX;
     const animated = animationState?.actors.map((raw, index) => originalActorView(raw, index + 1));
-    const animatedBen = animated?.[0];
+    const animatedBen = scene().animation?.includePlayer ? animated?.[0] : undefined;
     ben.visible = actor !== null;
     if (animatedBen) {
       ben.visible = !!animatedBen.flags && !(animatedBen.flags & 2) && animatedBen.frame !== 255;
@@ -437,6 +443,16 @@ async function start() {
       },
       ...scene().layers.actors,
     ];
+    if (animated && !scene().animation?.includePlayer)
+      slots[0] = {
+        slot: 1,
+        flags: actor ? 1 : 0,
+        x: actor?.x ?? 0,
+        y: actor?.y ?? 0,
+        width: 32,
+        height: 48,
+        depthOffset: 0,
+      };
     depthOrder = originalActorOrder(slots, depthOrder);
     let drawIndex = 0;
     for (const slot of depthOrder) {
@@ -469,6 +485,17 @@ async function start() {
     boundaryButton.disabled = showingStatic || changing;
     boundaryButton.textContent = showLimits ? 'Ocultar límites' : 'Mostrar límites';
     boundaryButton.setAttribute('aria-pressed', String(showLimits));
+  }
+  function navigationState(): NavigationState {
+    const state = { ...scene().navigation.state };
+    if (!animationState) return state;
+    const bytes = animationState.actors.flat();
+    for (const key of Object.keys(state)) {
+      const offset = Number(key) - 0x2c2b;
+      if (offset >= 33 && offset + 1 < bytes.length)
+        state[key] = bytes[offset] | (bytes[offset + 1] << 8);
+    }
+    return state;
   }
   function pan(direction: number) {
     if (changing || selectingPack || transition || showingStatic) return;
@@ -640,7 +667,7 @@ async function start() {
         actor,
         previous,
         scene().navigation.regions,
-        scene().navigation.state,
+        navigationState(),
       );
       cameraX = followOriginalCamera(actor.x, cameraX, scene().background.width);
       cameras.set(scene().id, cameraX);
