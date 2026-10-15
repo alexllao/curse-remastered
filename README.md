@@ -358,3 +358,13 @@ pnpm --filter @curse/asset-extractor spr-preview
 ```
 
 Produce `reports/sprites/BENN-experimental.png` (mosaico de 22 bloques) y `BENN-experimental.json` (estadísticas). El dibujo es **solo diagnóstico**: interpreta tentativamente registros `00 (00|FF) longitud colores`, centra las secuencias en filas sucesivas y muestra los índices de color en escala de grises, sin la paleta original ni posiciones verificadas. La finalidad es comprobar si aparece estructura reconocible; **no equivale a una extracción correcta**.
+
+### Análisis estático del ejecutable DOS original
+
+Guarda tu copia legítima de `CURSE.EXE` en `original/CURSE.EXE` (fuera de Git). Ejecuta:
+
+```powershell
+pnpm --filter @curse/asset-extractor analyze-exe
+```
+
+El comando escribe `reports/exe/curse-analysis.json` con la cabecera MZ, punto de entrada, tabla de reubicaciones y ubicaciones de cadenas como `benn.spr`, `benn.map` y `sprites.pal`. Los posibles operandos inmediatos que muestra son **candidatos, no referencias de código verificadas**. El paso siguiente es desensamblar las funciones de apertura/lectura y seguir las llamadas hasta el renderizado de sprites. No subas el EXE original al repositorio.
