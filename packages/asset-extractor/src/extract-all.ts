@@ -2,6 +2,7 @@ import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unpackRnc1, crc16 } from './rnc1.js';
+import { unpackRnc2 } from './rnc2.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const fromRoot = (value: string): string => (isAbsolute(value) ? value : resolve(root, value));
@@ -62,13 +63,13 @@ async function walk(directory: string): Promise<void> {
     entry.packedCrcValid =
       packedSize + 18 <= bytes.length &&
       crc16(bytes.subarray(18, 18 + packedSize)) === bytes.readUInt16BE(14);
-    if (entry.method !== 1) {
+    if (entry.method !== 1 && entry.method !== 2) {
       entry.status = 'unsupported';
-      entry.error = 'RNC method 2 decoder not yet implemented';
+      entry.error = 'Unsupported RNC compression method';
       continue;
     }
     try {
-      const decoded = unpackRnc1(bytes);
+      const decoded = entry.method === 1 ? unpackRnc1(bytes) : unpackRnc2(bytes);
       const output = join(destinationRoot, name + '.bin');
       await mkdir(dirname(output), { recursive: true });
       await writeFile(output, decoded);
