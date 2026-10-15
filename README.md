@@ -407,3 +407,5 @@ pnpm --filter @curse/asset-extractor spr-atlas reports/sprites/scenes reports/sp
 ```
 
 Los manifiestos con hashes, las paletas derivadas y los PNG permanecen en `reports/` (excluido de Git).
+
+La ejecución aislada del código original también verifica los fundidos y el ciclo del índice 255 de la interfaz. Véase [captura reproducible, modelos TypeScript y límites](docs/palette-effects.md).
