@@ -314,3 +314,11 @@ Se han examinado muestras locales originales (no se incorporan al repositorio).
 - `BENN.MAP` mide **30.450 bytes** (`16×1903+2`). Comienza con `00 00 00 00 00 02 02 00 ...`, con secuencias iniciales de valores pequeños; más adelante cambia su distribución de bytes. **No está demostrada** su relación exacta con los sprites ni el significado de los registros.
 
 Siguiente trabajo: crear un lector de índices SPR con validación de rangos y un visor experimental de bloques, sin suponer que los datos son píxeles sin comprimir.
+
+### Inspección reproducible de índices SPR
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-index
+```
+
+Lee por defecto `original/DATA/BENN.SPR` y escribe `reports/sprites/BENN-index.json`. El primer entero little-endian se interpreta como desplazamiento del primer bloque en unidades de 16 bytes; el índice se recorre hasta la primera entrada cero y se validan posiciones crecientes, alineadas y dentro del archivo. Cada bloque incluye los cinco primeros enteros de 16 bits y dimensiones candidatas. Esta herramienta **no dibuja aún sprites**: falta identificar de forma comprobable la codificación de los datos de píxel. El fichero original permanece intacto.
