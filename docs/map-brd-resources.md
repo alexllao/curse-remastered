@@ -42,7 +42,7 @@ Resultados locales:
 - 29 archivos BRD presentes y 637 fotogramas decodificados.
 - 583 PNG con colores compartidos; 26 atlas de estos fotogramas.
 - 54 fotogramas dependen del escenario. Hay 44 variantes PNG con contexto inicial identificado: EMERGE/POOL, PLUNGE/LAKEBED y GRAVE/GRAVE.
-- La investigación de scripts añade cinco PNG de CHANGE (fotogramas 0–4), seleccionados con CHANGE.MAP activo. Hay 49 PNG contextuales en total. Siguen pendientes CHANGE[5–7] y CASTLE[24–25], que conservan índices y transparencia.
+- La investigación de scripts añade cinco PNG de CHANGE (fotogramas 0–4), seleccionados con CHANGE.MAP activo. La acción final añade CASTLE[24–25] con FINAL.MAP. Hay 51 PNG contextuales en total. Siguen pendientes CHANGE[5–7], que conservan índices y transparencia.
 - SMALL.BRD tiene 118 entradas iniciales válidas. La entrada 118 apunta fuera del archivo: párrafo 16128, desplazamiento 258048, frente a 41520 bytes de archivo. Se registra `valid-prefix-only`; no se declara relleno ni se repara el original. Solo una copia temporal de la tabla termina tras el prefijo válido para reutilizar el decodificador.
 
 El nombre FINAL.BRD aparece en la tabla del EXE, pero falta entre los originales disponibles y ningún descriptor inicial lo selecciona. Su uso dinámico queda pendiente.
@@ -60,9 +60,10 @@ python -m pip install --target reports/tool-deps -r tools/reverse-engineering/re
 $env:PYTHONPATH = (Resolve-Path reports/tool-deps).Path
 python tools/reverse-engineering/trace-map-backgrounds.py
 python tools/reverse-engineering/trace-brd-scripts.py
+python tools/reverse-engineering/trace-brd-index.py
 ```
 
-Fondos, índices, franjas y manifiestos: `reports/scenes/backgrounds/`. BRD, índices RGBA y contextos: `reports/brd/`. En los archivos RGBA indexados, cada canal RGB conserva el índice y alfa conserva la transparencia. Los contrastes originales se registran en `reports/exe/map-background-verification.json` y `reports/exe/brd-script-verification.json`. Todos los recursos, PNG e informes permanecen excluidos de Git.
+Fondos, índices, franjas y manifiestos: `reports/scenes/backgrounds/`. BRD, índices RGBA y contextos: `reports/brd/`. En los archivos RGBA indexados, cada canal RGB conserva el índice y alfa conserva la transparencia. Los contrastes originales se registran en `reports/exe/map-background-verification.json` , `reports/exe/brd-script-verification.json` y `reports/exe/small-index-verification.json`. Todos los recursos, PNG e informes permanecen excluidos de Git.
 
 Los manifiestos registran hashes, desplazamientos, asociaciones y límites. Los lectores del EXE rechazan revisiones desconocidas. Pasan 11 pruebas del extractor, las comprobaciones específicas de TypeScript, ESLint y formato, y el contraste de las 736 franjas con el original. Persisten los fallos globales previamente documentados en [paletas](palette-loading.md).
 
@@ -74,8 +75,22 @@ El intérprete de animaciones (`0x85FC–0x8800`) reconoce el comando 248 (`0xF8
 
 Para CHANGE, `0x450F` exige el recurso 25. La escritura de `0x453F` instala la secuencia DS:1B8E; la copia original `0xBE2–0xBF1` la transfiere al actor. El comando en DS:1B8F carga CHANGE.BRD (selector 19), selecciona los fotogramas 0, 1, 2, 3 y 4, y vuelve a STD. El recurso 25 está asociado a CHANGE.MAP en la tabla de recursos del ejecutable. La ejecución aislada confirma la carga, los cinco índices, la conservación del recurso y del búfer de paleta, y la ausencia de escrituras DAC en esta ruta. La misma rama rechaza un recurso distinto. Es evidencia de contexto de esta ruta, sin afirmar exclusividad de paleta ni cobertura de todos los scripts.
 
-Para CASTLE, `0x4B25` exige el recurso 72 (FINAL.MAP) y el estado cero de los dos bits altos de DS:35CA. Instala DS:2B61, carga CASTLE.BRD y selecciona el fotograma 22. Esto demuestra una carga en FINAL, pero **no verifica el uso de CASTLE[24–25]**. No se exportan esos dos fotogramas con una asociación deducida de esta carga. Existe otra secuencia en DS:2BA8 con índices 24 y 25; falta verificar su contexto de activación y paleta.
+Para CASTLE, `0x4B25` exige el recurso 72 (FINAL.MAP) y el estado cero de los dos bits altos de DS:35CA. Instala DS:2B61, carga CASTLE.BRD y selecciona el fotograma 22. Esto demuestra una carga en FINAL, pero **no verifica el uso de CASTLE[24–25]**. No se exportan esos dos fotogramas con una asociación deducida de esta carga. La secuencia posterior DS:2BA8, descrita a continuación, sí permite verificar CASTLE[24–25].
 
 `trace-brd-scripts.py` ejecuta estas instrucciones originales sin sustituir el intérprete. Solo emula las operaciones DOS de apertura, lectura y cierre. Usa un actor fuera de pantalla (x=500) para omitir el sonido mediante el recorte original; inicia los contadores de animación explícitamente. Contrasta las selecciones observadas con el manifiesto TypeScript y comprueba que no se exportan como verificados otros fotogramas de CHANGE. Los 85 y 3 pasos observados son iteraciones del ensayo, no una medida de tiempo de juego ni una prueba de alcance desde una partida inicial.
 
 La anomalía de SMALL sigue abierta: encontrar una secuencia que cargue SMALL o que use sus índices bajos no demuestra que la entrada 118 sea relleno o que nunca se consulte. Se conserva el aviso de extracción parcial.
+
+## Acción final: CASTLE[24–25]
+
+El despacho `0x438A–0x4398` compara el objetivo 177 y el objeto usado 175. Si coinciden, salta a `0x4C1D`, que instala DS:2BA8 en el actor. El comando de DS:2BB3 carga CASTLE.BRD; después se seleccionan los fotogramas 23, 24 y 25. El ensayo se detiene al obtener el 25; no verifica el resto del desenlace ni afirma que la secuencia termine en ese punto.
+
+El objetivo 177 aparece únicamente en la lista inicial del recurso 72, asociado a FINAL.MAP. La herramienta ejecuta el cargador original `0x8CA6–0x8D6E` con FINAL.SPR y comprueba que crea ese objetivo activo. Luego ejecuta el despacho de la pareja 177/175 y el intérprete hasta seleccionar el fotograma 25. Comprueba que siguen activos el mismo recurso y la misma paleta, sin escrituras DAC. Dos parejas de objetos incorrectas rechazan esta acción. El ensayo conserva las entradas sintéticas declaradas y no reproduce la selección completa de objetos desde la interfaz ni el progreso de la partida.
+
+El contexto FINAL es el de la ubicación inicial del objetivo comprobada y la ejecución aislada realizada. **El despacho de la acción compara identificadores de objetos; no contiene una condición que exija el recurso 72.** No se deduce que FINAL sea el único contexto posible después de cambios de estado o scripts. El manifiesto registra esta distinción en `resourceScope` y añade la ubicación del registro del objetivo como evidencia. Se exportan los fotogramas dependientes de paleta 24 y 25 con este contexto; los índices de selección observados se contrastan con el manifiesto.
+
+## Consulta original de la entrada 118 de SMALL
+
+`trace-brd-index.py` ejecuta `0x87DE–0x8800`, el acceso original a la tabla de fotogramas. Verifica las entradas 0 y 117 contra las dimensiones de sus cabeceras reales: 16 × 24 y 8 × 8. Para la entrada 118, el párrafo 16128 lleva al desplazamiento 258048, fuera de los 41520 bytes de SMALL.BRD.
+
+El ensayo coloca un marcador explícitamente sintético en la memoria emulada correspondiente a ese destino y comprueba que el lector lo consume como dimensiones. Esto demuestra que esa ruta no valida el límite del archivo ni trata la entrada 118 como un terminador especial. El marcador no es contenido del juego ni se guarda en los originales. No se ha demostrado que una partida normal seleccione esa entrada, por lo que no se afirma un fallo reproducible del juego ni que el archivo esté corrupto. El extractor mantiene el prefijo de 118 fotogramas y el aviso `valid-prefix-only`.

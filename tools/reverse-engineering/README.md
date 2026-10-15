@@ -17,4 +17,8 @@
 
 ## Scripts originales de animación BRD
 
-`trace-brd-scripts.py` verifica las condiciones de recurso, la instalación de secuencias, la carga DOS de CHANGE/CASTLE y los índices elegidos por el intérprete original. Contrasta los cinco fotogramas CHANGE exportados con su manifiesto y rechaza un contexto de recurso incorrecto. Ejecutar `brd-extract` antes del ensayo, con la misma dependencia Unicorn que los demás contrastes. Véase [evidencia, entradas sintéticas y límites](../../docs/map-brd-resources.md#selección-brd-mediante-scripts).
+`trace-brd-scripts.py` verifica las condiciones de recurso, la instalación de secuencias, la carga DOS de CHANGE/CASTLE y los índices elegidos por el intérprete original. Contrasta los cinco fotogramas CHANGE y la selección CASTLE[23–25] con el manifiesto. Incluye la carga original del objetivo 177 en FINAL y el despacho de la acción 177/175; distingue esa prueba de las condiciones explícitas de recurso de otras rutas. Ejecutar `brd-extract` antes del ensayo, con la misma dependencia Unicorn que los demás contrastes. Véase [evidencia, entradas sintéticas y límites](../../docs/map-brd-resources.md#selección-brd-mediante-scripts).
+
+## Límites de la tabla SMALL
+
+`trace-brd-index.py` ejecuta el lector original sobre las entradas 0, 117 y 118. Comprueba las cabeceras reales de las válidas y usa un marcador sintético fuera del archivo para detectar la ausencia de una validación de límites. No demuestra que una partida seleccione la entrada 118. Mantiene la extracción parcial documentada y guarda los resultados en `reports/exe/small-index-verification.json`.
