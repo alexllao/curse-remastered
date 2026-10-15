@@ -218,3 +218,21 @@ Backgrounds and animated sprites require different treatment. Every frame in a c
 | Hotspot | Interactive region in a scene |
 | Upscaling | Enlarging an image by generating or interpolating pixels |
 
+
+## Extraction run: 2026-10-15
+
+The first user-provided `reports/extracted/manifest.json` reports **192 eligible game data files** scanned: **3 RNC1 extracted**, **16 RNC2 unsupported**, **173 raw/unrecognized**. These are **extraction status counts**, not a measure of the fraction of game content decoded. The earlier whole-directory inventory counted more files because it included non-resource extensions.
+
+Verified from the manifest:
+
+- RNC1: `DATA/TITLE.DAT` (64,000 decoded bytes), `DATA/CORE.DAT` (64,000), `DATA/MENU.DAT` (10,240). The batch extractor reports valid packed CRCs for these; the RNC1 decoder also checks unpacked CRC before writing.
+- RNC2: 16 files, including `BALCONY1`–`BALCONY5`, `BASEBAL1`–`BASEBAL6`, `BASEBAT`, and `CAULDRN1`–`CAULDRN4`. All declare 64,000 unpacked bytes and have valid packed CRCs. **Likely** 320×200 indexed screens or frames; not yet visually confirmed.
+- Raw/unrecognized: 173 files. These include `.MAP`, `.SPR`, `.BRD`, `.SFX`, `.PAL` and other files. `raw` means the current tool has **not recognized an RNC wrapper**, not that the file is uncompressed or corrupt.
+
+### Next investigation steps
+
+1. Implement and CRC-validate **RNC2**. Export the 16 recovered 64,000-byte buffers, then determine the correct palette associations and visually inspect the resulting frames.
+2. Investigate **`.MAP`** binary headers and scene representation; collect several representative files and compare byte patterns and sizes.
+3. Decode **`.SPR`** frame tables, masks and transparency, starting with `MOUSE.SPR`, `FONT.SPR` and `ICONS.SPR`.
+4. Reverse-engineer `.BRD` animation/other structures and `.SFX` audio only after inspecting actual bytes.
+5. Keep adding validated findings, examples and commands here. Never commit original or extracted copyrighted data.
