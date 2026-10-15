@@ -266,13 +266,13 @@ Lee `reports/extracted/manifest.json` y convierte los recursos extraídos de **6
 
 Las asociaciones de paleta son **hipótesis basadas en los nombres**, todavía pendientes de comprobación visual:
 
-| Pantallas | Paleta candidata |
-| --- | --- |
-| `BALCONY1.DAT` a `BALCONY5.DAT` | `BALCONY.PAL` |
-| `BASEBAL1.DAT` a `BASEBAL6.DAT`, `BASEBAT.DAT` | `BASEBALL.PAL` |
-| `CAULDRN1.DAT` a `CAULDRN4.DAT` | `CAULDRN.PAL` |
-| `TITLE.DAT` | `TITLE.PAL` (asociación ya comprobada) |
-| `CORE.DAT` | `CORE.PAL` (pendiente de inspección visual) |
+| Pantallas                                      | Paleta candidata                            |
+| ---------------------------------------------- | ------------------------------------------- |
+| `BALCONY1.DAT` a `BALCONY5.DAT`                | `BALCONY.PAL`                               |
+| `BASEBAL1.DAT` a `BASEBAL6.DAT`, `BASEBAT.DAT` | `BASEBALL.PAL`                              |
+| `CAULDRN1.DAT` a `CAULDRN4.DAT`                | `CAULDRN.PAL`                               |
+| `TITLE.DAT`                                    | `TITLE.PAL` (asociación ya comprobada)      |
+| `CORE.DAT`                                     | `CORE.PAL` (pendiente de inspección visual) |
 
 `MENU.DAT` se omite porque tiene 10.240 bytes y no es una pantalla completa de 320 × 200. El conversor rechaza paletas que no tengan 768 bytes o que incluyan componentes superiores a 63, en lugar de inventar colores. **Una conversión técnicamente correcta no demuestra por sí sola que la paleta elegida sea la adecuada.**
 
@@ -396,3 +396,14 @@ pnpm --filter @curse/asset-extractor spr-atlas
 ```
 
 Las hojas se guardan en `reports/sprites/atlases/` y el índice en `reports/sprites/atlases/manifest.json`. Cada casilla incluye número de sprite, dimensiones y número de píxeles dibujados (`p`). El fondo ajedrezado distingue transparencia y el escalado usa vecino más cercano. Las imágenes son para revisión, no sustituyen a los PNG individuales. Si una hoja falla, el comando intenta procesar las restantes e informa del error.
+
+## Paletas de escena verificadas
+
+El cargador original combina 192 colores del encabezado MAP con los 64 finales de SPRITES.PAL. No debe usarse una PAL global para todos los SPR. Véase [evidencia, alcance y pendientes](docs/palette-loading.md).
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-decode-scenes
+pnpm --filter @curse/asset-extractor spr-atlas reports/sprites/scenes reports/sprites/scene-atlases
+```
+
+Los manifiestos con hashes, las paletas derivadas y los PNG permanecen en `reports/` (excluido de Git).
