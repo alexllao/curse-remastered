@@ -279,3 +279,7 @@ Las asociaciones de paleta son **hipótesis basadas en los nombres**, todavía p
 ### Resultado de la primera conversión por lotes
 
 La ejecución local comunicada por el usuario produjo **18 PNG**, **1 recurso omitido** y **0 errores**. La omisión prevista es `MENU.DAT` (10.240 bytes, no corresponde a una pantalla completa de 320 × 200). Falta confirmar en el manifiesto de imágenes el nombre exacto del archivo omitido y revisar visualmente las imágenes y las paletas candidatas antes de dar por validadas las escenas.
+
+### Validación visual de la introducción
+
+El usuario ha revisado las imágenes PNG generadas y confirma que se ven correctamente y corresponden a la animación de introducción del juego. Con esta comprobación quedan validados visualmente los fotogramas y las paletas utilizados en esta fase, además de las verificaciones de tamaño y CRC de la extracción. La próxima investigación se centrará en los formatos propios `.MAP` y `.SPR`; todavía no debe asumirse su estructura interna por la extensión del archivo.
