@@ -27,7 +27,7 @@ pnpm --filter @curse/asset-extractor extract-all
 - `inventory` crea un inventario de archivos con tamaños, firmas y hashes.
 - `rnc-info` examina la cabecera RNC y comprueba el CRC de los datos comprimidos.
 - `title-png` descomprime `DATA/TITLE.DAT`, valida su CRC y aplica la paleta `DATA/TITLE.PAL` para generar `reports/TITLE.png` (320 × 200).
-- `extract-all` recorre `original/` buscando recursos del juego. Descomprime los archivos **RNC de método 1** en `reports/extracted/<ruta-relativa-original>.bin` y genera `reports/extracted/manifest.json`. El método RNC2 **todavía no está implementado**. Los formatos desconocidos se registran sin inventar su interpretación. Descomprimir correctamente un archivo no implica que ya sea una imagen visualizable.
+- `extract-all` recorre `original/` buscando recursos del juego. Descomprime los archivos **RNC de método 1** en `reports/extracted/<ruta-relativa-original>.bin` y genera `reports/extracted/manifest.json`. El método RNC2 cuenta con una primera implementación que **todavía debe validarse con los archivos originales**. Los formatos desconocidos se registran sin inventar su interpretación. Descomprimir correctamente un archivo no implica que ya sea una imagen visualizable.
 
 El extractor conserva los nombres y la estructura de carpetas. No modifica ni sobrescribe los originales. No publiques recursos extraídos protegidos por derechos de autor.
 
@@ -49,7 +49,7 @@ Husky ejecuta lint-staged antes de cada commit y `pnpm check` antes de cada push
 2. **Reconstrucción jugable:** implementar escenarios, zonas interactivas, acciones, navegación, animaciones, sonido y guardado/carga en TypeScript y PixiJS 8.
 3. **Mejoras gráficas opcionales y no destructivas:** ofrecer **Original** (escalado entero por vecino más cercano), **Mejorado** (xBRZ/ScaleFX) y **Remastered HD** (reescalado con IA fuera del juego y revisión manual). Conservar los gráficos originales, las transparencias y la coherencia entre fotogramas. Los fondos y los sprites pueden necesitar tratamientos distintos. No ejecutar IA durante la partida.
 
-**Estado actual:** existen herramientas para extraer RNC1 y la pantalla de título. La primera extracción por lotes ya se ha ejecutado y analizado mediante su manifiesto; quedan pendientes RNC2, la interpretación de la mayoría de formatos y la validación completa del proyecto.
+**Estado actual:** existen herramientas para extraer RNC1 y la pantalla de título. La primera extracción por lotes ya se ha ejecutado y analizado mediante su manifiesto; queda pendiente validar RNC2, así como la interpretación de la mayoría de formatos y la validación completa del proyecto.
 
 ## Guía técnica: cómo funcionan los gráficos originales
 
@@ -235,3 +235,9 @@ Datos comprobados en el manifiesto:
 3. Descifrar los fotogramas, máscaras y transparencias de **`.SPR`**, empezando por `MOUSE.SPR`, `FONT.SPR` e `ICONS.SPR`.
 4. Investigar las estructuras de `.BRD` y el audio `.SFX` a partir de sus bytes reales.
 5. Seguir añadiendo al README los hallazgos comprobados, ejemplos y comandos. No subir a Git los recursos originales ni los extraídos.
+
+### Avance del descompresor RNC2
+
+Se ha añadido `packages/asset-extractor/src/rnc2.ts` y se ha integrado en `extract-all`. El decodificador interpreta los bits de control en orden MSB, las secuencias literales y las referencias hacia atrás, y exige que coincidan el tamaño y ambos CRC16 antes de considerar válida una extracción. Se ha tomado como referencia técnica el algoritmo RNC2 documentado en [ancient, de Teemu Suutari](https://sources.debian.org/src/ancient/2.2.0-1/src/RNCDecompressor.cpp).
+
+**Estado: implementación inicial sin validación con los 16 archivos reales.** Hay que ejecutar nuevamente `pnpm --filter @curse/asset-extractor extract-all` y comprobar `reports/extracted/manifest.json`. Si aparece un error de CRC o de descompresión, el archivo se marcará como no compatible y no se guardará un resultado incorrecto. No debemos dar por recuperados los recursos RNC2 hasta superar estas pruebas.
