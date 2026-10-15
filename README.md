@@ -350,3 +350,11 @@ pnpm --filter @curse/asset-extractor spr-rows
 ```
 
 El diagnóstico `reports/sprites/BENN-rows.json` prueba varias posiciones iniciales (10, 12, 14 y 16 bytes), interpreta provisionalmente registros `[desplazamiento firmado, cantidad, colores...]`, y compara cuántas filas encajan con la altura y el ancho declarados. Los resultados son hipótesis para contrastar, no sprites renderizados.
+
+### Primera previsualización PNG experimental de sprites
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-preview
+```
+
+Produce `reports/sprites/BENN-experimental.png` (mosaico de 22 bloques) y `BENN-experimental.json` (estadísticas). El dibujo es **solo diagnóstico**: interpreta tentativamente registros `00 (00|FF) longitud colores`, centra las secuencias en filas sucesivas y muestra los índices de color en escala de grises, sin la paleta original ni posiciones verificadas. La finalidad es comprobar si aparece estructura reconocible; **no equivale a una extracción correcta**.
