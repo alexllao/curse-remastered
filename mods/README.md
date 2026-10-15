@@ -1,30 +1,52 @@
-# Recursos gráficos opcionales
+# Paquetes gráficos locales
 
-El juego original y los recursos derivados siguen fuera de Git. Esta carpeta contiene solo instrucciones y configuración versionadas; sus imágenes son locales.
+Las imágenes originales y derivadas son locales y permanecen fuera de Git. Solo se versiona este documento. No publiques una compilación que incluya estos gráficos.
 
-## Primer encargo: STUDY
+## Carpetas y nombres
 
-1. Abre `mods/original/fondos/070-STUDY.png` con Codex.
-2. Remasteriza el fondo manteniendo su composición, perspectiva, puertas, mobiliario y suelo. No añadas a Ben, objetos de inventario, texto ni elementos nuevos. Esta imagen es el fondo; las capas y personajes se dibujan aparte.
-3. Guarda el resultado en **`mods/remaster/fondos/070-STUDY.png`** como PNG de **1280 × 800** (4× el original de 320 × 200), sin márgenes añadidos.
-4. Durante la prueba jugable, pulsa **F2** para alternar Original y Remaster. Si ya estabas en Remaster, sal de ese modo y vuelve para recargar el fondo.
+```text
+mods/
+  original/fondos/070-STUDY.png
+  remaster/fondos/070-STUDY.png
+  remaster2/fondos/070-STUDY.png
+  remaster4k/fondos/070-STUDY.png
+  referencias/
+  manifest.json
+```
 
-Si Codex genera otra resolución, habrá que ajustarla o recortarla con cuidado al tamaño acordado antes de considerarla terminada. No cambies la posición de los elementos para adaptarla: las coordenadas de la escena deben seguir encajando. La mera presencia del archivo no equivale a una revisión visual aprobada.
+`original/` contiene las copias preparadas a partir de la extracción: no editarlas. `remaster/` es el paquete mejorado de respaldo. Puedes crear otra carpeta con el nombre que quieras, por ejemplo `remaster2`, y poner dentro imágenes con **la misma ruta y nombre** que sus originales. Puede estar incompleta o vacía.
 
-Solo necesitas dejar la imagen con ese nombre. No hace falta editar código, instalar el resultado ni generar un manifiesto. El siguiente encargo se elegirá después de revisar este fondo. Conserva también una imagen de referencia del estilo que te haya gustado en `mods/referencias/`.
+En desarrollo, F2 vuelve a consultar las carpetas en cada pulsación. Detecta las carpetas directas de `mods/`, salvo `original`, `referencias`, la antigua `escalado` y los nombres que empiezan por punto. Original y Remaster siempre aparecen. Los demás paquetes se ordenan por nombre. Una compilación guarda la lista disponible al compilar: para añadir carpetas nuevas después, hay que volver a compilar.
 
-## Carpetas
+## Carga y comparación
 
-- `original/`: copias locales preparadas desde los recursos extraídos. No editarlas.
-- `remaster/`: tus PNG terminados, con la misma ruta y nombre que sus originales.
-- `referencias/`: referencias locales del estilo deseado.
-- `manifest.json`: catálogo generado para la prueba, con dimensiones lógicas y procedencia. También es local.
+- **F2:** siguiente paquete gráfico; conserva la escena y el encuadre.
+- **F3 / Mayús+F3:** escenario siguiente / anterior entre los 78 fondos.
+- **Flechas izquierda / derecha:** desplazar la cámara en un panorama.
+- **FPS:** contador en la esquina superior derecha.
 
-En Remaster se decide por recurso: usa su PNG mejorado si existe y tiene la misma proporción; si falta o no se puede cargar, muestra el original sin interpolar. Los sprites pueden seguir siendo originales mientras los fondos ya están remasterizados. Las variantes deben conservar transparencia, punto de apoyo y dimensiones lógicas. Por ahora solo se encarga el fondo STUDY; los fotogramas de Ben se preparan para la prueba, no como una petición de remasterizarlos todos.
+Cada recurso usa el primer PNG válido de **paquete seleccionado → remaster → original**. El modo Original carga directamente el original. Si falta una imagen, falla su carga o tiene una proporción incompatible, se intenta el respaldo. Los originales usan vecino más cercano, sin interpolación; los fondos HD usan muestreo lineal para adaptarse a la ventana. No hay un modo intermedio de escalado.
 
-## Preparación local
+Por decisión del usuario, **todos los sprites de Ben permanecen originales**. La propuesta descartada está en `referencias/ben-frente-descartado.png`, fuera de las rutas de carga. No se encargan sprites nuevos por ahora.
 
-Desde la raíz del repositorio:
+## Cómo preparar un fondo
+
+1. Usa como referencia el PNG correspondiente de `original/fondos/`.
+2. Conserva el encuadre completo, perspectiva, suelo, puertas, objetos y posiciones. No añadas personajes ni objetos. Mantén también las zonas negras que rodean algunos interiores.
+3. Guarda el resultado con la misma ruta y nombre en el paquete deseado.
+4. Pulsa F2 para salir del paquete y volver a él; compara después de mover la cámara a ambos extremos si es un panorama.
+
+No hace falta que el factor sea 2×, 3× ni 4×: se admite otra resolución con la proporción del original, con hasta dos píxeles nativos de tolerancia por redondeo. STUDY mide 320 × 200; 1280 × 800 es un ejemplo adecuado. Los panoramas conservan **todo su ancho lógico**: CORRIDOR mide 1216 × 200, LAKEBED 1600 × 200 y EDGE 2144 × 200. No los fuerces a 320 × 200.
+
+Algunas propuestas generadas contienen bandas negras adicionales para alojar panoramas muy anchos. El archivo opcional `imagen.png.json`, mediante `contentRect`, indica qué región del PNG debe usar la textura. El PNG se conserva intacto y el motor comprueba tanto los límites como la proporción de esa región. Este metadato está preparado en los fondos instalados que lo necesitan; una entrega sin bandas no requiere ningún archivo adicional.
+
+## Estado artístico y revisión
+
+Se han instalado propuestas para **33 de los 78 escenarios**, correspondientes a **26 de los 57 fondos distintos**. Las imágenes idénticas del original comparten propuesta. Quedan 31 fondos distintos sin generar. El registro local `referencias/background-generation.json` guarda procedencia, asociaciones, dimensiones, estado y prompts; no se versiona.
+
+La presencia de un PNG y su carga correcta no equivalen a una revisión aprobada. La IA ha desplazado detalles en varias propuestas: deberán revisarse con los recorridos originales y probablemente rehacerse. La prioridad pasa a la fidelidad del juego antes de ampliar la producción artística. Todas las propuestas, salvo la prueba visual de STUDY ya valorada por el usuario, siguen pendientes de revisión; esa valoración artística tampoco verifica su navegación.
+
+## Preparación local y límites del prototipo
 
 ```powershell
 pnpm --filter @curse/asset-extractor scene-backgrounds
@@ -33,28 +55,8 @@ pnpm mods:prepare
 pnpm dev
 ```
 
-La preparación copia el fondo y los 27 fotogramas iniciales de STD.BRD. Nunca sobrescribe `mods/remaster/` ni `mods/referencias/`. Si una copia original local difiere de la extracción actual, detiene la preparación en lugar de pisarla. Los originales DOS tampoco se modifican.
+Abre `http://127.0.0.1:8787/`. La preparación copia los 78 fondos y los 27 fotogramas iniciales de STD.BRD. No sobrescribe los paquetes remaster ni `referencias`. Si una copia original local difiere de la extracción actual, se detiene para conservarla.
 
-La prueba usa el estudio y una zona transitable provisional sobre la alfombra, no la navegación original. No implementa aún interacciones, scripts de sala, salidas, inventario ni una partida completa. El cambio F2 afecta a los gráficos, no al estado ni las coordenadas del personaje. Los modos se definen en la capa de presentación; los factores no forman parte de la lógica del juego.
+Solo STUDY permite mover a Ben sobre una zona provisional de la alfombra, trazada a mano. Las demás pantallas son una galería. Falta recuperar el movimiento, las colisiones, la cámara, las transiciones, los objetos y los scripts originales. El primer análisis reproducible está en `docs/navigation.md`.
 
-El servidor local y la compilación incluyen los recursos presentes en esta carpeta. No publiques la compilación con los gráficos originales o derivados; `dist/` permanece excluido de Git.
-
-## Tamaño de los sprites de Ben
-
-Los 27 fotogramas de paseo preparados en `mods/original/ben/` miden 32 × 48; para el remaster 4× corresponden PNG de 128 × 192. El original `STD-000.png`, por ejemplo, se sustituye mediante `mods/remaster/ben/STD-000.png`. Cada fotograma conserva el mismo lienzo, transparencia y punto de apoyo. Otras poses del archivo STD tienen tamaños distintos y deberán escalarse desde sus dimensiones originales cuando se preparen: no se fuerzan al tamaño de estos fotogramas de paseo. Conviene fijar primero el estilo y validar una animación corta antes de encargar toda la secuencia.
-
-## Prueba artística instalada
-
-El fondo STUDY generado con imagegen está instalado en `remaster/fondos/070-STUDY.png`. Es una propuesta visual para revisión. La herramienta entregó 1586 × 992 y se conserva esa resolución nativa sin editar el original. El motor admite un pequeño redondeo de proporción de hasta dos píxeles nativos y mantiene los tamaños lógicos originales. Para futuras entregas manuales se recomienda el objetivo 4× indicado arriba.
-
-El usuario ha descartado la propuesta del sprite de Ben: se ha retirado de `remaster/ben/` y se conserva únicamente en `referencias/ben-frente-descartado.png`. **Todos los sprites permanecen originales, sin interpolar; por ahora no se generan nuevas versiones de personajes.** F2 alterna exclusivamente Original y Remaster. No hay modo de escalado intermedio.
-
-El contador FPS de la esquina superior derecha se actualiza aproximadamente cada medio segundo y no bloquea los clics. Mide la cadencia de la aplicación en esta sesión, sin prometer una tasa concreta en otros equipos.
-
-`remaster2k/` y `remaster4k/` quedan contempladas como variantes futuras y protegidas por la exclusión `mods/remaster*/`. Todavía no son modos disponibles con F2. No se sustituye la prueba actual hasta valorar su estilo y encaje.
-
-## Prueba de luces en STUDY
-
-F4 activa o desactiva luces suaves en las velas y la chimenea del fondo remasterizado. Son capas aditivas con variación continua de intensidad y pequeñas variaciones de llama; el PNG, las coordenadas de juego y los sprites originales se mantienen intactos. Solo se activan cuando el fondo Remaster de STUDY se ha cargado. En Original o si falta el remaster, quedan deshabilitadas. La preferencia del navegador de reducir movimiento las deja apagadas inicialmente; F4 permite elegir explícitamente.
-
-Esta propuesta de luces se revisará antes de continuar con otros fondos. La galería de 78 fondos y la navegación F3/Mayús+F3 quedan como siguiente trabajo, todavía no implementado. Para los panoramas habrá que conservar el ancho completo y poder recorrerlos; no se deben recortar ni forzar a 320 píxeles de ancho.
+F4 y la prueba de luces se han retirado. El fondo estático, la capa reservada para futuros efectos y el personaje se mantienen separados. El manifiesto reserva `animationLayers`, pero no existe aún un reproductor de esas capas. Añadir animaciones será trabajo posterior y no exige sustituir los PNG estáticos ni cambiar las coordenadas lógicas.

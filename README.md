@@ -31,7 +31,7 @@ pnpm --filter @curse/asset-extractor extract-all
 - `inventory` crea un inventario de archivos con tamaños, firmas y hashes.
 - `rnc-info` examina la cabecera RNC y comprueba el CRC de los datos comprimidos.
 - `title-png` descomprime `DATA/TITLE.DAT`, valida su CRC y aplica la paleta `DATA/TITLE.PAL` para generar `reports/TITLE.png` (320 × 200).
-- `extract-all` recorre `original/` buscando recursos del juego. Descomprime los archivos **RNC de método 1** en `reports/extracted/<ruta-relativa-original>.bin` y genera `reports/extracted/manifest.json`. El método RNC2 cuenta con una primera implementación que **todavía debe validarse con los archivos originales**. Los formatos desconocidos se registran sin inventar su interpretación. Descomprimir correctamente un archivo no implica que ya sea una imagen visualizable.
+- `extract-all` recorre `original/` buscando recursos del juego. Descomprime los archivos **RNC de método 1** en `reports/extracted/<ruta-relativa-original>.bin` y genera `reports/extracted/manifest.json`. La extracción de franjas RNC2 de los fondos MAP se ha contrastado con las instrucciones originales; véase [fondos MAP y BRD](docs/map-brd-resources.md). Los formatos desconocidos se registran sin inventar su interpretación. Descomprimir correctamente un archivo no implica que ya sea una imagen visualizable.
 
 El extractor conserva los nombres y la estructura de carpetas. No modifica ni sobrescribe los originales. No publiques recursos extraídos protegidos por derechos de autor.
 
@@ -53,7 +53,7 @@ Husky ejecuta lint-staged antes de cada commit y `pnpm check` antes de cada push
 2. **Reconstrucción jugable:** implementar escenarios, zonas interactivas, acciones, navegación, animaciones, sonido y guardado/carga en TypeScript y PixiJS 8.
 3. **Mejoras gráficas opcionales y no destructivas:** ofrecer **Original** (escalado entero por vecino más cercano) y **Remastered HD** (reescalado con IA fuera del juego y revisión manual). Conservar los gráficos originales, las transparencias y la coherencia entre fotogramas. Los fondos y los sprites pueden necesitar tratamientos distintos. No ejecutar IA durante la partida.
 
-**Estado actual:** existen herramientas para extraer RNC1 y la pantalla de título. La primera extracción por lotes ya se ha ejecutado y analizado mediante su manifiesto; queda pendiente validar RNC2, así como la interpretación de la mayoría de formatos y la validación completa del proyecto.
+**Estado actual:** se reconstruyen los 78 fondos de recursos y 637 fotogramas BRD, con límites de extracción documentados. El visor permite recorrer escenarios y comparar paquetes gráficos; el paseo de STUDY sigue siendo provisional. La prioridad actual es recuperar el movimiento, las colisiones y las transiciones originales antes de dar por válidos los remasters. [Primer contraste de BOXDET](docs/navigation.md).
 
 ## Guía técnica: cómo funcionan los gráficos originales
 
@@ -438,9 +438,9 @@ pnpm --filter @curse/asset-extractor spr-atlas reports/brd reports/brd/atlases
 
 Reconstruye 78 fondos según las tablas del ejecutable y extrae 637 fotogramas BRD. Las vistas de objetos son composiciones estáticas de revisión. SMALL.BRD tiene una tabla parcialmente válida y tres fotogramas de CHANGE.BRD siguen pendientes de contexto de color. Véase [evidencia, reproducción y límites](docs/map-brd-resources.md).
 
-## Primera escena jugable y recursos Remaster
+## Galería de escenarios y primera prueba de movimiento
 
-La prueba permite mover a Ben por una zona provisional de la alfombra de STUDY. Haz clic para caminar; F2 alterna **Original ↔ Remaster** sin reiniciar la escena. La esquina superior derecha muestra un contador discreto de FPS. Remaster sustituye cada recurso disponible y usa el original sin interpolar donde falte una versión mejorada. La lógica conserva coordenadas de 320 × 200, independientemente de la resolución de las imágenes.
+La galería prepara los 78 fondos originales, incluidos los panoramas completos. **F3** avanza de escenario y **Mayús+F3** retrocede. Las flechas izquierda y derecha recorren los fondos anchos. **F2** alterna Original, Remaster y los paquetes gráficos locales detectados, manteniendo el encuadre. Un contador discreto muestra los FPS arriba a la derecha.
 
 ```powershell
 pnpm mods:prepare
@@ -448,8 +448,10 @@ pnpm dev
 pnpm --filter @curse/engine test
 ```
 
-La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. El servidor local usa el puerto 8787. El primer encargo es `mods/original/fondos/070-STUDY.png`; guarda el resultado como `mods/remaster/fondos/070-STUDY.png` a 1280 × 800. Véase [carpetas, nombres y proceso gradual](mods/README.md). Los fotogramas normales de Ben son 32 × 48; su versión a 4× sería 128 × 192 con transparencia y anclaje conservados. Las poses con otras dimensiones se escalan desde su propio tamaño original.
+La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. Abre `http://127.0.0.1:8787/`. En desarrollo, basta crear una carpeta como `mods/remaster2/` y pulsar F2 para detectarla, aunque esté vacía. Cada imagen se busca en **paquete seleccionado → remaster → original**. Véase [carpetas, nombres y proceso gradual](mods/README.md).
 
-Esta es una prueba de paseo ejecutada en el navegador, todavía sin salidas, inventario, interacciones ni scripts originales de sala. El empaquetado como aplicación nativa de Windows sigue pendiente. Los recursos locales de `mods/` y las compilaciones que los contienen no se suben a Git.
+Los sprites de Ben permanecen originales sin interpolar. Solo STUDY permite caminar por una zona de prueba dibujada a mano: todavía no reproduce la navegación original. Las demás pantallas son un visor de fondos. No hay salidas, inventario, interacciones ni scripts de sala implementados. El empaquetado como aplicación nativa de Windows sigue pendiente.
 
-F4 compara la prueba opcional de iluminación de STUDY: variación suave de luces en velas y chimenea, como capas independientes. Se desactiva en Original; no pretende reproducir animaciones verificadas del juego DOS. Los sprites generados se han descartado y todos los personajes permanecen originales. El siguiente trabajo previsto es preparar una galería de fondos con F3, después de valorar esta prueba. Aún no se han generado remasters de los otros fondos ni implementado F3.
+Los fondos remasterizados son propuestas artísticas provisionales: la IA puede desplazar elementos y conservar la proporción del PNG no demuestra que su geometría encaje. Para validarlos habrá que comparar con el movimiento y los límites originales. Se ha empezado a extraer y contrastar [BOXDET.DAT y las consultas del ejecutable](docs/navigation.md); estos datos aún no sustituyen la zona provisional del motor.
+
+La prueba de luces y F4 se han retirado. Se reserva una capa de presentación independiente para futuras animaciones, sin implementarlas ahora. Todos los recursos locales de `mods/`, originales y derivados, y las compilaciones que los contienen permanecen fuera de Git.
