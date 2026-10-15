@@ -42,8 +42,9 @@ rectángulo; no son relleno, transparencia ni datos descartados por recorte.
 
 La extracción registra sus dimensiones, histograma e índices dependientes
 del escenario, pero **no genera un PNG RGB con una asociación inventada**.
-Sigue pendiente localizar el contexto de uso de ese icono y la paleta activa
-en ese punto. No se ha modificado su geometría ni se han corregido esos
+La investigación posterior identifica el objeto 175 de STUDY y demuestra
+que puede entrar en el inventario: usa la paleta del MAP activo. Se exporta
+por separado con [contexto explícito](icon159-context.md). No se ha modificado su geometría ni se han corregido esos
 píxeles por parecer excepcionales.
 
 ## Comandos y salidas
@@ -80,3 +81,5 @@ a un MAP: ese informe sigue describiendo únicamente asociaciones de escena.
 - ESLint, Prettier y TypeScript de los archivos cambiados pasan. Los errores
   globales previos del repositorio permanecen documentados en el informe
   de paletas de escena.
+
+El manifiesto de interfaz usa ahora `schemaVersion: 2`: 211 sprites compartidos, 1 dependiente del MAP activo con contexto identificado y 0 casos desconocidos. ICONS[159] figura en `contextDependent`, con origen STUDY y exportador contextual; ya no se clasifica como `unresolved`.
