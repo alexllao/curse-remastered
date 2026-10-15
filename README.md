@@ -417,4 +417,10 @@ pnpm --filter @curse/asset-extractor spr-decode-ui
 pnpm --filter @curse/asset-extractor spr-atlas reports/sprites/interface reports/sprites/interface-atlases
 ```
 
-Exporta 211 sprites de MOUSE, FONT e ICONS usando únicamente colores compartidos verificados. ICONS[159] queda pendiente porque siete píxeles usan índices del escenario. Véase [evidencia y resultados](docs/interface-palettes.md).
+Exporta 211 sprites de MOUSE, FONT e ICONS usando únicamente colores compartidos verificados. ICONS[159] se exporta por separado con la paleta del MAP activo porque siete píxeles usan índices del escenario. Véase [evidencia y resultados](docs/interface-palettes.md).
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-decode-ui-context
+```
+
+Genera ICONS[159] en su contexto de origen STUDY. Es el icono del objeto 175, que puede incorporarse al inventario y usa la paleta de la escena activa; [evidencia y alcance](docs/icon159-context.md).

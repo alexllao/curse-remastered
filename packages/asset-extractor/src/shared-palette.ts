@@ -33,6 +33,18 @@ export function colorSharedPixels(indexed: Buffer, palette: Buffer): Buffer {
     throw new Error('Expected a valid shared VGA palette tail');
   if (usage.sceneDependentPixels || usage.animatedPixels)
     throw new Error('Sprite requires palette context');
+  return paintIndices(indexed, palette);
+}
+
+/** The caller explicitly supplies the complete active scene palette. */
+export function colorContextPixels(indexed: Buffer, palette: Buffer): Buffer {
+  inspectIndices(indexed);
+  if (palette.length !== 768 || palette.some((value) => value > 63))
+    throw new Error('Expected a complete VGA scene palette');
+  return paintIndices(indexed, palette);
+}
+
+function paintIndices(indexed: Buffer, palette: Buffer): Buffer {
   const result = Buffer.from(indexed);
   for (let pixel = 0; pixel < result.length; pixel += 4) {
     if (!result[pixel + 3]) continue;

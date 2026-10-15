@@ -8,3 +8,5 @@
 ## Original palette routine harness
 
 `trace-palettes.py` executes the original MZ palette code with Unicorn (pinned in `requirements.txt`). It captures VGA DAC writes into ignored reports and rejects unknown executable revisions. It is an isolated routine test, not a full DOS emulator or a full-game timing capture. See [setup, verified behavior and limitations](../../docs/palette-effects.md).
+
+`trace-icon-context.py` reuses that harness to check object 175, inventory insertion and ICONS[159] selection. See [verified context and reproduction](../../docs/icon159-context.md).
