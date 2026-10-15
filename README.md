@@ -2,6 +2,10 @@
 
 Reconstrucción moderna en TypeScript y PixiJS 8 de la aventura gráfica clásica de DOS, orientada a Windows actual.
 
+_Curse of Enchantia_ fue el primer juego al que jugué de pequeño, y por eso este proyecto tiene un significado especial para mí. Me ha hecho mucha ilusión volver a él y descubrir sus tripas: desensamblar el ejecutable, entender cómo guarda sus gráficos y recuperar sus recursos originales, con la ayuda de la IA. Todavía conservo el juego original en disquetes de 3½ pulgadas.
+
+Lo desarrollo en mis ratos libres. Mi objetivo es que pueda ejecutarse de forma nativa en un ordenador actual y, poco a poco, intentar hacer un remaster sencillo que conserve el encanto del original. Primero toca comprender y extraer sus recursos con fidelidad; después, reconstruir el juego sobre esa base.
+
 > Los archivos originales del juego **no están incluidos**. Debes disponer de una copia obtenida legalmente y colocarla en `original/`. Nunca subas a Git los originales, los recursos extraídos ni los informes.
 
 ## Instalación
