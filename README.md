@@ -340,3 +340,13 @@ pnpm --filter @curse/asset-extractor spr-layout
 ```
 
 Genera `reports/sprites/BENN-layout.json`, con las primeras palabras de cada cabecera, relaciones aritméticas candidatas, muestras hexadecimales al inicio y al final de los datos, histogramas y posiciones de marcadores. El propósito es identificar límites y tipos de secciones antes de reconstruir los píxeles. No se añaden datos originales al repositorio.
+
+### Hipótesis de registros por línea en sprites
+
+El informe `BENN-layout.json` confirma patrones recurrentes en 22 bloques: las primeras dos palabras son compatibles con ancho y alto; los tres valores siguientes presentan relaciones aritméticas frecuentes (`160 = 117 + 43`, `445 = 296 + 149`) pero no universales. Los bytes sugieren registros de desplazamiento, cantidad y colores; esto **todavía no demuestra** el códec gráfico.
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-rows
+```
+
+El diagnóstico `reports/sprites/BENN-rows.json` prueba varias posiciones iniciales (10, 12, 14 y 16 bytes), interpreta provisionalmente registros `[desplazamiento firmado, cantidad, colores...]`, y compara cuántas filas encajan con la altura y el ancho declarados. Los resultados son hipótesis para contrastar, no sprites renderizados.
