@@ -32,5 +32,9 @@
       "prettier --write"
     ],
     "**/*.{json,md,yml,yaml,css,html}": "prettier --write"
+  },
+  "author": {
+    "name": "Àlex Llaó",
+    "email": "alexllao@me.com"
   }
 }
