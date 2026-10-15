@@ -293,3 +293,13 @@ pnpm --filter @curse/asset-extractor analyze-map-spr
 ```
 
 El comando guarda `reports/map-spr-analysis.json` con los tamaños por extensión, los primeros bytes en hexadecimal y ASCII imprimible, los primeros valores de 16 y 32 bits en ambos órdenes de bytes, la entropía, la proporción de ceros, el número de valores distintos y la frecuencia de bytes consecutivos repetidos. Estos indicadores servirán para comparar estructuras y plantear hipótesis verificables sobre cabeceras, dimensiones, índices y compresión. **Aún no existe un decodificador confirmado de MAP o SPR.** El informe puede compartirse sin incluir los archivos originales; conviene revisar que sus cabeceras no contengan datos privados antes de publicarlo.
+
+### Primeros hallazgos de los 113 archivos MAP/SPR (15 de octubre de 2026)
+
+A partir del informe local `reports/map-spr-analysis.json`:
+
+- **56 archivos MAP:** todos cumplen `tamaño = 16 × N + 2`. En 54 de 56, los dos primeros bytes son `00 00`; hay dos excepciones. Esto apunta a una estructura regular, pero **no demuestra** que los datos estén organizados en registros de 16 bytes.
+- **57 archivos SPR:** todos tienen tamaño múltiplo de 16. Sus primeras palabras interpretadas como enteros de 16 bits little-endian suelen formar secuencias crecientes; en los 57 casos, el segundo valor es menor que el tamaño total del archivo. Una posible explicación es una tabla de desplazamientos, pendiente de verificar contra el contenido binario.
+- Ejemplos: `BENN.SPR` comienza por `3, 32, 62, 94, 124`; `CAVE.SPR` por `2, 83, 164, 245, 268`.
+
+**Próximo paso:** analizar offsets, longitudes de segmentos y cabeceras con muestras binarias originales, y contrastar varias interpretaciones antes de generar gráficos. No hay todavía decodificación MAP/SPR validada.
