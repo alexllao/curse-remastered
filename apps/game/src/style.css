@@ -147,3 +147,11 @@ footer {
   border: 1px solid #665439;
   border-radius: 4px;
 }
+
+header > div:first-child {
+  flex-shrink: 0;
+}
+header > .controls {
+  flex: 1;
+  justify-content: flex-end;
+}

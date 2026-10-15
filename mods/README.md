@@ -104,3 +104,5 @@ Preparación nueva: ejecutar también `trace-room-entries.py` y `trace-presentat
 La lista completa con tamaños exactos se regenera en `mods/referencias/Guia-remaster-x6.txt`. No hace falta remasterizar los PNG de `presentacion/fundidos/`: se generan automáticamente con las paletas originales. En remaster el reproductor aplica un fundido global adaptado a la nueva imagen; en Original utiliza los colores DAC capturados, sin aproximarlos mediante opacidad.
 
 Más resolución no sustituye el detalle real ni la alineación: ×6 es la referencia habitual, sin obligar al juego a una resolución fija. Los futuros paquetes de mayor resolución se compararán manteniendo la misma geometría y continuidad entre fotogramas.
+
+F2 utiliza un fundido cruzado de 320 ms entre los paquetes, conservando posición y cámara. La presentación se pausa durante ese cambio y continúa desde el mismo instante. Se respeta la preferencia de reducir movimiento del sistema.
