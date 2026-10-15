@@ -14,7 +14,8 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "prepare": "husky",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm build"
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm build",
+    "mods:prepare": "pnpm --filter @curse/asset-extractor prepare-playtest"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
@@ -34,7 +35,7 @@
     "**/*.{json,md,yml,yaml,css,html}": "prettier --write"
   },
   "author": {
-    "name": "Àlex Llaó",
+    "name": "Ã€lex LlaÃ³",
     "email": "alexllao@me.com"
   }
 }

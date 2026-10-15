@@ -5,3 +5,10 @@ original/
 .env
 .DS_Store
 __pycache__/
+
+# Recursos locales de los modos grÃ¡ficos (originales y derivados).
+mods/original/
+mods/escalado/
+mods/remaster*/
+mods/referencias/
+mods/manifest.json
