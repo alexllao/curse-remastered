@@ -2,55 +2,96 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
+import { sha256 } from './scene-palette.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const pathFromRoot = (path: string): string => isAbsolute(path) ? path : resolve(root, path);
+const pathFromRoot = (path: string): string => (isAbsolute(path) ? path : resolve(root, path));
 const sourceDir = pathFromRoot(process.argv[2] ?? 'original/DATA');
 const outputDir = pathFromRoot(process.argv[3] ?? 'reports/sprites/all');
 const paletteFile = pathFromRoot(process.argv[4] ?? 'original/DATA/SPRITES.PAL');
 
-type SpriteResult = { index: number; width: number; height: number; paintedPixels: number; file: string };
-type FileResult = { source: string; status: 'decoded' | 'error'; count: number; sprites?: SpriteResult[]; error?: string };
+type SpriteResult = {
+  index: number;
+  width: number;
+  height: number;
+  paintedPixels: number;
+  file: string;
+};
+type FileResult = {
+  source: string;
+  status: 'decoded' | 'error' | 'unresolved';
+  palette?: string;
+  paletteStatus?: string;
+  map?: string;
+  count: number;
+  sprites?: SpriteResult[];
+  error?: string;
+};
 const crc32 = (bytes: Buffer): number => {
   let crc = 0xffffffff;
   for (const byte of bytes) {
     crc ^= byte;
-    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
   }
   return (crc ^ 0xffffffff) >>> 0;
 };
 function chunk(type: string, payload: Buffer): Buffer {
   const tag = Buffer.from(type, 'ascii');
-  const len = Buffer.alloc(4); len.writeUInt32BE(payload.length);
-  const checksum = Buffer.alloc(4); checksum.writeUInt32BE(crc32(Buffer.concat([tag, payload])));
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(payload.length);
+  const checksum = Buffer.alloc(4);
+  checksum.writeUInt32BE(crc32(Buffer.concat([tag, payload])));
   return Buffer.concat([len, tag, payload, checksum]);
 }
 function png(width: number, height: number, rgba: Buffer): Buffer {
   const rows = Buffer.alloc(height * (width * 4 + 1));
-  for (let y = 0; y < height; y++) rgba.copy(rows, y * (width * 4 + 1) + 1, y * width * 4, (y + 1) * width * 4);
+  for (let y = 0; y < height; y++)
+    rgba.copy(rows, y * (width * 4 + 1) + 1, y * width * 4, (y + 1) * width * 4);
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0); ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8; ihdr[9] = 6;
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(rows)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
 }
 async function walk(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
-  const files = await Promise.all(entries.map(async entry => {
-    const path = join(dir, entry.name);
-    return entry.isDirectory() ? walk(path) : entry.isFile() && extname(path).toLowerCase() === '.spr' ? [path] : [];
-  }));
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(dir, entry.name);
+      return entry.isDirectory()
+        ? walk(path)
+        : entry.isFile() && extname(path).toLowerCase() === '.spr'
+          ? [path]
+          : [];
+    }),
+  );
   return files.flat().sort((a, b) => a.localeCompare(b));
 }
-function decode(data: Buffer, palette: Buffer, source: string): { width: number; height: number; pixels: Buffer; paintedPixels: number }[] {
+function decode(
+  data: Buffer,
+  palette: Buffer,
+  source: string,
+): { width: number; height: number; pixels: Buffer; paintedPixels: number }[] {
   if (data.length < 16) throw new Error('Archivo SPR demasiado corto');
   const first = data.readUInt16LE(0) * 16;
-  if (first < 16 || first > data.length || first % 2) throw new Error('Tabla de índices SPR inválida');
+  if (first < 16 || first > data.length || first % 2)
+    throw new Error('Tabla de índices SPR inválida');
   const starts: number[] = [];
   for (let i = 0; i < first; i += 2) {
     const unit = data.readUInt16LE(i);
     if (unit === 0) break; // Relleno a 16 bytes.
     const start = unit * 16;
-    if (start < first || start >= data.length || (starts.length > 0 && start <= starts[starts.length - 1])) {
+    if (
+      start < first ||
+      start >= data.length ||
+      (starts.length > 0 && start <= starts[starts.length - 1])
+    ) {
       throw new Error('Índice SPR fuera de rango o desordenado: ' + i / 2);
     }
     starts.push(start);
@@ -59,12 +100,18 @@ function decode(data: Buffer, palette: Buffer, source: string): { width: number;
   return starts.map((start, index) => {
     const end = starts[index + 1] ?? data.length;
     if (start + 10 > end) throw new Error('Cabecera truncada, sprite ' + index);
-    const width = data.readUInt16LE(start), height = data.readUInt16LE(start + 2);
+    const width = data.readUInt16LE(start),
+      height = data.readUInt16LE(start + 2);
     if (!width || !height || width > 2048 || height > 2048 || width * height > 1_000_000) {
       throw new Error('Dimensiones inválidas, sprite ' + index);
     }
-    const offsets = [0, data.readUInt16LE(start + 8), data.readUInt16LE(start + 6), data.readUInt16LE(start + 4)];
-    const positions = offsets.map(offset => start + 10 + offset);
+    const offsets = [
+      0,
+      data.readUInt16LE(start + 8),
+      data.readUInt16LE(start + 6),
+      data.readUInt16LE(start + 4),
+    ];
+    const positions = offsets.map((offset) => start + 10 + offset);
     if (positions.some((p, i) => p >= end || (i > 0 && p <= positions[i - 1]))) {
       throw new Error('Desplazamientos VGA inválidos, sprite ' + index);
     }
@@ -78,13 +125,18 @@ function decode(data: Buffer, palette: Buffer, source: string): { width: number;
         let terminated = false;
         while (position < limit) {
           let count = data.readInt8(position++);
-          if (count === 0) { terminated = true; break; }
+          if (count === 0) {
+            terminated = true;
+            break;
+          }
           if (count < 0) {
             x += -count * 4;
-            if (position >= limit) throw new Error('Salto truncado en ' + source + ' sprite ' + index);
+            if (position >= limit)
+              throw new Error('Salto truncado en ' + source + ' sprite ' + index);
             count = data[position++];
           }
-          if (position + count > limit) throw new Error('Píxeles truncados en ' + source + ' sprite ' + index);
+          if (position + count > limit)
+            throw new Error('Píxeles truncados en ' + source + ' sprite ' + index);
           for (let n = 0; n < count; n++) {
             if (x >= 0 && x < width) {
               const pixel = (y * width + x) * 4;
@@ -99,52 +151,137 @@ function decode(data: Buffer, palette: Buffer, source: string): { width: number;
           }
           position += count;
         }
-        if (!terminated) throw new Error('Fila sin terminador en ' + source + ' sprite ' + index + ', plano ' + plane + ', fila ' + y);
+        if (!terminated)
+          throw new Error(
+            'Fila sin terminador en ' +
+              source +
+              ' sprite ' +
+              index +
+              ', plano ' +
+              plane +
+              ', fila ' +
+              y,
+          );
       }
     }
     return { width, height, pixels, paintedPixels };
   });
 }
 
-const paletteRaw = await readFile(paletteFile);
-if (paletteRaw.length !== 768) throw new Error('La paleta debe contener 768 bytes (256 colores RGB)');
-if (paletteRaw.some(value => value > 63)) throw new Error('Se esperaba una paleta VGA de 6 bits por canal');
-const palette = Buffer.from(paletteRaw.map(value => Math.round(value * 255 / 63)));
+type Recipe = {
+  sprite: string;
+  map: string;
+  palette: string;
+  status: string;
+  paletteSha256: string;
+  spriteSha256: string;
+};
+const sceneMode = paletteFile.toLowerCase().endsWith('.json');
+let recipes: Recipe[] = [];
+if (sceneMode) {
+  const manifest = JSON.parse(await readFile(paletteFile, 'utf8'));
+  if (
+    manifest.kind !== 'curse-scene-palettes' ||
+    manifest.status !== 'verified-static' ||
+    !Array.isArray(manifest.recipes)
+  )
+    throw new Error('Expected a verified scene palette manifest');
+  recipes = manifest.recipes;
+}
+async function loadPalette(path: string, expectedHash?: string): Promise<Buffer> {
+  const raw = await readFile(path);
+  if (raw.length !== 768 || raw.some((value) => value > 63))
+    throw new Error('Expected a 768-byte VGA palette');
+  if (expectedHash && sha256(raw) !== expectedHash)
+    throw new Error('Palette hash mismatch; regenerate exe-palettes');
+  return Buffer.from(raw.map((value) => Math.round((value * 255) / 63)));
+}
+const explicitPalette = sceneMode ? undefined : await loadPalette(paletteFile);
 const files = await walk(sourceDir);
 if (!files.length) throw new Error('No se encontraron archivos .SPR en ' + sourceDir);
 await mkdir(outputDir, { recursive: true });
 const results: FileResult[] = [];
 for (const file of files) {
   const source = relative(sourceDir, file).replaceAll('\\', '/');
-  try {
-    const sprites = decode(await readFile(file), palette, source);
-    const destination = join(outputDir, relative(sourceDir, file).replace(/\.spr$/i, ''));
-    await mkdir(destination, { recursive: true });
-    const entries: SpriteResult[] = [];
-    for (let index = 0; index < sprites.length; index++) {
-      const sprite = sprites[index];
-      const name = 'sprite-' + String(index).padStart(3, '0') + '.png';
-      await writeFile(join(destination, name), png(sprite.width, sprite.height, sprite.pixels));
-      entries.push({ index, width: sprite.width, height: sprite.height, paintedPixels: sprite.paintedPixels, file: relative(outputDir, join(destination, name)).replaceAll('\\', '/') });
+  const matches = sceneMode
+    ? recipes.filter((row) => row.sprite === source.toUpperCase())
+    : [undefined];
+  if (!matches.length) {
+    results.push({ source, status: 'unresolved', count: 0 });
+    continue;
+  }
+  for (const recipe of matches) {
+    const label = recipe ? recipe.map.replace(/\.MAP$/i, '') + '/' + source : source;
+    try {
+      const data = await readFile(file);
+      if (recipe && (recipe.status !== 'verified-static' || sha256(data) !== recipe.spriteSha256))
+        throw new Error('Unverified or changed sprite association');
+      const palette = recipe
+        ? await loadPalette(pathFromRoot(recipe.palette), recipe.paletteSha256)
+        : explicitPalette!;
+      const sprites = decode(data, palette, source);
+      const destination = join(outputDir, label.replace(/\.spr$/i, ''));
+      await mkdir(destination, { recursive: true });
+      const entries: SpriteResult[] = [];
+      for (let index = 0; index < sprites.length; index++) {
+        const sprite = sprites[index];
+        const name = 'sprite-' + String(index).padStart(3, '0') + '.png';
+        await writeFile(join(destination, name), png(sprite.width, sprite.height, sprite.pixels));
+        entries.push({
+          index,
+          width: sprite.width,
+          height: sprite.height,
+          paintedPixels: sprite.paintedPixels,
+          file: relative(outputDir, join(destination, name)).replaceAll('\\', '/'),
+        });
+      }
+      results.push({
+        source: label,
+        status: 'decoded',
+        count: entries.length,
+        sprites: entries,
+        palette: recipe?.palette ?? relative(root, paletteFile).replaceAll('\\', '/'),
+        paletteStatus: recipe ? 'verified-static' : 'unverified-explicit',
+        map: recipe?.map,
+      });
+      console.log('OK ' + source + ': ' + entries.length + ' sprites');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      results.push({ source: label, status: 'error', count: 0, error: message });
+      console.error('ERROR ' + source + ': ' + message);
     }
-    results.push({ source, status: 'decoded', count: entries.length, sprites: entries });
-    console.log('OK ' + source + ': ' + entries.length + ' sprites');
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    results.push({ source, status: 'error', count: 0, error: message });
-    console.error('ERROR ' + source + ': ' + message);
   }
 }
 const manifest = {
-  note: 'Paleta SPRITES.PAL aplicada como candidata global; comprobar en el juego si cada escena cambia de paleta.',
+  note: sceneMode
+    ? 'Paletas de carga de escena verificadas estaticamente; no incluyen fundidos ni animacion del indice 255.'
+    : 'Paleta explicita sin asociacion verificada; no implica que sea correcta para cada escena.',
   palette: relative(root, paletteFile).replaceAll('\\', '/'),
   sourceDir: relative(root, sourceDir).replaceAll('\\', '/'),
   totalFiles: files.length,
-  decodedFiles: results.filter(result => result.status === 'decoded').length,
-  failedFiles: results.filter(result => result.status === 'error').length,
+  decodedVariants: results.filter((result) => result.status === 'decoded').length,
+  decodedFiles: new Set(
+    results
+      .filter((result) => result.status === 'decoded')
+      .map((result) => result.source.split('/').pop()),
+  ).size,
+  unresolvedFiles: results.filter((result) => result.status === 'unresolved').length,
+  failedFiles: results.filter((result) => result.status === 'error').length,
   totalSprites: results.reduce((sum, result) => sum + result.count, 0),
   results,
 };
 await writeFile(join(outputDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
-console.log(JSON.stringify({ files: manifest.totalFiles, decoded: manifest.decodedFiles, failed: manifest.failedFiles, sprites: manifest.totalSprites, report: join(outputDir, 'manifest.json') }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      files: manifest.totalFiles,
+      decoded: manifest.decodedFiles,
+      failed: manifest.failedFiles,
+      sprites: manifest.totalSprites,
+      report: join(outputDir, 'manifest.json'),
+    },
+    null,
+    2,
+  ),
+);
 if (manifest.failedFiles) process.exitCode = 1;

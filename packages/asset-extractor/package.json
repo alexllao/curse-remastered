@@ -22,7 +22,10 @@
     "spr-decode": "tsx src/spr-decode.ts",
     "spr-decode-all": "tsx src/spr-decode-all.ts",
     "spr-atlas": "tsx src/spr-atlas.ts",
-    "spr-palette-audit": "tsx src/spr-palette-audit.ts"
+    "spr-palette-audit": "tsx src/spr-palette-audit.ts",
+    "exe-palettes": "tsx src/exe-palettes.ts",
+    "spr-decode-scenes": "pnpm exe-palettes && tsx src/spr-decode-all.ts original/DATA reports/sprites/scenes reports/palettes/scenes/manifest.json",
+    "test": "tsx --test src/scene-palette.test.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
