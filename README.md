@@ -241,3 +241,9 @@ Datos comprobados en el manifiesto:
 Se ha añadido `packages/asset-extractor/src/rnc2.ts` y se ha integrado en `extract-all`. El decodificador interpreta los bits de control en orden MSB, las secuencias literales y las referencias hacia atrás, y exige que coincidan el tamaño y ambos CRC16 antes de considerar válida una extracción. Se ha tomado como referencia técnica el algoritmo RNC2 documentado en [ancient, de Teemu Suutari](https://sources.debian.org/src/ancient/2.2.0-1/src/RNCDecompressor.cpp).
 
 **Estado: implementación inicial sin validación con los 16 archivos reales.** Hay que ejecutar nuevamente `pnpm --filter @curse/asset-extractor extract-all` y comprobar `reports/extracted/manifest.json`. Si aparece un error de CRC o de descompresión, el archivo se marcará como no compatible y no se guardará un resultado incorrecto. No debemos dar por recuperados los recursos RNC2 hasta superar estas pruebas.
+
+### Corrección del 15 de octubre: longitudes RNC2
+
+La segunda extracción mostró 16 errores `Invalid RNC2 back-reference`. Los archivos `BALCONY1.DAT`, `BALCONY2.DAT` y `BALCONY3.DAT` fallaban en el mismo punto: 231 bytes producidos, intento de retroceder 440 bytes, longitud 8. La investigación del algoritmo de referencia permitió detectar una tabla de **códigos de longitud RNC2 incorrecta** en nuestra implementación. Se corrigió a los prefijos `00→4`, `10→5`, `010→6`, `011→7`, `110→8` y `111→9` (el valor 9 señala una secuencia de literales).
+
+**Pendiente:** ejecutar de nuevo el extractor con los archivos originales y verificar los CRC. La corrección todavía no demuestra que los 16 archivos se recuperen correctamente.
