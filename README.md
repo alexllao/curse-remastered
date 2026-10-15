@@ -1,21 +1,21 @@
 # CURSE Remastered
 
-A TypeScript and PixiJS 8 reconstruction of the classic DOS point-and-click adventure, targeting modern Windows.
+Reconstrucción moderna en TypeScript y PixiJS 8 de la aventura gráfica clásica de DOS, orientada a Windows actual.
 
-> Original game files are **not** included. Supply your own legally obtained files in `original/`. Never commit originals, decoded assets or reports.
+> Los archivos originales del juego **no están incluidos**. Debes disponer de una copia obtenida legalmente y colocarla en `original/`. Nunca subas a Git los originales, los recursos extraídos ni los informes.
 
-## Setup
+## Instalación
 
-Requires Node.js 22+ and pnpm 10.
+Se necesitan Node.js 22 o superior y pnpm 10.
 
 ```powershell
 pnpm install
 pnpm dev
 ```
 
-## Original asset recovery
+## Recuperación de los recursos originales
 
-The asset pipeline is intentionally **non-destructive**. It reads `original/` and writes generated outputs to `reports/`, which is gitignored.
+El proceso de extracción es **no destructivo**: lee `original/` y escribe los resultados en `reports/`, una carpeta excluida de Git.
 
 ```powershell
 pnpm inventory
@@ -24,14 +24,14 @@ pnpm --filter @curse/asset-extractor title-png
 pnpm --filter @curse/asset-extractor extract-all
 ```
 
-- `inventory` creates a file inventory with sizes, signatures and hashes.
-- `rnc-info` inspects an RNC header and checks the packed CRC.
-- `title-png` decompresses `DATA/TITLE.DAT`, validates its CRC and applies `DATA/TITLE.PAL` to produce `reports/TITLE.png` (320×200).
-- `extract-all` recursively scans `original/` for game data extensions. It decompresses **RNC method 1** resources to `reports/extracted/<original-relative-path>.bin` and produces `reports/extracted/manifest.json`. RNC method 2 is **not supported yet**; unknown/raw formats are inventoried without guessing how to interpret them. A successfully decompressed binary is not necessarily a ready-to-display image.
+- `inventory` crea un inventario de archivos con tamaños, firmas y hashes.
+- `rnc-info` examina la cabecera RNC y comprueba el CRC de los datos comprimidos.
+- `title-png` descomprime `DATA/TITLE.DAT`, valida su CRC y aplica la paleta `DATA/TITLE.PAL` para generar `reports/TITLE.png` (320 × 200).
+- `extract-all` recorre `original/` buscando recursos del juego. Descomprime los archivos **RNC de método 1** en `reports/extracted/<ruta-relativa-original>.bin` y genera `reports/extracted/manifest.json`. El método RNC2 **todavía no está implementado**. Los formatos desconocidos se registran sin inventar su interpretación. Descomprimir correctamente un archivo no implica que ya sea una imagen visualizable.
 
-The extractor preserves original names and directory structure. It does not overwrite or modify original files. Do not publish extracted copyrighted game assets.
+El extractor conserva los nombres y la estructura de carpetas. No modifica ni sobrescribe los originales. No publiques recursos extraídos protegidos por derechos de autor.
 
-## Development checks
+## Comprobaciones de desarrollo
 
 ```powershell
 pnpm lint
@@ -41,31 +41,31 @@ pnpm build
 pnpm check
 ```
 
-Husky runs lint-staged before commits and `pnpm check` before pushes. Run `pnpm format` when normalizing the existing codebase.
+Husky ejecuta lint-staged antes de cada commit y `pnpm check` antes de cada push. Utiliza `pnpm format` para normalizar el formato del código existente.
 
-## Roadmap
+## Hoja de ruta
 
-1. **Asset recovery:** inventory all files; validate RNC1 extraction; implement RNC2; reverse-engineer `.MAP`, `.SPR`, `.BRD`, `.SFX`, palettes and any additional containers; produce reproducible conversion tools and manifests.
-2. **Original playable reconstruction:** scenes, hotspots, verbs, navigation, character animation, audio and save/load in TypeScript + PixiJS 8.
-3. **Optional non-destructive graphics improvements:** offer **Original** (integer nearest-neighbor), **Enhanced** (e.g. xBRZ/ScaleFX), and **Remastered HD** (offline AI upscaling with manual review). Preserve original art, transparency and animation consistency. Backgrounds and sprites may require different processing. Do not run AI upscaling during gameplay.
+1. **Recuperación de recursos:** inventariar los archivos, validar RNC1, implementar RNC2, investigar los formatos `.MAP`, `.SPR`, `.BRD`, `.SFX` y las paletas, y crear herramientas de conversión reproducibles.
+2. **Reconstrucción jugable:** implementar escenarios, zonas interactivas, acciones, navegación, animaciones, sonido y guardado/carga en TypeScript y PixiJS 8.
+3. **Mejoras gráficas opcionales y no destructivas:** ofrecer **Original** (escalado entero por vecino más cercano), **Mejorado** (xBRZ/ScaleFX) y **Remastered HD** (reescalado con IA fuera del juego y revisión manual). Conservar los gráficos originales, las transparencias y la coherencia entre fotogramas. Los fondos y los sprites pueden necesitar tratamientos distintos. No ejecutar IA durante la partida.
 
-**Current status:** RNC1 and title-image extraction tools exist. Batch extraction and full-project validation still need to be run locally against the original game data. RNC2 and most resource format parsers are pending.
+**Estado actual:** existen herramientas para extraer RNC1 y la pantalla de título. La primera extracción por lotes ya se ha ejecutado y analizado mediante su manifiesto; quedan pendientes RNC2, la interpretación de la mayoría de formatos y la validación completa del proyecto.
 
-## Technical guide: how the original graphics work
+## Guía técnica: cómo funcionan los gráficos originales
 
-This section is a living reverse-engineering notebook. It explains the concepts behind the extractor, records what we have verified, and distinguishes observations from hypotheses. When we identify a new file format, update this guide before or alongside the code.
+Esta sección es un cuaderno vivo de ingeniería inversa. Explica los conceptos del extractor, registra lo comprobado y distingue los hechos de las hipótesis. Cada formato nuevo debe documentarse antes de implementar su lector o al mismo tiempo.
 
-### 1. What is a pixel, and what does 320 × 200 mean?
+### 1. ¿Qué es un píxel y qué significa 320 × 200?
 
-A **pixel** is one position in a digital image. A 320 × 200 frame has 320 columns and 200 rows, so it contains **64,000 pixels**. Many DOS games used this resolution because it fit the VGA hardware and memory constraints of the era.
+Un **píxel** es una posición de una imagen digital. Una pantalla de 320 × 200 tiene 320 columnas y 200 filas: en total, **64.000 píxeles**. Muchos juegos de DOS utilizaban esta resolución por las características de las tarjetas VGA y las limitaciones de memoria.
 
-An image can store each pixel's full red/green/blue values (**true color**) or store a number that refers to a color in a separate table (**indexed color**). The title screen uses indexed color.
+Una imagen puede guardar los componentes rojo, verde y azul de cada píxel (**color directo**) o un número que apunta a una tabla de colores (**color indexado**). La pantalla de título utiliza color indexado.
 
-### 2. What is a palette?
+### 2. ¿Qué es una paleta de colores?
 
 A **palette** is a table of available colors. Instead of storing three color channels for every pixel, an 8-bit indexed image stores **one byte per pixel**, from 0 to 255. That number is an _index_ into a palette containing up to 256 colors.
 
-For example:
+Por ejemplo:
 
 | Pixel index | Palette entry (R, G, B) | Interpretation                |
 | ----------- | ----------------------- | ----------------------------- |
@@ -73,35 +73,35 @@ For example:
 | 1           | (63, 0, 0)              | Bright red in VGA DAC units   |
 | 2           | (0, 63, 0)              | Bright green in VGA DAC units |
 
-These are **illustrative entries**, not claims about the actual colors in `TITLE.PAL`.
+Son **ejemplos ilustrativos**, no los valores reales comprobados de `TITLE.PAL`.
 
-A standard 256-color VGA palette contains 256 × 3 = **768 bytes**: one red, one green and one blue value per entry. The original VGA DAC typically used **6 bits per component**, meaning values from 0 to 63. Modern PNG images use 8-bit channels (0–255). A typical conversion is:
-
-```text
-modernChannel = round(vgaChannel × 255 / 63)
-```
-
-For a pixel with index `42`, the renderer reads palette entry 42 and uses its three channels. **The pixel byte is not itself a brightness value or an RGB color.**
-
-Why does this matter? The same 64,000 indexed pixels can look completely different when paired with another palette. We must identify the correct palette for each scene; guessing one may produce wildly incorrect colors. Some games also animate colors by changing palette entries without changing the pixel indices.
-
-### 3. How is a VGA screen stored?
-
-A simple uncompressed 320 × 200, 8-bit indexed frame is a sequence of **64,000 bytes**, typically one byte per pixel in row-major order:
+Una paleta VGA estándar de 256 colores ocupa 256 × 3 = **768 bytes**: un valor rojo, uno verde y uno azul por color. El conversor digital-analógico (DAC) de VGA solía utilizar **6 bits por componente**, con valores entre 0 y 63. Los PNG modernos utilizan canales de 8 bits (0–255). La conversión habitual es:
 
 ```text
-offset = y × 320 + x
-pixelIndex = imageBytes[offset]
-rgb = palette[pixelIndex]
+canalModerno = redondear(canalVGA × 255 / 63)
 ```
 
-This row-major layout is the interpretation used for the extracted title image; other assets may use tiles, planes, masks, multiple frames or custom arrangements. Do **not** assume every `.MAP` or `.SPR` file is a raw 320 × 200 image.
+Si un píxel tiene índice `42`, el programa consulta la entrada 42 de la paleta y obtiene sus tres componentes. **El byte del píxel no es directamente un color RGB ni un valor de brillo.**
 
-### 4. What are RNC, RNC1 and RNC2?
+¿Por qué importa? Los mismos 64.000 índices pueden producir imágenes totalmente distintas al cambiar la paleta. Debemos identificar la paleta correcta de cada escena; elegir otra daría colores erróneos. Algunos juegos incluso animaban efectos modificando la paleta sin cambiar los índices de los píxeles.
 
-**RNC** is a data compression format associated with Rob Northen Computing's ProPack tools, used by various games to reduce disk space. The bytes `RNC\x01` identify **method 1**, while `RNC\x02` identifies **method 2**. These are compression methods, **not image formats**: RNC can wrap images, maps or other arbitrary data.
+### 3. ¿Cómo se almacena una pantalla VGA?
 
-A typical RNC file begins with an **18-byte header**:
+Una imagen indexada de 320 × 200 sin comprimir ocupa **64.000 bytes**, normalmente uno por píxel, ordenados fila a fila:
+
+```text
+desplazamiento = y × 320 + x
+indicePixel = bytesImagen[desplazamiento]
+rgb = paleta[indicePixel]
+```
+
+Esta distribución por filas se ha confirmado para la pantalla de título. Otros recursos pueden usar mosaicos, planos, máscaras, varios fotogramas u otras estructuras. **No debemos suponer que todos los `.MAP` o `.SPR` sean imágenes de 320 × 200.**
+
+### 4. ¿Qué son RNC, RNC1 y RNC2?
+
+**RNC** es un formato de compresión de datos asociado a ProPack, de Rob Northen Computing, utilizado en videojuegos para ahorrar espacio. La firma `RNC\x01` identifica el **método 1** y `RNC\x02` el **método 2**. Son métodos de compresión, **no formatos gráficos**: pueden contener imágenes, mapas o cualquier otro tipo de datos.
+
+Un archivo RNC habitual empieza con una **cabecera de 18 bytes**:
 
 | Offset | Bytes | Meaning                             |
 | ------ | ----: | ----------------------------------- |
@@ -114,20 +114,20 @@ A typical RNC file begins with an **18-byte header**:
 | 16     |     1 | Leeway value                        |
 | 17     |     1 | Number of chunks/blocks             |
 
-**Big-endian** means the most significant byte comes first. For example, `00 00 FA 00` is hexadecimal `0xFA00`, or **64,000** in decimal.
+**Big-endian** significa que el byte más significativo se almacena primero. Por ejemplo, `00 00 FA 00` representa `0xFA00` en hexadecimal, es decir, **64.000** en decimal.
 
-RNC1 uses Huffman-coded values and back-references: frequently occurring patterns can be represented using fewer bits, and repeated byte sequences can refer back to data already decoded. RNC2 uses a different bitstream; it requires a separate decoder.
+RNC1 utiliza códigos Huffman y referencias a datos anteriores: los patrones frecuentes ocupan menos bits y las secuencias repetidas pueden reutilizar bytes ya descomprimidos. RNC2 emplea otra codificación de bits y necesita su propio descompresor.
 
-**CRC16** is a 16-bit checksum used to detect accidental corruption. The packed CRC checks that the compressed bytes match the header; the unpacked CRC checks the reconstructed output. A matching CRC is a useful integrity check, **not proof that a file is a valid image or that its interpretation is correct**.
+**CRC16** es una suma de comprobación de 16 bits para detectar errores accidentales. El CRC comprimido verifica los bytes originales y el descomprimido verifica el resultado. Que coincidan es una buena prueba de integridad, **pero no demuestra que el contenido sea una imagen ni que lo hayamos interpretado correctamente**.
 
-### 5. Worked example: `DATA/TITLE.DAT` and `DATA/TITLE.PAL`
+### 5. Ejemplo real: `DATA/TITLE.DAT` y `DATA/TITLE.PAL`
 
-These values were inspected from the supplied original title files:
+Estos valores se comprobaron en los archivos originales de la pantalla de título:
 
 | Property                    | Observed value       |
 | --------------------------- | -------------------- |
 | Signature                   | `RNC\x01` (method 1) |
-| Total `TITLE.DAT` file size | 47,064 bytes         |
+| Tamaño total de `TITLE.DAT` | 47,064 bytes         |
 | Compressed payload          | 47,046 bytes         |
 | Decompressed payload        | 64,000 bytes         |
 | Unpacked CRC16              | `51cb`               |
@@ -136,23 +136,23 @@ These values were inspected from the supplied original title files:
 | `TITLE.PAL` length          | 768 bytes            |
 | Intended image dimensions   | 320 × 200 pixels     |
 
-The 18-byte header plus 47,046 compressed bytes equals the file size of 47,064 bytes. The 64,000 decoded bytes correspond to 320 × 200 8-bit indexed pixels. Applying the 256-entry palette yields the original title image.
+La cabecera de 18 bytes y los 47.046 bytes comprimidos suman los 47.064 bytes del archivo. Los 64.000 bytes descomprimidos corresponden a 320 × 200 píxeles indexados de 8 bits. Al aplicar la paleta de 256 colores obtenemos la imagen original del título.
 
-The processing steps are:
+El proceso es:
 
 ```text
-TITLE.DAT -> inspect RNC header -> verify packed CRC
-          -> RNC1 decompression -> verify unpacked CRC
-          -> 64,000 palette indices --+
-                                       +-> indexed PNG (320 × 200)
-TITLE.PAL -> 256 RGB triples ---------+
+TITLE.DAT -> leer cabecera RNC -> validar CRC comprimido
+          -> descomprimir RNC1 -> validar CRC descomprimido
+          -> 64.000 índices de color --+
+                                        +-> PNG indexado (320 × 200)
+TITLE.PAL -> 256 colores RGB ----------+
 ```
 
-PNG is a modern image container supported by image tools and game engines. Our converter writes an **indexed PNG** (PNG color type 3) with a `PLTE` palette chunk. PNG also compresses its image data, but this is **not the same compression format as RNC**.
+PNG es un formato moderno de imagen compatible con editores y motores gráficos. Nuestro conversor escribe un **PNG indexado** (tipo de color 3), con un bloque `PLTE` que contiene la paleta. PNG también comprime los datos de imagen, pero **no utiliza el formato RNC**.
 
-### 6. What are `.MAP`, `.SPR`, `.BRD` and `.SFX`?
+### 6. ¿Qué son los archivos `.MAP`, `.SPR`, `.BRD` y `.SFX`?
 
-The original game contains files with these extensions. Their precise internal layouts **have not yet been fully documented** in this project.
+El juego original contiene archivos con estas extensiones. Su estructura interna **todavía no se ha documentado completamente**.
 
 | Extension | Working hypothesis                               | What still needs verifying                           |
 | --------- | ------------------------------------------------ | ---------------------------------------------------- |
@@ -163,41 +163,41 @@ The original game contains files with these extensions. Their precise internal l
 | `.DAT`    | General-purpose game data                        | May be compressed or contain arbitrary structures    |
 | `.PAL`    | Palette data                                     | Which resource uses which palette; channel encoding  |
 
-**Important:** file extensions are clues, not specifications. We will verify formats by inspecting headers, byte patterns, known visual output and the original executable where necessary. The extractor must report unsupported formats honestly rather than produce misleading images.
+**Importante:** las extensiones son pistas, no especificaciones. Verificaremos cada formato examinando cabeceras, patrones de bytes, resultados visuales y, cuando sea necesario, el ejecutable original. El extractor debe indicar los formatos no compatibles en vez de generar imágenes engañosas.
 
-### 7. What is reverse engineering in this project?
+### 7. ¿En qué consiste la ingeniería inversa del proyecto?
 
-We work from original files and observed behavior to reconstruct the data structures and game logic. A reproducible workflow is:
+Partimos de los archivos originales y del comportamiento observado del juego para reconstruir sus estructuras de datos y su lógica. Seguimos un proceso reproducible:
 
-1. Inventory files, sizes, hashes and signatures.
-2. Identify compression or container headers.
-3. Decompress without changing the originals; verify checksums.
-4. Identify internal structures such as dimensions, frame tables, offsets, masks and palettes.
-5. Export validated PNG, audio or structured JSON.
-6. Compare results against original gameplay and document findings.
-7. Build a modern runtime that loads the reconstructed resources.
+1. Inventariar archivos, tamaños, hashes y firmas.
+2. Identificar cabeceras de compresión y contenedores.
+3. Descomprimir sin modificar los originales y verificar los CRC.
+4. Identificar dimensiones, tablas de fotogramas, desplazamientos, máscaras y paletas.
+5. Exportar PNG, audio o JSON una vez validados.
+6. Comparar los resultados con el juego original y documentar los hallazgos.
+7. Construir un motor moderno que cargue los recursos recuperados.
 
-Every new decoder should handle truncated or malformed input safely and preserve a clear distinction between **verified** and **inferred** format details.
+Cada descompresor o lector debe gestionar de forma segura archivos incompletos o malformados y distinguir los detalles **comprobados** de los **deducidos**.
 
-### 8. How will PixiJS render the game?
+### 8. ¿Cómo mostrará PixiJS los gráficos?
 
-PixiJS 8 is the modern 2D renderer used by the new game. It will draw backgrounds, characters, UI and visual effects using assets produced by our extraction pipeline. The **engine** will separately manage verbs, hotspots, scene transitions, interaction rules and game state.
+PixiJS 8 es el sistema moderno de renderizado 2D. Dibujará fondos, personajes, interfaz y efectos a partir de los recursos extraídos. El **motor del juego** gestionará por separado las acciones, las zonas interactivas, los cambios de escena y el estado de la partida.
 
-For the original mode, **nearest-neighbor** scaling preserves hard pixel edges. To preserve the intended composition, we will handle aspect ratio and window resizing deliberately; original DOS VGA pixels were not necessarily displayed as square pixels on CRT monitors.
+En el modo original, el escalado por **vecino más cercano** mantiene los bordes definidos de los píxeles. También tendremos en cuenta la relación de aspecto y el tamaño de la ventana: en los monitores CRT los píxeles VGA no siempre se mostraban cuadrados.
 
-### 9. Why not upscale immediately?
+### 9. ¿Por qué no aplicamos el upscaling inmediatamente?
 
-Upscaling changes how an image is displayed or creates new pixels; it does **not** recover missing original information. Applying it before extraction is complete would complicate verification.
+El *upscaling* amplía la imagen creando o interpolando píxeles; **no recupera información original perdida**. Aplicarlo antes de terminar la extracción dificultaría comprobar que los gráficos recuperados son fieles.
 
-Our planned options:
+Los modos previstos son:
 
-- **Original:** unmodified extracted art, integer/nearest-neighbor scaling.
-- **Enhanced:** deterministic pixel-art scaling such as xBRZ or ScaleFX, subject to visual review.
-- **Remastered HD:** offline AI-assisted upscaling and manual cleanup, with no replacement of the original files.
+- **Original:** gráficos extraídos sin modificar, con escalado entero por vecino más cercano.
+- **Mejorado:** algoritmos de escalado de pixel art, como xBRZ o ScaleFX, con revisión visual.
+- **Remastered HD:** reescalado con ayuda de IA fuera del juego y retoque manual, sin sustituir los archivos originales.
 
-Backgrounds and animated sprites require different treatment. Every frame in a character animation must stay consistent, and transparency and hotspots must remain aligned. AI may invent visual details, so its output is an optional artistic reinterpretation, not a faithful recovery of missing pixels.
+Los fondos y los sprites animados requieren tratamientos distintos. Todos los fotogramas deben mantener coherencia y respetar transparencias y puntos de interacción. La IA puede inventar detalles, por lo que su resultado será una reinterpretación artística opcional, no una recuperación exacta de píxeles perdidos.
 
-### 10. Glossary
+### 10. Glosario
 
 | Term           | Meaning                                                         |
 | -------------- | --------------------------------------------------------------- |
@@ -218,20 +218,20 @@ Backgrounds and animated sprites require different treatment. Every frame in a c
 | Hotspot        | Interactive region in a scene                                   |
 | Upscaling      | Enlarging an image by generating or interpolating pixels        |
 
-## Extraction run: 2026-10-15
+## Resultado de la extracción: 15 de octubre de 2026
 
-The first user-provided `reports/extracted/manifest.json` reports **192 eligible game data files** scanned: **3 RNC1 extracted**, **16 RNC2 unsupported**, **173 raw/unrecognized**. These are **extraction status counts**, not a measure of the fraction of game content decoded. The earlier whole-directory inventory counted more files because it included non-resource extensions.
+El primer `reports/extracted/manifest.json` generado en el equipo registra **192 archivos de recursos**: **3 RNC1 extraídos**, **16 RNC2 todavía no compatibles** y **173 sin formato reconocido**. Son **estados de extracción**, no porcentajes de contenido del juego recuperado. El inventario general anterior incluía más archivos porque también contaba otras extensiones.
 
-Verified from the manifest:
+Datos comprobados en el manifiesto:
 
-- RNC1: `DATA/TITLE.DAT` (64,000 decoded bytes), `DATA/CORE.DAT` (64,000), `DATA/MENU.DAT` (10,240). The batch extractor reports valid packed CRCs for these; the RNC1 decoder also checks unpacked CRC before writing.
-- RNC2: 16 files, including `BALCONY1`–`BALCONY5`, `BASEBAL1`–`BASEBAL6`, `BASEBAT`, and `CAULDRN1`–`CAULDRN4`. All declare 64,000 unpacked bytes and have valid packed CRCs. **Likely** 320×200 indexed screens or frames; not yet visually confirmed.
-- Raw/unrecognized: 173 files. These include `.MAP`, `.SPR`, `.BRD`, `.SFX`, `.PAL` and other files. `raw` means the current tool has **not recognized an RNC wrapper**, not that the file is uncompressed or corrupt.
+- **RNC1:** `DATA/TITLE.DAT` (64.000 bytes descomprimidos), `DATA/CORE.DAT` (64.000) y `DATA/MENU.DAT` (10.240). El extractor informa de CRC comprimidos válidos; el descompresor RNC1 también valida el CRC descomprimido antes de guardar.
+- **RNC2:** 16 archivos, entre ellos `BALCONY1`–`BALCONY5`, `BASEBAL1`–`BASEBAL6`, `BASEBAT` y `CAULDRN1`–`CAULDRN4`. Todos declaran 64.000 bytes descomprimidos y tienen un CRC comprimido válido. **Probablemente** sean pantallas o fotogramas indexados de 320 × 200, pero falta confirmarlo visualmente.
+- **Sin reconocer:** 173 archivos, incluidos `.MAP`, `.SPR`, `.BRD`, `.SFX` y `.PAL`. El estado `raw` solo significa que el programa **no ha reconocido una cabecera RNC**, no que el archivo esté descomprimido o dañado.
 
-### Next investigation steps
+### Próximos pasos de investigación
 
-1. Implement and CRC-validate **RNC2**. Export the 16 recovered 64,000-byte buffers, then determine the correct palette associations and visually inspect the resulting frames.
-2. Investigate **`.MAP`** binary headers and scene representation; collect several representative files and compare byte patterns and sizes.
-3. Decode **`.SPR`** frame tables, masks and transparency, starting with `MOUSE.SPR`, `FONT.SPR` and `ICONS.SPR`.
-4. Reverse-engineer `.BRD` animation/other structures and `.SFX` audio only after inspecting actual bytes.
-5. Keep adding validated findings, examples and commands here. Never commit original or extracted copyrighted data.
+1. Implementar **RNC2** y validar los CRC. Exportar los 16 bloques de 64.000 bytes, identificar sus paletas y comprobar visualmente las imágenes.
+2. Investigar las cabeceras binarias de **`.MAP`** y la representación de escenas, comparando patrones y tamaños de varios archivos.
+3. Descifrar los fotogramas, máscaras y transparencias de **`.SPR`**, empezando por `MOUSE.SPR`, `FONT.SPR` e `ICONS.SPR`.
+4. Investigar las estructuras de `.BRD` y el audio `.SFX` a partir de sus bytes reales.
+5. Seguir añadiendo al README los hallazgos comprobados, ejemplos y comandos. No subir a Git los recursos originales ni los extraídos.
