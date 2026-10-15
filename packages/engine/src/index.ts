@@ -17,3 +17,11 @@ export function findHotspot(scene: Scene, x: number, y: number) {
     (h) => x >= h.x && y >= h.y && x < h.x + h.width && y < h.y + h.height,
   );
 }
+
+export {
+  containsPoint,
+  moveTowards,
+  facingTowards,
+  type Point,
+  type Facing,
+} from './navigation.js';

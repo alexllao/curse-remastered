@@ -3,10 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>CURSE Remastered</title>
+    <title>CURSE Remastered · El estudio</title>
   </head>
-  <body style="margin: 0; background: #111827">
-    <div id="app"></div>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>CURSE <span>REMASTERED</span></h1>
+          <p>El estudio · Primera prueba jugable</p>
+        </div>
+        <div class="controls">
+          <button id="visual-mode" disabled>F2 · Original</button
+          ><button id="restart" disabled>Reiniciar</button
+          ><button id="fullscreen">Pantalla completa</button>
+        </div>
+      </header>
+      <div id="viewport"><p id="loading">Cargando el estudio…</p></div>
+      <footer>
+        <p id="status" role="status" aria-live="polite">
+          Haz clic en la alfombra para mover a Ben.
+        </p>
+        <p id="mode">Original</p>
+      </footer>
+      <p>Zona de paseo provisional. Las interacciones y salidas todavía están en preparación.</p>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

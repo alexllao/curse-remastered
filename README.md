@@ -438,3 +438,17 @@ pnpm --filter @curse/asset-extractor spr-atlas reports/brd reports/brd/atlases
 ```
 
 Reconstruye 78 fondos según las tablas del ejecutable y extrae 637 fotogramas BRD. Las vistas de objetos son composiciones estáticas de revisión. SMALL.BRD tiene una tabla parcialmente válida y tres fotogramas de CHANGE.BRD siguen pendientes de contexto de color. Véase [evidencia, reproducción y límites](docs/map-brd-resources.md).
+
+## Primera escena jugable y recursos Remaster
+
+La prueba permite mover a Ben por una zona provisional de la alfombra de STUDY. Haz clic para caminar; F2 alterna **Original → Escalado → Remaster** sin reiniciar la escena. El modo Escalado usa Scale2x. La esquina superior derecha muestra un contador discreto de FPS. Remaster sustituye cada recurso disponible y usa el original interpolado donde falte una versión mejorada. La lógica conserva coordenadas de 320 × 200, independientemente de la resolución de las imágenes.
+
+```powershell
+pnpm mods:prepare
+pnpm dev
+pnpm --filter @curse/engine test
+```
+
+La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. El servidor local usa el puerto 8787. El primer encargo es `mods/original/fondos/070-STUDY.png`; guarda el resultado como `mods/remaster/fondos/070-STUDY.png` a 1280 × 800. Véase [carpetas, nombres y proceso gradual](mods/README.md). Los fotogramas normales de Ben son 32 × 48; su versión a 4× sería 128 × 192 con transparencia y anclaje conservados. Las poses con otras dimensiones se escalan desde su propio tamaño original.
+
+Esta es una prueba de paseo ejecutada en el navegador, todavía sin salidas, inventario, interacciones ni scripts originales de sala. El empaquetado como aplicación nativa de Windows sigue pendiente. Los recursos locales de `mods/` y las compilaciones que los contienen no se suben a Git.
