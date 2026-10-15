@@ -247,3 +247,9 @@ Se ha añadido `packages/asset-extractor/src/rnc2.ts` y se ha integrado en `extr
 La segunda extracción mostró 16 errores `Invalid RNC2 back-reference`. Los archivos `BALCONY1.DAT`, `BALCONY2.DAT` y `BALCONY3.DAT` fallaban en el mismo punto: 231 bytes producidos, intento de retroceder 440 bytes, longitud 8. La investigación del algoritmo de referencia permitió detectar una tabla de **códigos de longitud RNC2 incorrecta** en nuestra implementación. Se corrigió a los prefijos `00→4`, `10→5`, `010→6`, `011→7`, `110→8` y `111→9` (el valor 9 señala una secuencia de literales).
 
 **Pendiente:** ejecutar de nuevo el extractor con los archivos originales y verificar los CRC. La corrección todavía no demuestra que los 16 archivos se recuperen correctamente.
+
+### Extracción RNC1 y RNC2 completada (15 de octubre de 2026)
+
+Después de corregir la tabla de longitudes del decodificador RNC2, la ejecución local del extractor ha informado de **192 recursos examinados, 19 extraídos, 0 no compatibles y 173 sin interpretar**. Por tanto, los **3 archivos RNC1 y los 16 RNC2** se han descomprimido sin errores según el resumen facilitado. El código comprueba el tamaño y los CRC16 antes de guardar los datos. Esta validación **no implica** que los archivos extraídos ya se hayan identificado o comprobado visualmente como imágenes.
+
+**Siguiente fase:** convertir los bloques de 64.000 bytes en PNG indexados de 320 × 200 cuando exista una paleta de 768 bytes asociable, comparar visualmente los resultados y documentar qué relación entre archivos y paletas queda realmente confirmada. Después se investigarán los formatos propios `.MAP` y `.SPR`.
