@@ -457,3 +457,17 @@ Los fondos remasterizados son propuestas artísticas provisionales: la IA puede 
 La prueba de luces y F4 se han retirado. Se reserva una capa de presentación independiente para futuras animaciones, sin implementarlas ahora. Todos los recursos locales de `mods/`, originales y derivados, y las compilaciones que los contienen permanecen fuera de Git.
 
 Los objetos originales del estado inicial y 82 piezas de primer plano ya se preparan para el visor: Ben puede quedar oculto por las piezas que corresponden, con ordenación contrastada frente al ejecutable. Las animaciones ambientales, entradas especiales y obstáculos dinámicos siguen pendientes; el uso de objetos queda fuera de esta fase. El visor arranca en `TITLE.png` y reproduce la presentación con los intervalos y repeticiones capturados del ejecutable (referencia de 70 Hz; duración física DOS todavía sin medir). F3 y el selector permiten revisar todas sus imágenes y escenarios. Los originales están en `mods/original/presentacion/` y tus remasters se dejan en `mods/remaster/presentacion/` con los mismos nombres. La referencia artística es ×6: 320 × 200 → 1920 × 1200; los panoramas multiplican todo su ancho y alto por seis. La guía completa se genera en `mods/referencias/Guia-remaster-x6.txt`. Véase [el alcance de las pruebas del original](docs/navigation.md).
+
+## Preparar una copia recién clonada
+
+El repositorio distribuye únicamente código, herramientas y documentación. Los originales, los gráficos extraídos, las tablas derivadas del EXE y los remasters no se publican en Git.
+
+1. Instalar Node.js 22, pnpm y Python 3.
+2. Ejecutar `pnpm install`.
+3. Copiar el juego propio en `original/`, con `CURSE.EXE` y la carpeta `DATA/`.
+4. Ejecutar `pnpm assets:prepare`.
+5. Ejecutar `pnpm dev`.
+
+La preparación comprueba la revisión del ejecutable, descomprime RNC1/RNC2, extrae imágenes y sprites, ejecuta los contrastes de navegación/presentación y construye los recursos locales de `reports/` y `mods/original/`. Si falta Unicorn 2.1.4, prepara un entorno Python local excluido de Git e instala la dependencia fijada; la primera preparación necesita conexión para esa instalación. Se puede elegir el intérprete con `CURSE_PYTHON`. Una revisión de juego distinta se rechaza hasta investigarla.
+
+La preparación no genera ni reemplaza remasters. Sin un paquete gráfico local se ve Original. Los remasters se añaden aparte a `mods/remaster/` conservando las rutas; la referencia habitual es ×6. `pnpm assets:check` y el control previo al commit rechazan recursos o gráficos añadidos al índice, incluso mediante `git add -f`.

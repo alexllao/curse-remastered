@@ -14,8 +14,10 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "prepare": "husky",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm build",
-    "mods:prepare": "pnpm --filter @curse/asset-extractor prepare-playtest"
+    "check": "pnpm assets:check && pnpm lint && pnpm format:check && pnpm typecheck && pnpm build",
+    "mods:prepare": "pnpm --filter @curse/asset-extractor prepare-playtest",
+    "assets:prepare": "node tools/prepare-assets.mjs",
+    "assets:check": "node tools/check-assets.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
