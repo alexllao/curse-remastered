@@ -386,3 +386,13 @@ pnpm --filter @curse/asset-extractor spr-decode-all original/DATA reports/sprite
 ```
 
 No subas los `.SPR`, `.PAL` ni los PNG derivados al repositorio.
+
+### Atlas de revisión visual de sprites
+
+Después de ejecutar `spr-decode-all`, genera una hoja visual por cada archivo `.SPR`:
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-atlas
+```
+
+Las hojas se guardan en `reports/sprites/atlases/` y el índice en `reports/sprites/atlases/manifest.json`. Cada casilla incluye número de sprite, dimensiones y número de píxeles dibujados (`p`). El fondo ajedrezado distingue transparencia y el escalado usa vecino más cercano. Las imágenes son para revisión, no sustituyen a los PNG individuales. Si una hoja falla, el comando intenta procesar las restantes e informa del error.
