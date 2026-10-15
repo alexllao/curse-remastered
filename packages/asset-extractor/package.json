@@ -10,7 +10,8 @@
     "rnc-info": "tsx src/rnc-info.ts",
     "title-png": "tsx src/title-png.ts",
     "extract-all": "tsx src/extract-all.ts",
-    "images-png": "tsx src/images-png.ts"
+    "images-png": "tsx src/images-png.ts",
+    "analyze-map-spr": "tsx src/analyze-map-spr.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
