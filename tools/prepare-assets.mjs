@@ -59,10 +59,19 @@ try {
     'trace-room-entries',
     'trace-scene-order',
     'trace-presentation',
+    'trace-dungeon',
   ]) {
     console.log(`\nContrastando instrucciones originales: ${name}`);
     run(python, [`tools/reverse-engineering/${name}.py`]);
   }
+  run(process.execPath, [
+    pnpm,
+    '--filter',
+    '@curse/asset-extractor',
+    'exec',
+    'tsx',
+    '../../tools/reverse-engineering/verify-dungeon.mts',
+  ]);
   for (const name of ['scene-layers', 'navigation-verify', 'prepare-playtest']) packageStep(name);
   console.log('\nRecursos locales preparados. Ejecuta pnpm dev. Tus remasters se han conservado.');
 } catch (error) {

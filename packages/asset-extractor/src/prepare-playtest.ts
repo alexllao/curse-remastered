@@ -4,6 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { unpackRnc1 } from './rnc1.js';
 import { unpackRnc2 } from './rnc2.js';
 import { png } from './spr-codec.js';
+import { decodeBrd } from './brd-resources.js';
+import { decode } from './spr-codec.js';
+import { indexPalette, colorContextPixels } from './shared-palette.js';
+import { composeScenePalette } from './scene-palette.js';
 import { sha256 } from './scene-palette.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url)),
@@ -114,6 +118,71 @@ for (const row of report.results) {
     },
   });
 }
+// DUNGEON: entrada inicial -1, MANA encadenado y canales ambientales contrastados.
+const dungeon = JSON.parse(
+  await readFile(join(root, 'reports/navigation/dungeon-animation.json'), 'utf8'),
+);
+if (dungeon.executableSha256 !== exeHash || dungeon.ticks.length !== 1000)
+  throw new Error('Repeat DUNGEON animation trace');
+const dungeonAssets = [],
+  dimensions: Record<string, [number, number]> = {};
+const dungeonPalette = composeScenePalette(
+  await readFile(join(root, 'original/DATA/DUNGEON.MAP')),
+  await readFile(join(root, 'original/DATA/SPRITES.PAL')),
+);
+for (const [bank, name] of [
+  [16384, 'MANA.BRD'],
+  [20480, 'STD.BRD'],
+  [24576, 'DUNGEON.SPR'],
+] as const) {
+  const source = await readFile(join(root, 'original/DATA', name));
+  if (sha256(source) !== dungeon.sourceSha256[name])
+    throw new Error('DUNGEON animation source differs');
+  const decoded = name.endsWith('.BRD')
+    ? decodeBrd(source, name).frames
+    : decode(source, indexPalette, name);
+  for (const [index, image] of decoded.entries())
+    dimensions[`${bank}:${index}`] = [image.width, image.height];
+  const used = new Set<number>();
+  for (const actors of [dungeon.initial, ...dungeon.ticks])
+    for (const actor of actors)
+      if (actor[0] && (actor[31] | (actor[32] << 8)) === bank && actor[1] !== 255)
+        used.add(actor[1] & 127);
+  for (const frame of used) {
+    const image = decoded[frame];
+    const sourceFile = `reports/scenes/layers/000/animation-${bank}-${frame}.png`;
+    await writeFile(
+      join(root, sourceFile),
+      png(image.width, image.height, colorContextPixels(image.pixels, dungeonPalette)),
+    );
+    dungeonAssets.push({
+      ...(await prepare(sourceFile, `escenario/000/animation-${bank}-${frame}.png`, false)),
+      bank,
+      frame,
+    });
+  }
+}
+Object.assign(
+  scenes.find((scene) => scene.id === 0)!,
+  {
+    animation: {
+      actors: dungeon.initial,
+      programs: dungeon.programs,
+      seed: dungeon.seed,
+      dimensions,
+      firstFreeSlot: dungeon.firstFreeSlot,
+      controls: [0, 0, 0],
+      bank: 0,
+      collision: 0,
+      pendingRoom: null,
+      sounds: [],
+      assets: dungeonAssets,
+      cyclePulses: 5,
+      referenceHz: 70,
+      scope: 'Initial DUNGEON channels only; no interactions or dynamic handlers',
+    },
+  },
+);
 const presentationTrace = JSON.parse(
   await readFile(join(root, 'reports/navigation/presentation.json'), 'utf8'),
 );
