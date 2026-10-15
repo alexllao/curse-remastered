@@ -36,7 +36,7 @@ Por decisión del usuario, **todos los sprites de Ben permanecen originales**. L
 3. Guarda el resultado con la misma ruta y nombre en el paquete deseado.
 4. Pulsa F2 para salir del paquete y volver a él; compara después de mover la cámara a ambos extremos si es un panorama.
 
-No hace falta que el factor sea 2×, 3× ni 4×: se admite otra resolución con la proporción del original, con hasta dos píxeles nativos de tolerancia por redondeo. STUDY mide 320 × 200; 1280 × 800 es un ejemplo adecuado. Los panoramas conservan **todo su ancho lógico**: CORRIDOR mide 1216 × 200, LAKEBED 1600 × 200 y EDGE 2144 × 200. No los fuerces a 320 × 200.
+No hace falta que el factor sea 2×, 3× ni 4×: se admite otra resolución con la proporción del original, con hasta dos píxeles nativos de tolerancia por redondeo. La referencia habitual es ×6: STUDY mide 320 × 200 y su remaster se prepara a 1920 × 1200. Los panoramas conservan **todo su ancho lógico**: CORRIDOR mide 1216 × 200, LAKEBED 1600 × 200 y EDGE 2144 × 200. No los fuerces a 320 × 200.
 
 Algunas propuestas generadas contienen bandas negras adicionales para alojar panoramas muy anchos. El archivo opcional `imagen.png.json`, mediante `contentRect`, indica qué región del PNG debe usar la textura. El PNG se conserva intacto y el motor comprueba tanto los límites como la proporción de esa región. Este metadato está preparado en los fondos instalados que lo necesitan; una entrega sin bandas no requiere ningún archivo adicional.
 
@@ -57,7 +57,7 @@ pnpm dev
 
 Abre `http://127.0.0.1:8787/`. La preparación copia los 78 fondos y los 27 fotogramas iniciales de STD.BRD. No sobrescribe los paquetes remaster ni `referencias`. Si una copia original local difiere de la extracción actual, se detiene para conservarla.
 
-El paseo STD y las regiones BOXDET ya sustituyen la alfombra provisional. En 66 fondos se toma una entrada STD original; los otros 12 permiten colocar a Ben manualmente en suelo libre, con sus entradas especiales pendientes. El botón «Mostrar límites» ayuda a revisar obstáculos. La cámara sigue a Ben y desliza el panorama en ocho pasos de cuatro píxeles. Las acciones y salidas se señalan sin ejecutarse; no se permite usar objetos. Las cadencias temporales son de prueba y los scripts de sala siguen pendientes. Véase `docs/navigation.md`.
+El paseo STD y las regiones BOXDET ya sustituyen la alfombra provisional. En 62 fondos se toma el destino de una entrada STD contrastada, después de ejecutar sus canales de entrada; 15 quedan como especiales y BASEBAT oculta a Ben, según el original. No se coloca un Ben arbitrario en esas escenas. El botón «Mostrar límites» ayuda a revisar obstáculos. La cámara sigue a Ben y desliza el panorama en ocho pasos de cuatro píxeles. Las acciones y salidas se señalan sin ejecutarse; no se permite usar objetos. Las cadencias temporales son de prueba y los scripts de sala siguen pendientes. Véase `docs/navigation.md`.
 
 Antes de `mods:prepare`, genera también los datos de navegación:
 
@@ -80,6 +80,27 @@ F4 y la prueba de luces se han retirado. El fondo estático, la capa reservada p
 
 La preparación incluye las piezas originales de escenario en `original/escenario/`. Se dibujan con su orden de profundidad y se restauran los primeros planos que deben ocultar a Ben. No se han remasterizado estas piezas y sus animaciones ambientales todavía no se reproducen. El uso de objetos sigue desactivado.
 
-La pantalla de título original se prepara como `original/interfaz/title.png`, a partir de `reports/TITLE.png` generado por `title-png`. La versión mejorada se deja como `remaster/interfaz/title.png` (el nombre `TITLE.png` también funciona en Windows). Es una pantalla completa de proporción 320:200; 1280 × 800 es un ejemplo de resolución mejorada. El manifiesto registra el recurso, pero el visor sigue arrancando en STUDY: todavía no existe una pantalla de título interactiva ni se reproduce la introducción. El remaster proporcionado por el usuario se conserva intacto.
+La pantalla de título se prepara como `original/interfaz/TITLE.png`, con el remaster en `remaster/interfaz/TITLE.png` (respetar mayúsculas). Es una pantalla completa de 320 × 200: ×6 corresponde a 1920 × 1200. El visor arranca en TITLE y permite reproducir la presentación con Enter o con su botón, además de revisarla mediante F3. Los originales y los remasters proporcionados por el usuario se conservan intactos.
 
 El trabajo artístico queda aplazado mientras se comprueba el original. Las nuevas propuestas de Ben pueden guardarse en `remaster/ben/` para revisión, conservando los nombres STD; el visor mantiene los sprites originales hasta que se apruebe activarlas.
+
+## Portada e imágenes de presentación
+
+El visor empieza en `interfaz/TITLE.png` (pantalla 0). F3 recorre las 16 imágenes de presentación en el orden contrastado del ejecutable y después los 78 escenarios; el selector permite saltar directamente. El botón «Reproducir presentación» alterna los fotogramas y sus repeticiones según la traza del ejecutable. F3 permite revisarlos manualmente. Los intervalos se cuentan en retrazados VGA y se presentan usando una referencia de 70 Hz; la duración física original sigue pendiente de medir. Sin audio todavía.
+
+Originales: `mods/original/presentacion/`. Deja tus versiones en `mods/remaster/presentacion/` con el mismo nombre, respetando mayúsculas:
+
+- `CAULDRN1.png` a `CAULDRN4.png`
+- `BALCONY1.png` a `BALCONY5.png`
+- `BASEBAL1.png` a `BASEBAL6.png`
+- `BASEBAT.png`
+
+Portada: `mods/original/interfaz/TITLE.png` → `mods/remaster/interfaz/TITLE.png`. Logotipo inicial disponible en `mods/original/interfaz/CORE.png`. F2 mantiene el original cuando falta un remaster. Puedes usar un paquete alternativo como `mods/remaster2/presentacion/` con los mismos nombres.
+
+Las originales son de 320 × 200. Conserva esa proporción y el encuadre completo (ejemplos: 1920 × 1200 (×6) o 2560 × 1600 (×8)), sin mover elementos entre fotogramas. Los sprites, máscaras y objetos animados necesitan mantener su posición respecto al fondo. La navegación de las secuencias especiales sigue pendiente; no se inserta un Ben normal artificialmente.
+
+Preparación nueva: ejecutar también `trace-room-entries.py` y `trace-presentation.py` antes de `pnpm mods:prepare`, según `docs/navigation.md`. Las imágenes y el manifiesto generado permanecen excluidos de Git.
+
+La lista completa con tamaños exactos se regenera en `mods/referencias/Guia-remaster-x6.txt`. No hace falta remasterizar los PNG de `presentacion/fundidos/`: se generan automáticamente con las paletas originales. En remaster el reproductor aplica un fundido global adaptado a la nueva imagen; en Original utiliza los colores DAC capturados, sin aproximarlos mediante opacidad.
+
+Más resolución no sustituye el detalle real ni la alineación: ×6 es la referencia habitual, sin obligar al juego a una resolución fija. Los futuros paquetes de mayor resolución se compararán manteniendo la misma geometría y continuidad entre fotogramas.
