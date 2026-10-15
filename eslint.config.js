@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import globals from 'globals';
 
 export default tseslint.config(
   { ignores: ['**/dist/**', '**/node_modules/**', 'original/**', 'reports/**', '**/coverage/**'] },
@@ -8,10 +9,7 @@ export default tseslint.config(
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
-      globals: {
-        console: 'readonly',
-        process: 'readonly',
-      },
+      globals: { ...globals.browser, ...globals.node },
     },
   },
 );
