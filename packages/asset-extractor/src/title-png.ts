@@ -5,7 +5,7 @@ import { deflateSync } from 'node:zlib';
 import { unpackRnc1 } from './rnc1.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const pathFromRoot = (path: string): string => isAbsolute(path) ? path : resolve(root, path);
+const pathFromRoot = (path: string): string => (isAbsolute(path) ? path : resolve(root, path));
 const input = pathFromRoot(process.argv[2] ?? 'original/DATA/TITLE.DAT');
 const palettePath = pathFromRoot(process.argv[3] ?? 'original/DATA/TITLE.PAL');
 const outputPath = pathFromRoot(process.argv[4] ?? 'reports/TITLE.png');
@@ -21,7 +21,7 @@ const crc32 = (bytes: Uint8Array): number => {
   let crc = 0xffffffff;
   for (const byte of bytes) {
     crc ^= byte;
-    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
   }
   return (crc ^ 0xffffffff) >>> 0;
 };
@@ -38,7 +38,7 @@ header.writeUInt32BE(width, 0);
 header.writeUInt32BE(height, 4);
 header[8] = 8; // 8-bit indexed
 header[9] = 3; // PNG indexed-color mode
-const rgb = Buffer.from(palette.map((value) => Math.round(value * 255 / 63)));
+const rgb = Buffer.from(palette.map((value) => Math.round((value * 255) / 63)));
 const scanlines = Buffer.alloc(height * (width + 1));
 for (let row = 0; row < height; row++) {
   scanlines.set(pixels.subarray(row * width, (row + 1) * width), row * (width + 1) + 1);
