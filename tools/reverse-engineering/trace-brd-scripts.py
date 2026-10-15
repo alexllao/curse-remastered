@@ -112,16 +112,79 @@ def main():
             'sourceSha256': hashlib.sha256((root / 'original/DATA' / brd).read_bytes()).hexdigest(),
             'mapSha256': hashlib.sha256(map_data).hexdigest(),
         })
+    # Acción final: el despacho exige los objetos 177 y 175, no un recurso.
+    # Se comprueba por separado la creación original del objetivo en FINAL.
+    machine = ScriptMachine()
+    machine.set_word(0x8082, 72)
+    scene_data = (root / 'original/DATA/FINAL.SPR').read_bytes()
+    machine.uc.mem_write(0x60000, scene_data)
+    machine.uc.mem_write(trace.LOAD_ADDRESS + 0x4aee, struct.pack('<H', 0x6000))
+    machine.uc.mem_write(trace.DATA_ADDRESS + 0xad6, b'\0')
+    machine.execute(0x8ca6, 0x8d6e)
+    targets = [0x2c4c + index * 33 for index in range(machine.word(0x3588) - 2)
+               if machine.word(0x2c4c + index * 33 + 14) == 177]
+    trace.require(len(targets) == 1 and machine.uc.mem_read(trace.DATA_ADDRESS + targets[0], 1)[0] != 0,
+                  'Original loader did not create active object 177 in FINAL')
+    map_data = (root / 'original/DATA/FINAL.MAP').read_bytes()
+    palette = map_data[:576] + shared[576:768]
+    machine.uc.mem_write(trace.DATA_ADDRESS + 0xaef, palette)
+    machine.uc.reg_write(UC_X86_REG_AX, 177)
+    machine.uc.reg_write(UC_X86_REG_BX, 175)
+    machine.execute(0x438a, 0x4c2f)
+    trace.require(machine.word(0x2c3b) == 0x2ba8, 'Final action did not install expected script')
+    actor = 0x2c2b
+    machine.uc.mem_write(trace.DATA_ADDRESS + actor, bytes(16))
+    machine.uc.mem_write(trace.DATA_ADDRESS + actor, b'\x01\x09')
+    machine.set_word(actor + 2, 500)
+    machine.set_word(actor + 0x1f, 0x5000)
+    machine.uc.mem_write(trace.DATA_ADDRESS + actor + 0x13, b'\x01\x01')
+    machine.uc.reg_write(UC_X86_REG_SI, actor)
+    frames = []
+    for tick in range(400):
+        machine.uc.reg_write(UC_X86_REG_BX, machine.word(actor + 0x10))
+        machine.execute(0x85fc, 0x8800)
+        if machine.word(actor + 0x1f) == 0x4000:
+            frame = machine.uc.mem_read(trace.DATA_ADDRESS + actor + 1, 1)[0] & 127
+            if frame not in frames:
+                frames.append(frame)
+            if frame == 25:
+                break
+    trace.require(frames == [23, 24, 25] and machine.files == ['CASTLE.BRD'], 'Final CASTLE selection mismatch')
+    trace.require(machine.word(0x8082) == 72 and not machine.frames, 'Final script changed scene or DAC')
+    trace.require(bytes(machine.uc.mem_read(trace.DATA_ADDRESS + 0xaef, 768)) == palette, 'Final palette changed')
+    for target, item in [(176, 175), (177, 174)]:
+        negative = ScriptMachine()
+        negative.uc.reg_write(UC_X86_REG_AX, target)
+        negative.uc.reg_write(UC_X86_REG_BX, item)
+        negative.execute(0x438a, 0x8aa0)
+        trace.require(negative.word(0x2c3b) != 0x2ba8, 'Wrong action pair accepted')
+    results.append({
+        'resourceId': 72, 'map': 'FINAL.MAP', 'source': 'CASTLE.BRD',
+        'actionDispatchFileOffset': 0x438a, 'scriptFileOffset': 0xf510 + 0x2ba8,
+        'targetObjectId': 177, 'itemObjectId': 175, 'originalTargetCreated': True,
+        'selectedFrames': frames, 'ticks': tick + 1, 'stopAfterFrame': 25,
+        'wrongActionPairsRejected': True, 'paletteUnchanged': True, 'dacWrites': 0,
+        'resourceScope': 'Initial target location and explicit active FINAL context; dispatch checks object IDs, not resource ID',
+        'sourceSha256': hashlib.sha256((root / 'original/DATA/CASTLE.BRD').read_bytes()).hexdigest(),
+        'sceneSpritesSha256': hashlib.sha256(scene_data).hexdigest(),
+        'mapSha256': hashlib.sha256(map_data).hexdigest(),
+    })
     manifest = json.loads((root / 'reports/brd/manifest.json').read_text(encoding='utf-8'))
     trace.require(manifest['executableSha256'] == trace.PROFILE, 'Unverified export executable')
     recorded = manifest['scriptContexts']
-    trace.require(len(recorded) == 1 and recorded[0]['frames'] == results[0]['selectedFrames']
-                  and recorded[0]['resourceId'] == 25 and recorded[0]['map'] == 'CHANGE.MAP'
-                  and recorded[0]['source'] == 'CHANGE.BRD', 'Export context differs from original selection')
-    change = next(row for row in manifest['results'] if row['source'] == 'CHANGE.BRD')
-    for frame in change['contextual']:
-        variants = [variant for variant in frame['variants'] if variant['status'] == 'original-script-frame-selection']
-        trace.require(bool(variants) == (frame['index'] in results[0]['selectedFrames']), 'Unobserved frame exported as script-verified')
+    trace.require(len(recorded) == 2, 'Unexpected script context count')
+    for context, observed in zip(recorded, [results[0], results[-1]]):
+        trace.require(context['frames'] == observed['selectedFrames']
+                      and context['resourceId'] == observed['resourceId']
+                      and context['map'] == observed['map']
+                      and context['source'] == observed['source'], 'Export context differs from original selection')
+        exported = next(row for row in manifest['results'] if row['source'] == context['source'])
+        trace.require(exported['sourceSha256'] == observed['sourceSha256'], 'Stale BRD export')
+        for frame in exported['contextual']:
+            variants = [variant for variant in frame['variants'] if variant['status'] == 'original-script-frame-selection']
+            trace.require(bool(variants) == (frame['index'] in observed['selectedFrames']), 'Unobserved frame exported as script-verified')
+            for variant in variants:
+                trace.require(variant['map'] == observed['map'] and variant['mapSha256'] == observed['mapSha256'], 'Wrong exported palette context')
     report = {
         'status': 'matched-original-instructions', 'executableSha256': trace.PROFILE,
         'scope': 'Resource gates, script installation, BRD loading and frame selection only; no full-game reachability or timing claim',
