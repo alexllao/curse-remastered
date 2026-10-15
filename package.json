@@ -1,0 +1,15 @@
+{
+  "name": "curse-remastered",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @curse/game dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "inspect": "pnpm --filter @curse/asset-extractor inspect"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
