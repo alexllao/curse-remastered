@@ -16,7 +16,8 @@
     "spr-stream": "tsx src/spr-stream.ts",
     "spr-layout": "tsx src/spr-layout.ts",
     "spr-rows": "tsx src/spr-rows.ts",
-    "spr-preview": "tsx src/spr-preview.ts"
+    "spr-preview": "tsx src/spr-preview.ts",
+    "spr-compare": "tsx src/spr-compare.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
