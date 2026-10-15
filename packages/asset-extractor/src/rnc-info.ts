@@ -21,17 +21,28 @@ const crc16 = (bytes: Uint8Array) => {
   let crc = 0;
   for (const byte of bytes) {
     crc ^= byte;
-    for (let bit = 0; bit < 8; bit++) crc = (crc & 1) ? (crc >>> 1) ^ 0xa001 : crc >>> 1;
+    for (let bit = 0; bit < 8; bit++) crc = crc & 1 ? (crc >>> 1) ^ 0xa001 : crc >>> 1;
   }
   return crc;
 };
 const actualPackedCrc = crc16(data.subarray(18, 18 + packedSize));
-console.log(JSON.stringify({
-  path: input, method, unpackedSize, packedSize, headerBytes: 18,
-  unpackedCrc: unpackedCrc.toString(16).padStart(4, '0'),
-  packedCrc: packedCrc.toString(16).padStart(4, '0'),
-  actualPackedCrc: actualPackedCrc.toString(16).padStart(4, '0'),
-  packedCrcValid: packedCrc === actualPackedCrc,
-  leeway, chunks,
-  likelyVga320x200: unpackedSize === 320 * 200
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      path: input,
+      method,
+      unpackedSize,
+      packedSize,
+      headerBytes: 18,
+      unpackedCrc: unpackedCrc.toString(16).padStart(4, '0'),
+      packedCrc: packedCrc.toString(16).padStart(4, '0'),
+      actualPackedCrc: actualPackedCrc.toString(16).padStart(4, '0'),
+      packedCrcValid: packedCrc === actualPackedCrc,
+      leeway,
+      chunks,
+      likelyVga320x200: unpackedSize === 320 * 200,
+    },
+    null,
+    2,
+  ),
+);
