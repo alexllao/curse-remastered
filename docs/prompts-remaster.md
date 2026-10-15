@@ -8,7 +8,13 @@ La prioridad actual es terminar la revisión del original. Este prompt queda pre
 2. **Guía de geometría, si está disponible:** referencia con contornos y posiciones de piezas, puertas y límites. Solo sirve de guía; sus marcas no deben aparecer en la entrega.
 3. **Estilo aprobado, opcional:** una referencia del acabado artístico deseado. No permite trasladar sus objetos, arquitectura o iluminación a otra sala.
 
-Completar las dimensiones antes de copiar el prompt. Ejemplo para STUDY: original 320 × 200, entrega 1280 × 800. Un panorama conserva su ancho completo: no se trata como una pantalla de 320 × 200.
+Completar las dimensiones antes de copiar el prompt. Ejemplo para STUDY: original 320 × 200, entrega 1920 × 1200 (×6). Un panorama conserva su ancho completo: no se trata como una pantalla de 320 × 200.
+
+## Tamaño habitual: ×6
+
+Multiplicar el ancho y el alto originales por seis. Una pantalla de 320 × 200 se entrega a 1920 × 1200; un panorama de 480 × 200, a 2880 × 1200. Mantener el panorama completo. El motor ajusta la presentación al contenedor sin cambiar sus coordenadas lógicas y admite otros factores en futuros paquetes; no hace falta usar ×6 internamente en el juego.
+
+Las imágenes de la introducción ya incluyen personajes y elementos animados pintados en cada fotograma. Al remasterizarlas, conservar todos esos elementos y su posición entre imágenes. La instrucción de excluir personajes del prompt siguiente se refiere a fondos MAP con sprites independientes, no a los fotogramas completos de presentación.
 
 ## Prompt para copiar
 

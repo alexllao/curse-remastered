@@ -1,6 +1,5 @@
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
-  actorContact,
   originalActorOrder,
   originalForegroundOverlaps,
   type OrderedActor,
@@ -36,21 +35,37 @@ interface SceneRecord {
     assets: (VisualAsset & { frame: number })[];
   };
   navigation: {
+    entryStatus: 'normal-walk-ready' | 'hidden-player' | 'special-entry';
     regions: BoxRegion[];
     state: NavigationState;
     spawn: { x: number; y: number; frame: number; cameraX: number; logicalRoomId: number } | null;
   };
 }
+interface PresentationEvent {
+  tick: number;
+  index: number;
+  asset: VisualAsset;
+  brightness: number;
+}
 interface Manifest {
   schemaVersion: number;
   scenes: SceneRecord[];
+  title: VisualAsset;
+  presentation: { name: string; asset: VisualAsset }[];
   player: VisualAsset[];
+  presentationPlayback: {
+    referenceHz: number;
+    physicalTimingVerified: boolean;
+    durationTicks: number;
+    events: PresentationEvent[];
+  };
   navigationProfile: WalkProfile;
 }
 const viewport = document.querySelector<HTMLDivElement>('#viewport')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;
 const modeLabel = document.querySelector<HTMLParagraphElement>('#mode')!;
 const sceneLabel = document.querySelector<HTMLParagraphElement>('#scene-name')!;
+const sceneSelect = document.querySelector<HTMLSelectElement>('#scene-select')!;
 const button = (id: string) => document.querySelector<HTMLButtonElement>(`#${id}`)!;
 const modeButton = button('visual-mode'),
   restartButton = button('restart'),
@@ -66,7 +81,10 @@ async function start() {
     throw new Error('Prepare local assets');
   const manifest: Manifest = await response.json();
   if (
-    manifest.schemaVersion !== 4 ||
+    manifest.schemaVersion !== 5 ||
+    !manifest.title ||
+    manifest.presentation?.length !== 16 ||
+    !manifest.presentationPlayback?.events.length ||
     manifest.player.length !== 27 ||
     manifest.scenes.length !== 78 ||
     !manifest.navigationProfile?.programs.length ||
@@ -91,13 +109,28 @@ async function start() {
     limits = new Graphics();
   effectsLayer.eventMode = 'none'; // Capa independiente reservada para futuras animaciones.
   limits.eventMode = 'none';
-  let sceneIndex = Math.max(
-    0,
-    manifest.scenes.findIndex((s) => s.id === 70),
+  const staticScreens = [
+    { name: 'TITLE — Bienvenida', asset: manifest.title },
+    ...manifest.presentation.map((entry) => ({ ...entry, name: `Presentación — ${entry.name}` })),
+  ];
+  const screenCount = staticScreens.length + manifest.scenes.length;
+  let sceneIndex = 0,
+    staticIndex = 0,
+    currentView = 0,
+    showingStatic = true;
+  sceneSelect.replaceChildren(
+    ...staticScreens.map((record, index) => new Option(`${index} · ${record.name}`, String(index))),
+    ...manifest.scenes.map(
+      (record, index) =>
+        new Option(
+          `${staticScreens.length + index} · Escenario ${index + 1} — ${record.name}`,
+          String(staticScreens.length + index),
+        ),
+    ),
   );
   let packs = await discoverPacks(),
     pack: GraphicsPack = packs.find((p) => p.id === 'original')!;
-  let visual = await loadVisual(manifest.scenes[sceneIndex].background, pack);
+  let visual = await loadVisual(manifest.title, pack);
   const player = await Promise.all(
     manifest.player.map((asset) => loadVisual({ ...asset, remaster: false }, pack)),
   );
@@ -130,6 +163,8 @@ async function start() {
   const resize = () => fitPresentation(app, world, viewport);
   new ResizeObserver(resize).observe(viewport);
   resize();
+  const introButton = button('play-intro');
+  const assetInfo = document.querySelector<HTMLParagraphElement>('#asset-info')!;
   const scene = () => manifest.scenes[sceneIndex];
   async function loadLayers(record: SceneRecord) {
     const assets = await Promise.all(
@@ -188,8 +223,59 @@ async function start() {
     elapsed = 0,
     fpsElapsed = 0,
     fpsFrames = 0;
+  let playback: {
+    elapsed: number;
+    event: number;
+    base: Awaited<ReturnType<typeof loadVisual>>[];
+    original: Awaited<ReturnType<typeof loadVisual>>[];
+  } | null = null;
+  const playbackCache = new Map<
+    string,
+    Promise<{
+      base: Awaited<ReturnType<typeof loadVisual>>[];
+      original: Awaited<ReturnType<typeof loadVisual>>[];
+    }>
+  >();
+  function stopPresentation() {
+    playback = null;
+    background.alpha = 1;
+    background.texture = visual.texture;
+  }
+  async function playPresentation(resume = 0) {
+    if (changing) return;
+    await show(0, pack);
+    changing = true;
+    status.textContent = 'Preparando la presentación…';
+    sync();
+    try {
+      let pending = playbackCache.get(pack.id);
+      if (!pending) {
+        pending = Promise.all([
+          Promise.all(staticScreens.map((screen) => loadVisual(screen.asset, pack))),
+          Promise.all(
+            manifest.presentationPlayback.events.map((event) => loadVisual(event.asset, pack)),
+          ),
+        ]).then(([base, original]) => ({ base, original }));
+        playbackCache.set(pack.id, pending);
+      }
+      const assets = await pending;
+      if (visual.disposable) visual.texture.destroy(true);
+      visual = { ...assets.base[0], disposable: false };
+      background.texture = visual.texture;
+      playback = { ...assets, elapsed: resume, event: -1 };
+      status.textContent =
+        'Presentación en curso. F2 compara gráficos; F3 permite revisar fotogramas. Puedes omitirla.';
+    } catch {
+      playbackCache.delete(pack.id);
+      status.textContent =
+        'No se ha podido preparar la presentación. Puedes recorrer sus imágenes con F3.';
+    } finally {
+      changing = false;
+      sync();
+    }
+  }
   function resetActor() {
-    const spawn = scene().navigation.spawn;
+    const spawn = showingStatic ? null : scene().navigation.spawn;
     actor = spawn ? createWalkActor(spawn.x + spawn.cameraX, spawn.y, spawn.frame) : null;
     cameraX = spawn ? Math.max(0, Math.min(scene().background.width - 320, spawn.cameraX)) : 0;
     renderCameraX = cameraX;
@@ -198,13 +284,20 @@ async function start() {
     destination.visible = false;
   }
   function describe() {
-    status.textContent = actor
-      ? 'Haz clic para caminar. Las acciones y salidas se señalarán sin ejecutarlas.'
-      : 'La entrada usa una animación especial. Pulsa suelo libre para colocar a Ben y probar el paseo normal.';
+    if (playback) return;
+    status.textContent = showingStatic
+      ? staticIndex === 0
+        ? 'Pulsa Entrar o haz clic para reproducir la presentación. F3 permite revisarla imagen a imagen.'
+        : `${staticScreens[staticIndex].name}. Imagen de revisión. Puedes reproducir la presentación o avanzar con F3.`
+      : actor
+        ? 'Haz clic para caminar. Las acciones y salidas se señalarán sin ejecutarlas.'
+        : scene().navigation.entryStatus === 'hidden-player'
+          ? 'El original oculta a Ben en esta pantalla. Vista del escenario sin paseo.'
+          : 'Secuencia especial pendiente de reproducir. Vista del escenario sin paseo libre.';
   }
   function drawLimits() {
     limits.clear();
-    limits.visible = showLimits;
+    limits.visible = showLimits && !showingStatic;
     if (!showLimits) return;
     for (const region of scene().navigation.regions) {
       const color = region.type === 0 ? 0xea675a : region.type === 2 ? 0x6ec8ee : 0xf1c762;
@@ -220,7 +313,11 @@ async function start() {
     }
   }
   function sync() {
-    background.width = scene().background.width;
+    background.width = showingStatic
+      ? staticScreens[staticIndex].asset.width
+      : scene().background.width;
+    actorsLayer.visible = foregroundLayer.visible = !showingStatic;
+    limits.visible = showLimits && !showingStatic;
     background.height = 200;
     sceneContent.x = -renderCameraX;
     ben.visible = actor !== null;
@@ -254,7 +351,16 @@ async function start() {
     }
     for (const piece of layerView.foreground)
       piece.sprite.visible = originalForegroundOverlaps(piece, slots);
-    sceneLabel.textContent = `${scene().name} · ${sceneIndex + 1} de ${manifest.scenes.length}`;
+    sceneLabel.textContent = showingStatic
+      ? `${currentView} · ${staticScreens[staticIndex].name}`
+      : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
+    sceneSelect.value = String(currentView);
+    sceneSelect.disabled = changing;
+    introButton.disabled = changing;
+    introButton.textContent = playback ? 'Omitir presentación' : 'Reproducir presentación';
+    const asset = showingStatic ? staticScreens[staticIndex].asset : scene().background;
+    assetInfo.textContent = `${asset.file} · Original: ${asset.width} × ${asset.height} · Remaster ×6: ${asset.width * 6} × ${asset.height * 6}`;
+    restartButton.textContent = showingStatic ? 'Continuar' : 'Reiniciar';
     modeButton.textContent = `F2 · ${pack.label}`;
     modeLabel.textContent =
       pack.label +
@@ -262,41 +368,56 @@ async function start() {
         ? ` · ${visual.usedPack === 'original' ? 'Original' : visual.usedPack} donde falta`
         : '');
     for (const b of [modeButton, nextButton, previousButton, restartButton]) b.disabled = changing;
-    leftButton.disabled = changing || cameraX === 0;
-    rightButton.disabled = changing || cameraX >= scene().background.width - 320;
+    leftButton.disabled = showingStatic || changing || cameraX === 0;
+    rightButton.disabled = showingStatic || changing || cameraX >= scene().background.width - 320;
+    boundaryButton.disabled = showingStatic || changing;
     boundaryButton.textContent = showLimits ? 'Ocultar límites' : 'Mostrar límites';
     boundaryButton.setAttribute('aria-pressed', String(showLimits));
   }
   function pan(direction: number) {
-    if (changing) return;
+    if (changing || showingStatic) return;
     if (actor) stopOriginalWalk(actor);
     destination.visible = false;
     cameraX = Math.max(0, Math.min(scene().background.width - 320, cameraX + direction * 32));
     cameras.set(scene().id, cameraX);
     sync();
   }
-  async function show(nextScene: number, nextPack: GraphicsPack) {
+  async function show(nextView: number, nextPack: GraphicsPack) {
     if (changing) return;
+    stopPresentation();
+    const nextStatic = nextView < staticScreens.length,
+      nextScene = Math.max(0, nextView - staticScreens.length);
     changing = true;
     sync();
     try {
       const nextLayers =
         nextScene === sceneIndex ? null : await loadLayers(manifest.scenes[nextScene]);
-      const loaded = await loadVisual(manifest.scenes[nextScene].background, nextPack);
+      const loaded = await loadVisual(
+        nextStatic ? staticScreens[nextView].asset : manifest.scenes[nextScene].background,
+        nextPack,
+      );
       const previous = visual,
-        moved = nextScene !== sceneIndex;
+        moved =
+          nextScene !== sceneIndex ||
+          nextStatic !== showingStatic ||
+          (nextStatic && nextView !== staticIndex);
       if (moved) {
         if (actor) stopOriginalWalk(actor);
-        actors.set(scene().id, actor);
-        cameras.set(scene().id, cameraX);
+        if (!showingStatic) {
+          actors.set(scene().id, actor);
+          cameras.set(scene().id, cameraX);
+        }
       }
       visual = loaded;
       sceneIndex = nextScene;
+      showingStatic = nextStatic;
+      currentView = nextView;
+      if (nextStatic) staticIndex = nextView;
       pack = nextPack;
       background.texture = loaded.texture;
       if (nextLayers) installLayers(nextLayers);
       if (moved) {
-        if (actors.has(scene().id)) {
+        if (!showingStatic && actors.has(scene().id)) {
           actor = actors.get(scene().id)!;
           cameraX = cameras.get(scene().id) ?? 0;
           renderCameraX = cameraX;
@@ -317,32 +438,31 @@ async function start() {
   }
   async function nextPack() {
     if (changing || selectingPack) return;
+    const resume = playback?.elapsed;
     selectingPack = true;
     try {
       packs = await discoverPacks();
       const current = packs.findIndex((p) => p.id === pack.id);
-      await show(sceneIndex, packs[(current + 1) % packs.length]);
+      await show(currentView, packs[(current + 1) % packs.length]);
+      if (resume !== undefined) await playPresentation(resume);
     } finally {
       selectingPack = false;
     }
   }
   const nextScene = (direction: number) =>
-    show((sceneIndex + direction + manifest.scenes.length) % manifest.scenes.length, pack);
+    show((currentView + direction + screenCount) % screenCount, pack);
   world.on('pointertap', (event) => {
     if (changing || renderCameraX !== cameraX) return;
+    if (showingStatic) {
+      if (staticIndex === 0) void playPresentation();
+      else void nextScene(1);
+      return;
+    }
     const local = world.toLocal(event.global),
       point = { x: Math.trunc(local.x + renderCameraX), y: Math.trunc(local.y) };
     if (point.x < 0 || point.x >= scene().background.width || point.y < 0 || point.y >= 200) return;
     if (!actor) {
-      const candidate = createWalkActor(point.x - 15, point.y - 47);
-      if (actorContact(candidate, scene().navigation.regions, scene().navigation.state).code) {
-        status.textContent = 'Ese punto toca un límite o una acción. Prueba en suelo libre.';
-        return;
-      }
-      actor = candidate;
-      status.textContent =
-        'Ben colocado para probar el paseo normal; la entrada especial sigue pendiente.';
-      sync();
+      describe();
       return;
     }
     startOriginalWalk(actor, point, manifest.navigationProfile);
@@ -365,6 +485,27 @@ async function start() {
       fpsElapsed = fpsFrames = 0;
     }
     if (changing) return;
+    if (playback) {
+      playback.elapsed += ticker.elapsedMS;
+      const tick = (playback.elapsed * manifest.presentationPlayback.referenceHz) / 1000;
+      const events = manifest.presentationPlayback.events;
+      let index = playback.event;
+      while (index + 1 < events.length && events[index + 1].tick <= tick) index++;
+      if (index >= 0 && index !== playback.event) {
+        playback.event = index;
+        const event = events[index],
+          base = playback.base[event.index];
+        visual = { ...base, disposable: false };
+        background.texture =
+          base.usedPack === 'original' ? playback.original[index].texture : base.texture;
+        background.alpha = base.usedPack === 'original' ? 1 : event.brightness;
+        staticIndex = currentView = event.index;
+        sync();
+      }
+      if (tick >= manifest.presentationPlayback.durationTicks)
+        void show(staticScreens.length, pack);
+      return;
+    }
     if (renderCameraX !== cameraX) {
       scrollElapsed += Math.min(ticker.deltaMS, 100);
       while (scrollElapsed >= 1000 / 60 && renderCameraX !== cameraX) {
@@ -409,6 +550,12 @@ async function start() {
     }
     sync();
   });
+  introButton.addEventListener('click', () => {
+    if (playback) void show(staticScreens.length, pack);
+    else void playPresentation();
+  });
+  sceneSelect.addEventListener('change', () => void show(Number(sceneSelect.value), pack));
+  button('welcome').addEventListener('click', () => void show(0, pack));
   modeButton.addEventListener('click', () => void nextPack());
   nextButton.addEventListener('click', () => void nextScene(1));
   previousButton.addEventListener('click', () => void nextScene(-1));
@@ -420,6 +567,11 @@ async function start() {
     sync();
   });
   restartButton.addEventListener('click', () => {
+    if (showingStatic) {
+      if (staticIndex === 0) void playPresentation();
+      else void nextScene(1);
+      return;
+    }
     if (!changing) {
       resetActor();
       sync();
@@ -428,6 +580,11 @@ async function start() {
   });
   window.addEventListener('keydown', (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === 'Enter' && showingStatic && event.target === document.body) {
+      event.preventDefault();
+      if (staticIndex === 0) void playPresentation();
+      else void nextScene(1);
+    }
     if (event.key === 'F2') {
       event.preventDefault();
       if (!event.repeat) void nextPack();

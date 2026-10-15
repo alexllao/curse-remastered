@@ -127,3 +127,23 @@ footer {
   margin-top: 9px;
   justify-content: flex-end;
 }
+
+.catalog {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+.catalog label {
+  color: #bdb4a5;
+  font-size: 14px;
+}
+.catalog select {
+  flex: 1;
+  max-width: 440px;
+  padding: 9px;
+  color: #f3dfb4;
+  background: #29251e;
+  border: 1px solid #665439;
+  border-radius: 4px;
+}

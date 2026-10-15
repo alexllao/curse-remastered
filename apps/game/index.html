@@ -10,9 +10,11 @@
       <header>
         <div>
           <h1>CURSE <span>REMASTERED</span></h1>
-          <p id="scene-name">STUDY · Galería de fondos</p>
+          <p id="scene-name">0 · TITLE — Bienvenida</p>
         </div>
         <div class="controls">
+          <button id="welcome">Portada</button>
+          <button id="play-intro" disabled>Reproducir presentación</button>
           <button id="visual-mode" disabled>F2 · Original</button>
           <button id="previous-scene" disabled>‹ Anterior</button>
           <button id="next-scene" disabled>F3 · Siguiente ›</button>
@@ -20,6 +22,13 @@
           ><button id="fullscreen">Pantalla completa</button>
         </div>
       </header>
+      <div class="catalog">
+        <label for="scene-select">Pantalla</label>
+        <select id="scene-select" disabled>
+          <option>0 · TITLE — Bienvenida</option>
+        </select>
+      </div>
+      <p id="asset-info"></p>
       <div id="viewport"><p id="loading">Cargando escenarios…</p></div>
       <div class="controls panorama-controls">
         <button id="boundaries" aria-pressed="false">Mostrar límites</button>
@@ -33,7 +42,7 @@
         <p id="mode">Original</p>
       </footer>
       <p>
-        F3 / Mayús+F3: escenarios · F2: paquete gráfico · Flechas: panoramas. Clic: caminar. Las
+        F3 / Mayús+F3: pantallas · F2: paquete gráfico · Flechas: panoramas. Clic: caminar. Las
         acciones y salidas se señalan sin ejecutarlas.
       </p>
     </main>

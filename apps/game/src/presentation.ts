@@ -41,7 +41,7 @@ export function fitPresentation(app: Application, world: Container, host: HTMLEl
     height = Math.max(1, host.clientHeight);
   app.renderer.resize(width, height);
   const fit = Math.min(width / 320, height / 200),
-    scale = fit >= 1 ? Math.floor(fit) : fit;
+    scale = fit;
   world.scale.set(scale);
   world.position.set(Math.floor((width - 320 * scale) / 2), Math.floor((height - 200 * scale) / 2));
 }
