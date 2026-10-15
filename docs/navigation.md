@@ -115,7 +115,7 @@ El visor arranca en TITLE (pantalla 0). Enter o el botón reproducen la presenta
 
 `trace-presentation.py` ejecuta el control original `0x2AB2–0x314F`, captura las cargas y 80 selecciones de página CRTC. Solo sustituye la carga/descompresión de imágenes; las consultas de entrada, bucles, escrituras DAC y fundidos originales se ejecutan. Cada espera explícita de flanco ascendente avanza un retrazado sintético; las consultas previas ven fase baja. No se alterna el valor por cada lectura, porque eso añadiría flancos artificiales entre bucles contiguos. No hay pulsaciones inyectadas. Contrasta las referencias estáticas de CORE (`0x698/0x6B0`), TITLE (`0x784/0x79C`) y la llamada a la presentación (`0x871`). El orden de arranque original es CORE → TITLE → presentación → entrada lógica -1 (recurso 0, BRD 0), que es distinta de la entrada normal usada para probar DUNGEON. El catálogo empieza por TITLE por decisión del usuario. CORE se conserva en `mods/original/interfaz/CORE.png`.
 
-La traza contiene 80 selecciones de página, 206 eventos efectivos de imagen/paleta y 1005 esperas de flanco, incluidos los fundidos de salida de TITLE y de la presentación. El visor reproduce ese orden y esos intervalos a una referencia configurable en el manifiesto de 70 Hz (unos 14,36 segundos sin cargas). La frecuencia física, las latencias de disco y el audio originales no están contrastados; los tiempos en segundos son una conversión de referencia. Los 144 PNG distintos de imagen/paleta se generan automáticamente a partir de los índices descomprimidos y los valores DAC, sin tocar la geometría. Original usa esos PNG exactos; Remaster conserva las imágenes del usuario y aproxima sus fundidos mediante brillo global. F2 conserva el instante de reproducción al cambiar de paquete. Omitir o terminar lleva al escenario DUNGEON de revisión; todavía no ejecuta su entrada especial inicial BRD 0. Los remasters conservan su nombre: `mods/original/presentacion/CAULDRN1.png` corresponde a `mods/remaster/presentacion/CAULDRN1.png`. Todos son de proporción 320:200; por ejemplo, 1920 × 1200 (×6) o 2560 × 1600 (×8) conservan el encuadre. Mantener exactamente las posiciones entre fotogramas para evitar saltos al animarlos.
+La traza contiene 80 selecciones de página, 206 eventos efectivos de imagen/paleta y 1005 esperas de flanco, incluidos los fundidos de salida de TITLE y de la presentación. El visor reproduce ese orden y esos intervalos a una referencia configurable en el manifiesto de 70 Hz (unos 14,36 segundos sin cargas). La frecuencia física, las latencias de disco y el audio originales no están contrastados; los tiempos en segundos son una conversión de referencia. Los 144 PNG distintos de imagen/paleta se generan automáticamente a partir de los índices descomprimidos y los valores DAC, sin tocar la geometría. Original usa esos PNG exactos; Remaster conserva las imágenes del usuario y aproxima sus fundidos mediante brillo global. F2 conserva el instante de reproducción al cambiar de paquete. Omitir o terminar lleva al escenario DUNGEON de revisión; carga ahora su estado inicial BRD 0, con Ben encadenado; liberar al personaje sigue pendiente. Los remasters conservan su nombre: `mods/original/presentacion/CAULDRN1.png` corresponde a `mods/remaster/presentacion/CAULDRN1.png`. Todos son de proporción 320:200; por ejemplo, 1920 × 1200 (×6) o 2560 × 1600 (×8) conservan el encuadre. Mantener exactamente las posiciones entre fotogramas para evitar saltos al animarlos.
 
 ```powershell
 python tools/reverse-engineering/trace-room-entries.py
@@ -125,3 +125,19 @@ pnpm mods:prepare
 ```
 
 Los informes derivados se guardan en `reports/navigation/`; el manifiesto local pasa a versión 5. Si el visor avisa de datos antiguos, repetir la preparación. Nunca se publican imágenes originales ni derivadas en Git.
+
+## Primera sala: entrada encadenada y canales ambientales
+
+El inicio lógico -1 de DUNGEON usa MANA.BRD, fotograma 0 (16 × 57), en X=125, Y=98. Ben comienza colgado boca abajo. Su canal habilita el clic, pero no el paseo: el visor conserva esta diferencia y no permite caminar desde esa postura. La acción para liberarlo todavía no está implementada.
+
+`trace-dungeon.py` ejecuta la carga original y 1.000 ciclos aislados de `0x85DE–0x8A21`. `verify-dungeon.mts` compara byte a byte los 69 registros de actores con el intérprete TypeScript, además de 32 casos del generador aleatorio y cinco casos del umbral de temporizador. Las ranuras 8 y 9 cambian visualmente en esa captura. El visor reproduce sus canales de fotograma, posición y visibilidad y aplica la ordenación y los primeros planos ya contrastados. No reproduce una grabación finita: ejecuta los programas locales.
+
+La espera principal exige al menos cinco pulsos. DUNGEON usa una referencia de 70 Hz dividida entre esos cinco pulsos; falta medir la cadencia física en DOS. El paseo STD de las otras salas mantiene su cadencia provisional de diez ciclos por segundo. La comparación aislada no demuestra todavía el comportamiento de los controladores de sala, las acciones, el audio o los obstáculos dinámicos. El cambio de banco F8 permanece rechazado hasta contrastarlo; este perfil no lo necesita. Las otras 77 salas conservan sus objetos iniciales estáticos.
+
+```powershell
+python tools/reverse-engineering/trace-dungeon.py
+pnpm --filter @curse/asset-extractor exec tsx ../../tools/reverse-engineering/verify-dungeon.mts
+pnpm mods:prepare
+```
+
+`pnpm assets:prepare` incluye la captura y su comparación antes de preparar los recursos. Los programas, semillas, tablas y capturas resultantes permanecen exclusivamente en las carpetas locales excluidas de Git.

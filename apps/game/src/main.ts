@@ -1,6 +1,9 @@
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
   originalActorOrder,
+  originalActorView,
+  tickOriginalActors,
+  type ActorPrograms,
   originalForegroundOverlaps,
   type OrderedActor,
   advanceOriginalScroll,
@@ -29,6 +32,11 @@ interface SceneRecord {
   name: string;
   background: VisualAsset;
   animationLayers: unknown[];
+  animation?: ActorPrograms & {
+    assets: (VisualAsset & { bank: number; frame: number })[];
+    cyclePulses: number;
+    referenceHz: number;
+  };
   layers: {
     actors: (OrderedActor & { frame: number })[];
     foreground: { frame: number; x: number; y: number; width: number; height: number }[];
@@ -168,25 +176,34 @@ async function start() {
   const scene = () => manifest.scenes[sceneIndex];
   async function loadLayers(record: SceneRecord) {
     const assets = await Promise.all(
-      record.layers.assets.map(async (asset) => ({
+      [
+        ...record.layers.assets.map((asset) => ({ ...asset, bank: 24576 })),
+        ...(record.animation?.assets ?? []),
+      ].map(async (asset) => ({
         asset,
         visual: await loadVisual({ ...asset, remaster: false }, pack),
       })),
     );
-    const texture = (frame: number) => {
-      const entry = assets.find((entry) => entry.asset.frame === frame);
+    const texture = (frame: number, bank = 24576) => {
+      const entry = assets.find(
+        (entry) => entry.asset.frame === frame && entry.asset.bank === bank,
+      );
       if (!entry) throw new Error('Missing original scene layer');
       return entry.visual.texture;
     };
-    const objects = record.layers.actors
-      .filter((a) => a.flags !== 0 && !(a.flags & 2) && a.frame !== 255)
+    const initialActors: (OrderedActor & { frame: number; bank?: number })[] = record.animation
+      ? record.animation.actors.slice(1).map((raw, index) => originalActorView(raw, index + 2))
+      : record.layers.actors;
+    const objects = initialActors
+      .filter((a) => a.flags !== 0 && (record.animation || !(a.flags & 2)) && a.frame !== 255)
       .map((a) => {
-        const sprite = new Sprite(texture(a.frame & 127));
+        const sprite = new Sprite(texture(a.frame & 127, a.bank ?? 24576));
         sprite.width = a.width;
         sprite.height = a.height;
         sprite.scale.x = Math.abs(sprite.scale.x) * (a.frame & 128 ? -1 : 1);
         sprite.position.set(a.x + (a.frame & 128 ? a.width : 0), a.y);
         sprite.eventMode = 'none';
+        sprite.visible = !(a.flags & 2);
         return { slot: a.slot, sprite };
       });
     const foreground = record.layers.foreground.map((piece) => {
@@ -197,7 +214,7 @@ async function start() {
       sprite.eventMode = 'none';
       return { ...piece, sprite };
     });
-    return { objects, foreground };
+    return { objects, foreground, texture };
   }
   let layerView = await loadLayers(scene());
   let depthOrder = Array.from({ length: 69 }, (_, i) => i + 1);
@@ -213,6 +230,9 @@ async function start() {
 
   const actors = new Map<number, WalkActor | null>(),
     cameras = new Map<number, number>();
+  const animationStates = new Map<number, ActorPrograms>();
+  let animationState: ActorPrograms | null = null,
+    animationElapsed = 0;
   let actor: WalkActor | null = null,
     cameraX = 0,
     renderCameraX = 0,
@@ -321,7 +341,10 @@ async function start() {
     transition = { sprite, elapsed: 0 };
   }
   function resetActor() {
-    const spawn = showingStatic ? null : scene().navigation.spawn;
+    animationState =
+      !showingStatic && scene().animation ? structuredClone(scene().animation!) : null;
+    animationElapsed = 0;
+    const spawn = showingStatic || animationState ? null : scene().navigation.spawn;
     actor = spawn ? createWalkActor(spawn.x + spawn.cameraX, spawn.y, spawn.frame) : null;
     cameraX = spawn ? Math.max(0, Math.min(scene().background.width - 320, spawn.cameraX)) : 0;
     renderCameraX = cameraX;
@@ -337,9 +360,11 @@ async function start() {
         : `${staticScreens[staticIndex].name}. Imagen de revisión. Puedes reproducir la presentación o avanzar con F3.`
       : actor
         ? 'Haz clic para caminar. Las acciones y salidas se señalarán sin ejecutarlas.'
-        : scene().navigation.entryStatus === 'hidden-player'
-          ? 'El original oculta a Ben en esta pantalla. Vista del escenario sin paseo.'
-          : 'Secuencia especial pendiente de reproducir. Vista del escenario sin paseo libre.';
+        : scene().animation
+          ? 'Ben empieza encadenado, como en el original. Su liberación requiere una acción todavía pendiente; las animaciones de la sala ya avanzan.'
+          : scene().navigation.entryStatus === 'hidden-player'
+            ? 'El original oculta a Ben en esta pantalla. Vista del escenario sin paseo.'
+            : 'Secuencia especial pendiente de reproducir. Vista del escenario sin paseo libre.';
   }
   function drawLimits() {
     limits.clear();
@@ -366,8 +391,20 @@ async function start() {
     limits.visible = showLimits && !showingStatic;
     background.height = 200;
     sceneContent.x = -renderCameraX;
+    const animated = animationState?.actors.map((raw, index) => originalActorView(raw, index + 1));
+    const animatedBen = animated?.[0];
     ben.visible = actor !== null;
-    if (actor) {
+    if (animatedBen) {
+      ben.visible = !!animatedBen.flags && !(animatedBen.flags & 2) && animatedBen.frame !== 255;
+      ben.texture = layerView.texture(animatedBen.frame & 127, animatedBen.bank);
+      ben.width = animatedBen.width;
+      ben.height = animatedBen.height;
+      ben.scale.x = Math.abs(ben.scale.x) * (animatedBen.frame & 128 ? -1 : 1);
+      ben.position.set(
+        animatedBen.x + (animatedBen.frame & 128 ? animatedBen.width : 0),
+        animatedBen.y,
+      );
+    } else if (actor) {
       const frame = actor.frame & 127;
       if (frame >= player.length) throw new Error('Frame outside normal STD walk');
       ben.texture = player[frame].texture;
@@ -376,7 +413,19 @@ async function start() {
       ben.scale.x = Math.abs(ben.scale.x) * (actor.frame & 128 ? -1 : 1);
       ben.position.set(actor.x + (actor.frame & 128 ? 32 : 0), actor.y);
     }
-    const slots: OrderedActor[] = [
+    if (animated)
+      for (const view of animated.slice(1)) {
+        const sprite = layerView.objects.find((item) => item.slot === view.slot)?.sprite;
+        if (!sprite) continue;
+        sprite.visible = !!view.flags && !(view.flags & 2) && view.frame !== 255;
+        if (!sprite.visible) continue;
+        sprite.texture = layerView.texture(view.frame & 127, view.bank);
+        sprite.width = view.width;
+        sprite.height = view.height;
+        sprite.scale.x = Math.abs(sprite.scale.x) * (view.frame & 128 ? -1 : 1);
+        sprite.position.set(view.x + (view.frame & 128 ? view.width : 0), view.y);
+      }
+    const slots: OrderedActor[] = animated ?? [
       {
         slot: 1,
         flags: actor ? 1 : 0,
@@ -453,6 +502,7 @@ async function start() {
         if (actor) stopOriginalWalk(actor);
         if (!showingStatic) {
           actors.set(scene().id, actor);
+          if (animationState) animationStates.set(scene().id, animationState);
           cameras.set(scene().id, cameraX);
         }
       }
@@ -467,6 +517,8 @@ async function start() {
       if (moved) {
         if (!showingStatic && actors.has(scene().id)) {
           actor = actors.get(scene().id)!;
+          animationState = animationStates.get(scene().id) ?? null;
+          animationElapsed = 0;
           cameraX = cameras.get(scene().id) ?? 0;
           renderCameraX = cameraX;
           scrollElapsed = 0;
@@ -566,6 +618,16 @@ async function start() {
       return;
     }
     scrollElapsed = 0;
+    if (animationState) {
+      animationElapsed += Math.min(ticker.deltaMS, 100);
+      const cadence = scene().animation!;
+      const cycleMs = (cadence.cyclePulses * 1000) / cadence.referenceHz;
+      while (animationElapsed >= cycleMs) {
+        animationElapsed -= cycleMs;
+        tickOriginalActors(animationState);
+      }
+      sync();
+    }
     if (!actor) return;
     elapsed += Math.min(ticker.deltaMS, 100);
     while (elapsed >= 100) {

@@ -29,3 +29,5 @@ export {
 export * from './original-walk.js';
 
 export * from './scene-order.js';
+
+export * from './actor-program.js';
