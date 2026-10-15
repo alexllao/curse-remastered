@@ -21,7 +21,8 @@
     "analyze-exe": "tsx src/analyze-exe.ts",
     "spr-decode": "tsx src/spr-decode.ts",
     "spr-decode-all": "tsx src/spr-decode-all.ts",
-    "spr-atlas": "tsx src/spr-atlas.ts"
+    "spr-atlas": "tsx src/spr-atlas.ts",
+    "spr-palette-audit": "tsx src/spr-palette-audit.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
