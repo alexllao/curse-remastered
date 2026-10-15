@@ -41,7 +41,7 @@ header[9] = 3; // PNG indexed-color mode
 const rgb = Buffer.from(palette.map((value) => Math.round(value * 255 / 63)));
 const scanlines = Buffer.alloc(height * (width + 1));
 for (let row = 0; row < height; row++) {
-  pixels.copy(scanlines, row * (width + 1) + 1, row * width, (row + 1) * width);
+  scanlines.set(pixels.subarray(row * width, (row + 1) * width), row * (width + 1) + 1);
 }
 const png = Buffer.concat([
   Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
