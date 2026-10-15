@@ -25,3 +25,5 @@ export {
   type Point,
   type Facing,
 } from './navigation.js';
+
+export * from './original-walk.js';

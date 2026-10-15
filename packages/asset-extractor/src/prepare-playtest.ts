@@ -37,6 +37,20 @@ const report = JSON.parse(
 ) as { results: { resourceId: number; output: string; map: string; status: string }[] };
 if (report.results.length !== 78 || report.results.some((row) => row.status !== 'decoded'))
   throw new Error('Expected 78 verified background exports');
+const boxdet = JSON.parse(await readFile(join(root, 'reports/navigation/boxdet.json'), 'utf8'));
+const navigation = JSON.parse(
+  await readFile(join(root, 'reports/navigation/walking-profile.json'), 'utf8'),
+);
+const exeHash = sha256(await readFile(join(root, 'original/CURSE.EXE')));
+if (
+  navigation.executableSha256 !== exeHash ||
+  boxdet.executableSha256 !== exeHash ||
+  boxdet.sourceSha256 !== sha256(await readFile(join(root, 'original/DATA/BOXDET.DAT'))) ||
+  navigation.stdSha256 !== sha256(await readFile(join(root, 'original/DATA/STD.BRD'))) ||
+  boxdet.resources.length !== 78 ||
+  navigation.resources.length !== 78
+)
+  throw new Error('Navigation sources differ: repeat BOXDET and walking verification');
 const scenes = [];
 for (const row of report.results) {
   const background = await prepare(
@@ -49,6 +63,11 @@ for (const row of report.results) {
     name: row.map.replace(/\.MAP$/i, ''),
     background,
     animationLayers: [],
+    navigation: {
+      ...navigation.resources.find((r: { resourceId: number }) => r.resourceId === row.resourceId),
+      regions: boxdet.resources.find((r: { resourceId: number }) => r.resourceId === row.resourceId)
+        .records,
+    },
   });
 }
 const background = scenes.find((scene) => scene.id === 70)!.background;
@@ -68,20 +87,24 @@ await writeFile(
   join(mods, 'manifest.json'),
   JSON.stringify(
     {
-      schemaVersion: 2,
+      schemaVersion: 3,
       logicalWidth: 320,
       logicalHeight: 200,
       scene: 'STUDY',
-      scope:
-        'Walking prototype; hand-authored convex floor, no original room scripts or gameplay claims',
+      scope: 'STD walking and BOXDET test viewer; no room scripts, object use or action execution',
       background,
       scenes,
       player,
+      navigationProfile: {
+        programBase: navigation.programBase,
+        programs: navigation.programs,
+        profile: navigation.profile,
+      },
     },
     null,
     2,
   ) + '\n',
 );
 console.log(
-  'Preparados los 78 fondos y 27 fotogramas originales de Ben. Primer resultado: mods/remaster/fondos/070-STUDY.png (1280 × 800). No se han modificado tus remasters.',
+  'Preparados los 78 fondos y 27 fotogramas originales de Ben. Datos de paseo STD y BOXDET incorporados. No se han modificado tus remasters.',
 );
