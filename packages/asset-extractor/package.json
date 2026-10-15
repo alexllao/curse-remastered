@@ -13,7 +13,8 @@
     "images-png": "tsx src/images-png.ts",
     "analyze-map-spr": "tsx src/analyze-map-spr.ts",
     "spr-index": "tsx src/spr-index.ts",
-    "spr-stream": "tsx src/spr-stream.ts"
+    "spr-stream": "tsx src/spr-stream.ts",
+    "spr-layout": "tsx src/spr-layout.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
