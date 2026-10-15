@@ -27,8 +27,7 @@ export function unpackRnc1(source: Uint8Array): Uint8Array {
         if (input + 1 >= data.length) throw new Error('Truncated RNC bitstream');
         const lo = data[input++];
         const hi = data[input++];
-        word = (((data[input + 1] ?? 0) << 24) |
-          ((data[input] ?? 0) << 16) | (hi << 8) | lo) >>> 0;
+        word = (((data[input + 1] ?? 0) << 24) | ((data[input] ?? 0) << 16) | (hi << 8) | lo) >>> 0;
         available = 16;
       }
       if (word & 1) value += place;
@@ -94,9 +93,9 @@ export function unpackRnc1(source: Uint8Array): Uint8Array {
         data.copy(result, output, input, input + literalCount);
         input += literalCount;
         output += literalCount;
-        const lookahead = ((data[input] ?? 0) |
-          ((data[input + 1] ?? 0) << 8) |
-          ((data[input + 2] ?? 0) << 16)) >>> 0;
+        const lookahead =
+          ((data[input] ?? 0) | ((data[input + 1] ?? 0) << 8) | ((data[input + 2] ?? 0) << 16)) >>>
+          0;
         word = ((lookahead << available) | (word & ((1 << available) - 1))) >>> 0;
       }
       if (chunk + 1 < chunks) {
@@ -123,7 +122,7 @@ export function crc16(bytes: Uint8Array): number {
   for (const byte of bytes) {
     crc ^= byte;
     for (let bit = 0; bit < 8; bit++) {
-      crc = (crc & 1) ? (crc >>> 1) ^ 0xa001 : crc >>> 1;
+      crc = crc & 1 ? (crc >>> 1) ^ 0xa001 : crc >>> 1;
     }
   }
   return crc;

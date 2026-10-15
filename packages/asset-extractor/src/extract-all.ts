@@ -4,10 +4,22 @@ import { fileURLToPath } from 'node:url';
 import { unpackRnc1, crc16 } from './rnc1.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const fromRoot = (value: string): string => isAbsolute(value) ? value : resolve(root, value);
+const fromRoot = (value: string): string => (isAbsolute(value) ? value : resolve(root, value));
 const sourceRoot = fromRoot(process.argv[2] ?? 'original');
 const destinationRoot = fromRoot(process.argv[3] ?? 'reports/extracted');
-const extensions = new Set(['.DAT', '.MAP', '.SPR', '.BRD', '.SFX', '.PAL', '.RS1', '.RS2', '.RS3', '.RS4', '.RS5']);
+const extensions = new Set([
+  '.DAT',
+  '.MAP',
+  '.SPR',
+  '.BRD',
+  '.SFX',
+  '.PAL',
+  '.RS1',
+  '.RS2',
+  '.RS3',
+  '.RS4',
+  '.RS5',
+]);
 type Entry = {
   file: string;
   extension: string;
@@ -34,14 +46,21 @@ async function walk(directory: string): Promise<void> {
     if (!extensions.has(extension)) continue;
     const bytes = await readFile(full);
     const name = relative(sourceRoot, full).replaceAll('\\', '/');
-    const entry: Entry = { file: name, extension, size: bytes.length, format: 'unknown', status: 'raw' };
+    const entry: Entry = {
+      file: name,
+      extension,
+      size: bytes.length,
+      format: 'unknown',
+      status: 'raw',
+    };
     results.push(entry);
     if (bytes.length < 18 || bytes.toString('ascii', 0, 3) !== 'RNC') continue;
     entry.format = 'RNC';
     entry.method = bytes[3];
     entry.unpackedSize = bytes.readUInt32BE(4);
     const packedSize = bytes.readUInt32BE(8);
-    entry.packedCrcValid = packedSize + 18 <= bytes.length &&
+    entry.packedCrcValid =
+      packedSize + 18 <= bytes.length &&
       crc16(bytes.subarray(18, 18 + packedSize)) === bytes.readUInt16BE(14);
     if (entry.method !== 1) {
       entry.status = 'unsupported';
@@ -74,6 +93,18 @@ const report = {
 await mkdir(destinationRoot, { recursive: true });
 const reportPath = join(destinationRoot, 'manifest.json');
 await writeFile(reportPath, JSON.stringify(report, null, 2) + '\n');
-console.log(JSON.stringify({ report: relative(root, reportPath), total: report.total,
-  extracted: report.extracted, unsupported: report.unsupported, raw: report.raw }, null, 2));
-if (report.unsupported > 0) console.log('Some resources need additional format decoders; see manifest.json.');
+console.log(
+  JSON.stringify(
+    {
+      report: relative(root, reportPath),
+      total: report.total,
+      extracted: report.extracted,
+      unsupported: report.unsupported,
+      raw: report.raw,
+    },
+    null,
+    2,
+  ),
+);
+if (report.unsupported > 0)
+  console.log('Some resources need additional format decoders; see manifest.json.');
