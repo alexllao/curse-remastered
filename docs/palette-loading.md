@@ -60,7 +60,7 @@ ninguna asociación con los SPR del juego.
 - `0xDD5C–0xDD8D` actualiza directamente el índice 255. Usa un contador que
   se reinicia a 4 y recorre 24 tripletas desde DS:B63E, con vuelta a cero.
   Esto demuestra una modificación de color en ejecución, pero todavía falta
-  identificar todos los contextos y la temporización real de esa rutina.
+  identificar todos los contextos y la temporización real de esa rutina. La ejecución aislada posterior la sitúa en el selector de interfaz y verifica que la cadencia también depende de carry; véase [Paletas dinámicas](palette-effects.md).
 - CORE.PAL, TITLE.PAL, CAULDRN.PAL, BALCONY.PAL y BASEBALL.PAL tienen rutas
   de lectura completa (768 bytes) y subida para imágenes de introducción;
   ejemplos en `0x698`, `0x784`, `0x2B2E`, `0x2C75`, `0x2EB5`.
@@ -111,7 +111,7 @@ asociación: la prueba procede del cargador y la tabla del ejecutable.
 
 ## Trabajo pendiente
 
-1. Capturar escrituras DAC durante el juego para verificar estados y temporización.
+1. Capturar escrituras DAC del juego completo para verificar activación y temporización. Las rutinas de fundido y selector ya se han contrastado mediante ejecución aislada; véase [Paletas dinámicas](palette-effects.md).
 2. Rastrear todos los productores y consumidores del búfer de paleta y la tabla DS:B63E.
 3. Completar la relación entre salas lógicas, tabla de recursos y BRD especiales.
 4. Resolver la exportación contextual de los sprites compartidos de interfaz.
