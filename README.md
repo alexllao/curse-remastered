@@ -322,3 +322,11 @@ pnpm --filter @curse/asset-extractor spr-index
 ```
 
 Lee por defecto `original/DATA/BENN.SPR` y escribe `reports/sprites/BENN-index.json`. El primer entero little-endian se interpreta como desplazamiento del primer bloque en unidades de 16 bytes; el índice se recorre hasta la primera entrada cero y se validan posiciones crecientes, alineadas y dentro del archivo. Cada bloque incluye los cinco primeros enteros de 16 bits y dimensiones candidatas. Esta herramienta **no dibuja aún sprites**: falta identificar de forma comprobable la codificación de los datos de píxel. El fichero original permanece intacto.
+
+### Investigación experimental del flujo de píxeles SPR
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-stream
+```
+
+El comando inspecciona los bloques de `BENN.SPR` y prueba, **sin darla por válida**, una gramática de secuencias `00 [FF opcional] longitud colores...` a partir del byte 12 de cada bloque. Guarda `reports/sprites/BENN-stream.json` con las secuencias detectadas, los bytes consumidos y los restantes. Los marcadores, el desplazamiento inicial de datos y la semántica de transparencia siguen por demostrar. No produce PNG ni modifica los originales.
