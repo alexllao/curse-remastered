@@ -5,7 +5,8 @@
   "scripts": {
     "inspect": "tsx src/inspect.ts",
     "build": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "inventory": "tsx src/inventory.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
