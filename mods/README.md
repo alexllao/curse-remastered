@@ -78,7 +78,7 @@ F4 y la prueba de luces se han retirado. El fondo estático, la capa reservada p
 
 ## Piezas de escenario y pantalla de título
 
-La preparación incluye las piezas originales de escenario en `original/escenario/`. Se dibujan con su orden de profundidad y se restauran los primeros planos que deben ocultar a Ben. No se han remasterizado estas piezas y sus animaciones ambientales todavía no se reproducen. El uso de objetos sigue desactivado.
+La preparación incluye las piezas originales de escenario en `original/escenario/`. Se dibujan con su orden de profundidad y se restauran los primeros planos que deben ocultar a Ben. Estas piezas conservan sus gráficos originales. El visor reproduce los canales ambientales iniciales con cambios visuales contrastados en 32 recursos; todavía faltan los controladores de interacción. El uso de objetos sigue desactivado.
 
 La pantalla de título se prepara como `original/interfaz/TITLE.png`, con el remaster en `remaster/interfaz/TITLE.png` (respetar mayúsculas). Es una pantalla completa de 320 × 200: ×6 corresponde a 1920 × 1200. El visor arranca en TITLE y permite reproducir la presentación con Enter o con su botón, además de revisarla mediante F3. Los originales y los remasters proporcionados por el usuario se conservan intactos.
 

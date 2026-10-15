@@ -166,8 +166,9 @@ Object.assign(
   scenes.find((scene) => scene.id === 0)!,
   {
     animation: {
+      includePlayer: true,
       actors: dungeon.initial,
-      programs: dungeon.programs,
+      programs: [],
       seed: dungeon.seed,
       dimensions,
       firstFreeSlot: dungeon.firstFreeSlot,
@@ -183,6 +184,70 @@ Object.assign(
     },
   },
 );
+// Los demás recursos conservan el paseo STD y ejecutan solo sus actores ambientales.
+const ambientBytes = await readFile(join(root, 'reports/navigation/ambient-audit.json'));
+const ambient = JSON.parse(ambientBytes.toString('utf8'));
+const ambientVerification = JSON.parse(
+  await readFile(join(root, 'reports/navigation/ambient-verification.json'), 'utf8'),
+);
+if (
+  ambient.executableSha256 !== exeHash ||
+  ambient.profiles.length !== 78 ||
+  ambientVerification.reportSha256 !== sha256(ambientBytes) ||
+  ambientVerification.results.length !== 78 ||
+  ambientVerification.results.some((result: { verified: boolean }) => !result.verified)
+)
+  throw new Error('Repeat ambient trace and native comparison');
+for (const profile of ambient.profiles) {
+  if (profile.resourceId === 0 || !profile.animatedSlots.length) continue;
+  const record = scenes.find((scene) => scene.id === profile.resourceId)!;
+  const source = await readFile(join(root, 'original/DATA', profile.sprite));
+  if (sha256(source) !== profile.sourceSha256) throw new Error('Ambient source differs');
+  const decoded = decode(source, indexPalette, profile.sprite);
+  const palette = composeScenePalette(
+    await readFile(join(root, 'original/DATA', record.name + '.MAP')),
+    await readFile(join(root, 'original/DATA/SPRITES.PAL')),
+  );
+  const assets = [],
+    frameDimensions: Record<string, [number, number]> = {};
+  const folder = `reports/scenes/layers/${String(record.id).padStart(3, '0')}`;
+  for (const [frame, image] of decoded.entries()) {
+    frameDimensions[`24576:${frame}`] = [image.width, image.height];
+    const sourceFile = `${folder}/animation-24576-${frame}.png`;
+    await writeFile(
+      join(root, sourceFile),
+      png(image.width, image.height, colorContextPixels(image.pixels, palette)),
+    );
+    assets.push({
+      ...(await prepare(
+        sourceFile,
+        `escenario/${String(record.id).padStart(3, '0')}/animation-24576-${frame}.png`,
+        false,
+      )),
+      bank: 24576,
+      frame,
+    });
+  }
+  Object.assign(record, {
+    animation: {
+      actors: profile.initial,
+      programs: [],
+      seed: profile.seed,
+      dimensions: frameDimensions,
+      firstFreeSlot: profile.firstFreeSlot,
+      controls: [0, 0, 0],
+      bank: 0,
+      collision: 0,
+      pendingRoom: null,
+      sounds: [],
+      assets,
+      cyclePulses: 5,
+      referenceHz: 70,
+      includePlayer: false,
+      scope: 'Initial ambient channels only; no interactions or dynamic handlers',
+    },
+  });
+}
 const presentationTrace = JSON.parse(
   await readFile(join(root, 'reports/navigation/presentation.json'), 'utf8'),
 );
@@ -275,7 +340,7 @@ await writeFile(
   join(mods, 'manifest.json'),
   JSON.stringify(
     {
-      schemaVersion: 5,
+      schemaVersion: 6,
       logicalWidth: 320,
       logicalHeight: 200,
       scene: 'TITLE',
@@ -284,6 +349,7 @@ await writeFile(
       title,
       presentation,
       presentationPlayback,
+      actorPrograms: dungeon.programs,
       scenes,
       player,
       navigationProfile: {
