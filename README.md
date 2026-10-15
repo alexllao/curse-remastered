@@ -368,3 +368,21 @@ pnpm --filter @curse/asset-extractor analyze-exe
 ```
 
 El comando escribe `reports/exe/curse-analysis.json` con la cabecera MZ, punto de entrada, tabla de reubicaciones y ubicaciones de cadenas como `benn.spr`, `benn.map` y `sprites.pal`. Los posibles operandos inmediatos que muestra son **candidatos, no referencias de código verificadas**. El paso siguiente es desensamblar las funciones de apertura/lectura y seguir las llamadas hasta el renderizado de sprites. No subas el EXE original al repositorio.
+
+### Extraer todos los sprites con colores
+
+Con los recursos originales en `original/DATA/` (no versionados), ejecuta:
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-decode-all
+```
+
+El comando recorre recursivamente los archivos `.SPR`, reconstruye los cuatro planos VGA, conserva la transparencia y genera PNG individuales en `reports/sprites/all/<NOMBRE>/`. También escribe `reports/sprites/all/manifest.json` con los resultados y errores de cada archivo. Un error en un recurso no interrumpe la extracción de los demás; el comando termina con código de error si hubo fallos.
+
+Por defecto usa `original/DATA/SPRITES.PAL` (256 colores VGA de 6 bits por canal) como **paleta candidata global**. La asociación de paleta a cada escena todavía requiere validación visual; los colores no deben considerarse definitivos hasta contrastarlos con el juego original. Puedes indicar carpetas y paleta alternativas:
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-decode-all original/DATA reports/sprites/all original/DATA/SPRITES.PAL
+```
+
+No subas los `.SPR`, `.PAL` ni los PNG derivados al repositorio.
