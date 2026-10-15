@@ -409,3 +409,12 @@ pnpm --filter @curse/asset-extractor spr-atlas reports/sprites/scenes reports/sp
 Los manifiestos con hashes, las paletas derivadas y los PNG permanecen en `reports/` (excluido de Git).
 
 La ejecución aislada del código original también verifica los fundidos y el ciclo del índice 255 de la interfaz. Véase [captura reproducible, modelos TypeScript y límites](docs/palette-effects.md).
+
+### Sprites de interfaz con paleta compartida
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-decode-ui
+pnpm --filter @curse/asset-extractor spr-atlas reports/sprites/interface reports/sprites/interface-atlases
+```
+
+Exporta 211 sprites de MOUSE, FONT e ICONS usando únicamente colores compartidos verificados. ICONS[159] queda pendiente porque siete píxeles usan índices del escenario. Véase [evidencia y resultados](docs/interface-palettes.md).

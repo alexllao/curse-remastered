@@ -71,8 +71,9 @@ ninguna asociación con los SPR del juego.
 **Alcance:** los PNG nuevos representan la paleta base de carga de cada
 recurso de escena. No están verificados mediante captura del juego original
 ni reproducen todos los estados de fundido o animación. FONT, ICONS y MOUSE
-quedan sin asociación única de escena; el exportador no les asigna una
-paleta por luminosidad o por parecido visual.
+no tienen una asociación única de escena. La investigación posterior resuelve
+211 sprites mediante los colores compartidos y conserva ICONS[159] como
+excepción: véase [Paletas de interfaz](interface-palettes.md).
 
 ## Extracción reproducible
 
@@ -114,6 +115,6 @@ asociación: la prueba procede del cargador y la tabla del ejecutable.
 1. Capturar escrituras DAC del juego completo para verificar activación y temporización. Las rutinas de fundido y selector ya se han contrastado mediante ejecución aislada; véase [Paletas dinámicas](palette-effects.md).
 2. Rastrear todos los productores y consumidores del búfer de paleta y la tabla DS:B63E.
 3. Completar la relación entre salas lógicas, tabla de recursos y BRD especiales.
-4. Resolver la exportación contextual de los sprites compartidos de interfaz.
+4. Resolver el contexto de ICONS.SPR[159]. Los otros 211 sprites de interfaz ya se exportan con la paleta compartida verificada.
 
 Las comprobaciones específicas de los archivos cambiados (ESLint, Prettier y TypeScript) pasan. La comprobación global del repositorio sigue fallando por problemas previos en rnc2.ts (ramas duplicadas), importaciones sin usar en spr-atlas.ts y spr-decode.ts, y Object.groupBy con lib ES2022 en analyze-map-spr.ts. Estos archivos no se han modificado en este cambio.

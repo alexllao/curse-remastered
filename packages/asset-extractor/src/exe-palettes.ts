@@ -74,7 +74,7 @@ const report = {
     .sort(),
   pending: [
     'Runtime captures for fades and animated index 255',
-    'Shared/UI sprites have no single verified scene association',
+    'UI sprites have no single MAP association; use spr-decode-ui for shared colors and per-sprite exceptions',
     'Table record 78 has a MAP pointer but no SPR pointer; excluded',
   ],
 };

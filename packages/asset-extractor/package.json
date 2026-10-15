@@ -25,8 +25,9 @@
     "spr-palette-audit": "tsx src/spr-palette-audit.ts",
     "exe-palettes": "tsx src/exe-palettes.ts",
     "spr-decode-scenes": "pnpm exe-palettes && tsx src/spr-decode-all.ts original/DATA reports/sprites/scenes reports/palettes/scenes/manifest.json",
-    "test": "tsx --test src/scene-palette.test.ts src/palette-effects.test.ts",
-    "palette-effects-verify": "tsx src/palette-effects-verify.ts"
+    "test": "tsx --test src/scene-palette.test.ts src/palette-effects.test.ts src/shared-palette.test.ts",
+    "palette-effects-verify": "tsx src/palette-effects-verify.ts",
+    "spr-decode-ui": "tsx src/spr-decode-ui.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
