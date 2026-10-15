@@ -1,58 +1,101 @@
-import { Application, Assets, Container, Texture } from 'pixi.js';
+import { Application, Assets, Container, ImageSource, Rectangle, Texture } from 'pixi.js';
 
-export const PRESENTATION_MODES = [
+export interface GraphicsPack {
+  id: string;
+  label: string;
+}
+export const DEFAULT_PACKS: GraphicsPack[] = [
   { id: 'original', label: 'Original' },
-  { id: 'escalado', label: 'Escalado' },
   { id: 'remaster', label: 'Remaster' },
-] as const;
-export type PresentationMode = (typeof PRESENTATION_MODES)[number]['id'];
+];
 export interface VisualAsset {
   file: string;
   width: number;
   height: number;
   remaster?: boolean;
 }
-
+export async function discoverPacks(): Promise<GraphicsPack[]> {
+  try {
+    const response = await fetch('/__mods/packs.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('No pack catalog');
+    const data = await response.json();
+    if (!Array.isArray(data.packs)) throw new Error('Invalid pack catalog');
+    const safe = data.packs.filter(
+      (pack: GraphicsPack) =>
+        typeof pack.id === 'string' &&
+        typeof pack.label === 'string' &&
+        pack.id.length > 0 &&
+        !pack.id.startsWith('.') &&
+        !/[\\/]/.test(pack.id),
+    );
+    if (!safe.some((pack: GraphicsPack) => pack.id === 'original'))
+      throw new Error('Missing original pack');
+    return safe;
+  } catch {
+    return DEFAULT_PACKS;
+  }
+}
 /** El tamaño lógico no depende de la resolución del PNG ni de la ventana. */
 export function fitPresentation(app: Application, world: Container, host: HTMLElement) {
   const width = Math.max(1, host.clientWidth),
     height = Math.max(1, host.clientHeight);
   app.renderer.resize(width, height);
-  const fit = Math.min(width / 320, height / 200);
-  const scale = fit >= 1 ? Math.floor(fit) : fit;
+  const fit = Math.min(width / 320, height / 200),
+    scale = fit >= 1 ? Math.floor(fit) : fit;
   world.scale.set(scale);
   world.position.set(Math.floor((width - 320 * scale) / 2), Math.floor((height - 200 * scale) / 2));
 }
-
-export async function loadVisual(asset: VisualAsset, mode: PresentationMode) {
-  let fallback = false;
-  let texture: Texture;
-  if (mode === 'remaster' && asset.remaster) {
+export async function loadVisual(asset: VisualAsset, pack: GraphicsPack) {
+  const candidates =
+    pack.id === 'original' || !asset.remaster
+      ? []
+      : pack.id === 'remaster'
+        ? ['remaster']
+        : [pack.id, 'remaster'];
+  for (const candidate of candidates) {
+    let bitmap: ImageBitmap | undefined;
     try {
-      // Evita reutilizar un fondo antiguo al volver a Remaster tras copiar otro PNG.
-      const response = await fetch(`/remaster/${asset.file}?v=${Date.now()}`, {
-        cache: 'no-store',
-      });
-      if (!response.ok || !response.headers.get('content-type')?.includes('image/png'))
-        throw new Error('Missing remaster');
-      const bitmap = await createImageBitmap(await response.blob());
-      if (
-        Math.abs(bitmap.width * asset.height - bitmap.height * asset.width) >
-        2 * Math.max(asset.width, asset.height)
-      ) {
-        bitmap.close();
-        throw new Error('Incompatible proportions');
+      const path = `/${encodeURIComponent(candidate)}/${asset.file.split('/').map(encodeURIComponent).join('/')}`;
+      const response = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok || !response.headers.get('content-type')?.includes('image/png')) continue;
+      bitmap = await createImageBitmap(await response.blob());
+      let rect: Rectangle | undefined;
+      // Un atlas o panorama con bandas puede declarar su región, sin editar el PNG.
+      const meta = await fetch(`${path}.json?v=${Date.now()}`, { cache: 'no-store' });
+      if (meta.ok && meta.headers.get('content-type')?.includes('application/json')) {
+        const data = await meta.json(),
+          r = data.contentRect;
+        if (r) {
+          if (
+            ![r.x, r.y, r.width, r.height].every(Number.isInteger) ||
+            r.x < 0 ||
+            r.y < 0 ||
+            r.width < 1 ||
+            r.height < 1 ||
+            r.x + r.width > bitmap.width ||
+            r.y + r.height > bitmap.height
+          )
+            throw new Error('Invalid image region');
+          rect = new Rectangle(r.x, r.y, r.width, r.height);
+        }
       }
-      texture = Texture.from(bitmap);
-      texture.source.scaleMode = 'linear';
-      return { texture, fallback, disposable: true };
+      const width = rect?.width ?? bitmap.width,
+        height = rect?.height ?? bitmap.height;
+      if (
+        Math.abs(width * asset.height - height * asset.width) >
+        2 * Math.max(asset.width, asset.height)
+      )
+        throw new Error('Incompatible proportions');
+      const texture = new Texture({
+        source: new ImageSource({ resource: bitmap, scaleMode: 'linear' }),
+        frame: rect,
+      });
+      return { texture, usedPack: candidate, fallback: candidate !== pack.id, disposable: true };
     } catch {
-      fallback = true;
+      bitmap?.close();
     }
-  } else if (mode === 'remaster') fallback = true;
-  texture = await Assets.load<Texture>(
-    `/${mode === 'escalado' ? 'escalado' : 'original'}/${asset.file}`,
-  );
-  texture.source.scaleMode = mode === 'remaster' ? 'linear' : 'nearest';
-  return { texture, fallback, disposable: false };
+  }
+  const texture = await Assets.load<Texture>(`/original/${asset.file}`);
+  texture.source.scaleMode = 'nearest';
+  return { texture, usedPack: 'original', fallback: pack.id !== 'original', disposable: false };
 }

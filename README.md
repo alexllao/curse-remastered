@@ -51,7 +51,7 @@ Husky ejecuta lint-staged antes de cada commit y `pnpm check` antes de cada push
 
 1. **Recuperación de recursos:** inventariar los archivos, validar RNC1, implementar RNC2, investigar los formatos `.MAP`, `.SPR`, `.BRD`, `.SFX` y las paletas, y crear herramientas de conversión reproducibles.
 2. **Reconstrucción jugable:** implementar escenarios, zonas interactivas, acciones, navegación, animaciones, sonido y guardado/carga en TypeScript y PixiJS 8.
-3. **Mejoras gráficas opcionales y no destructivas:** ofrecer **Original** (escalado entero por vecino más cercano), **Mejorado** (xBRZ/ScaleFX) y **Remastered HD** (reescalado con IA fuera del juego y revisión manual). Conservar los gráficos originales, las transparencias y la coherencia entre fotogramas. Los fondos y los sprites pueden necesitar tratamientos distintos. No ejecutar IA durante la partida.
+3. **Mejoras gráficas opcionales y no destructivas:** ofrecer **Original** (escalado entero por vecino más cercano) y **Remastered HD** (reescalado con IA fuera del juego y revisión manual). Conservar los gráficos originales, las transparencias y la coherencia entre fotogramas. Los fondos y los sprites pueden necesitar tratamientos distintos. No ejecutar IA durante la partida.
 
 **Estado actual:** existen herramientas para extraer RNC1 y la pantalla de título. La primera extracción por lotes ya se ha ejecutado y analizado mediante su manifiesto; queda pendiente validar RNC2, así como la interpretación de la mayoría de formatos y la validación completa del proyecto.
 
@@ -196,7 +196,6 @@ El _upscaling_ amplía la imagen creando o interpolando píxeles; **no recupera 
 Los modos previstos son:
 
 - **Original:** gráficos extraídos sin modificar, con escalado entero por vecino más cercano.
-- **Mejorado:** algoritmos de escalado de pixel art, como xBRZ o ScaleFX, con revisión visual.
 - **Remastered HD:** reescalado con ayuda de IA fuera del juego y retoque manual, sin sustituir los archivos originales.
 
 Los fondos y los sprites animados requieren tratamientos distintos. Todos los fotogramas deben mantener coherencia y respetar transparencias y puntos de interacción. La IA puede inventar detalles, por lo que su resultado será una reinterpretación artística opcional, no una recuperación exacta de píxeles perdidos.
@@ -441,7 +440,7 @@ Reconstruye 78 fondos según las tablas del ejecutable y extrae 637 fotogramas B
 
 ## Primera escena jugable y recursos Remaster
 
-La prueba permite mover a Ben por una zona provisional de la alfombra de STUDY. Haz clic para caminar; F2 alterna **Original → Escalado → Remaster** sin reiniciar la escena. El modo Escalado usa Scale2x. La esquina superior derecha muestra un contador discreto de FPS. Remaster sustituye cada recurso disponible y usa el original interpolado donde falte una versión mejorada. La lógica conserva coordenadas de 320 × 200, independientemente de la resolución de las imágenes.
+La prueba permite mover a Ben por una zona provisional de la alfombra de STUDY. Haz clic para caminar; F2 alterna **Original ↔ Remaster** sin reiniciar la escena. La esquina superior derecha muestra un contador discreto de FPS. Remaster sustituye cada recurso disponible y usa el original sin interpolar donde falte una versión mejorada. La lógica conserva coordenadas de 320 × 200, independientemente de la resolución de las imágenes.
 
 ```powershell
 pnpm mods:prepare
@@ -452,3 +451,5 @@ pnpm --filter @curse/engine test
 La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. El servidor local usa el puerto 8787. El primer encargo es `mods/original/fondos/070-STUDY.png`; guarda el resultado como `mods/remaster/fondos/070-STUDY.png` a 1280 × 800. Véase [carpetas, nombres y proceso gradual](mods/README.md). Los fotogramas normales de Ben son 32 × 48; su versión a 4× sería 128 × 192 con transparencia y anclaje conservados. Las poses con otras dimensiones se escalan desde su propio tamaño original.
 
 Esta es una prueba de paseo ejecutada en el navegador, todavía sin salidas, inventario, interacciones ni scripts originales de sala. El empaquetado como aplicación nativa de Windows sigue pendiente. Los recursos locales de `mods/` y las compilaciones que los contienen no se suben a Git.
+
+F4 compara la prueba opcional de iluminación de STUDY: variación suave de luces en velas y chimenea, como capas independientes. Se desactiva en Original; no pretende reproducir animaciones verificadas del juego DOS. Los sprites generados se han descartado y todos los personajes permanecen originales. El siguiente trabajo previsto es preparar una galería de fondos con F3, después de valorar esta prueba. Aún no se han generado remasters de los otros fondos ni implementado F3.

@@ -6,9 +6,6 @@ original/
 .DS_Store
 __pycache__/
 
-# Recursos locales de los modos grÃ¡ficos (originales y derivados).
-mods/original/
-mods/escalado/
-mods/remaster*/
-mods/referencias/
-mods/manifest.json
+# Todos los paquetes gráficos locales, independientemente de su nombre.
+mods/*
+!mods/README.md
