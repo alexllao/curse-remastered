@@ -71,13 +71,22 @@ export function unpackRnc2(source: Uint8Array): Uint8Array {
     }
     throw new Error('Invalid RNC2 distance code');
   };
+  const lengthCodes = new Map<string, number>([
+    ['00', 4],
+    ['10', 5],
+    ['010', 6],
+    ['011', 7],
+    ['110', 8],
+    ['111', 9],
+  ]);
   const length = (): number => {
-    const a = bit();
-    const b = bit();
-    if (a === 0) return b === 0 ? 4 : 5;
-    const c = bit();
-    if (b === 0) return c === 0 ? 6 : 7;
-    return c === 0 ? 8 : 9;
+    let code = '';
+    for (let i = 0; i < 3; i++) {
+      code += String(bit());
+      const value = lengthCodes.get(code);
+      if (value !== undefined) return value;
+    }
+    throw new Error('Invalid RNC2 length code');
   };
 
   readBits(2); // Two ballast bits.
