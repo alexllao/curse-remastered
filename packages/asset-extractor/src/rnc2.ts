@@ -49,7 +49,7 @@ export function unpackRnc2(source: Uint8Array): Uint8Array {
   };
   const copy = (distance: number, count: number): void => {
     if (distance < 1 || distance > out || count < 1 || out + count > size) {
-      throw new Error('Invalid RNC2 back-reference');
+      throw new Error(`Invalid RNC2 back-reference: offset=${out}, distance=${distance}, count=${count}, inputOffset=${pos}, bitsLeft=${left}`);
     }
     for (let i = 0; i < count; i++) {
       output[out] = output[out - distance];
