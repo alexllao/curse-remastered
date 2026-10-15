@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "inventory": "tsx src/inventory.ts",
     "rnc-info": "tsx src/rnc-info.ts",
-    "title-png": "tsx src/title-png.ts"
+    "title-png": "tsx src/title-png.ts",
+    "extract-all": "tsx src/extract-all.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
