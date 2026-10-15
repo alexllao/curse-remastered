@@ -40,3 +40,17 @@ Las direcciones de la tabla son **posiciones dentro del EXE**; el desensamblado 
 - `CURSE.CFG` se usa para la configuración y no forma parte de la ruta gráfica investigada.
 - La presencia de cadenas `benn.spr` y `benn.map` no identifica por sí sola la rutina que las carga.
 - La rutina encontrada **carga** `mouse.spr`; todavía no hemos localizado su **decodificador**.
+
+## Descubrimiento: decodificador SPR original (verificado)
+
+La ruta que usa `mouse.spr` llega al código en posición de archivo `0xEE51`: toma el segmento guardado en `DS:[0x2C29]`, indexa el sprite y llama a `0x718C` para dibujarlo. El desensamblado de `0x718C` demuestra que el encabezado del sprite contiene dos dimensiones (`uint16LE`) y tres desplazamientos (`uint16LE`) relativos al byte `start + 10`. Los cuatro flujos VGA comienzan en `start+10+[0, offset3, offset2, offset1]`.
+
+Cada flujo representa uno de los cuatro planos de píxeles intercalados de VGA (`x % 4`). Por cada fila: byte firmado negativo = avanzar tantos píxeles de ese plano sin pintar; después, byte positivo = número de índices de paleta literales; byte cero = fin de fila. Un byte positivo directamente también significa copiar ese número de índices literales. La implementación está en `packages/asset-extractor/src/spr-decode.ts`.
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-decode
+```
+
+Genera los PNG individuales en `reports/sprites/BENN-decoded/`, junto con `manifest.json`. **Los PNG actuales muestran índices de paleta en escala de grises; todavía falta resolver la paleta RGB correcta.** El algoritmo se contrastó con los 22 sprites de `BENN.SPR` y reconstruye figuras reconocibles sin errores de flujo.
+
+Los antiguos comandos `spr-preview` y `spr-compare` son experimentos anteriores, no decodificadores válidos.
