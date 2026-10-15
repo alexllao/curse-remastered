@@ -56,32 +56,20 @@ export function unpackRnc2(source: Uint8Array): Uint8Array {
       out++;
     }
   };
+  const distanceCodes = new Map<string, number>([
+    ['0', 0], ['110', 1], ['1000', 2], ['1001', 3],
+    ['10101', 4], ['10111', 5], ['11101', 6], ['11111', 7],
+    ['101000', 8], ['101001', 9], ['101100', 10], ['101101', 11],
+    ['111000', 12], ['111001', 13], ['111100', 14], ['111101', 15],
+  ]);
   const distance = (): number => {
-    // Prefix code: 0 => 0, 110 => 1, 1000/1001 => 2/3,
-    // 10101/10111/11101/11111 => 4..7; six-bit prefixes => 8..15.
-    let prefix = bit();
-    let high = 0;
-    if (prefix !== 0) {
-      const second = bit();
-      const third = bit();
-      if (second === 1 && third === 0) high = 1;
-      else {
-        const fourth = bit();
-        if (second === 0 && third === 0) high = 2 + fourth;
-        else {
-          const fifth = bit();
-          if (second === 0 && third === 1) high = 4 + (fourth << 1) + fifth;
-          else if (second === 1 && third === 1) {
-            if (fourth === 0) high = 6 + fifth;
-            else {
-              const sixth = bit();
-              high = 8 + (fifth << 1) + sixth;
-            }
-          } else throw new Error('Invalid RNC2 distance code');
-        }
-      }
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += String(bit());
+      const high = distanceCodes.get(code);
+      if (high !== undefined) return (high << 8) + readByte() + 1;
     }
-    return (high << 8) + readByte() + 1;
+    throw new Error('Invalid RNC2 distance code');
   };
   const length = (): number => {
     const a = bit();
