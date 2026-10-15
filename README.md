@@ -283,3 +283,13 @@ La ejecución local comunicada por el usuario produjo **18 PNG**, **1 recurso om
 ### Validación visual de la introducción
 
 El usuario ha revisado las imágenes PNG generadas y confirma que se ven correctamente y corresponden a la animación de introducción del juego. Con esta comprobación quedan validados visualmente los fotogramas y las paletas utilizados en esta fase, además de las verificaciones de tamaño y CRC de la extracción. La próxima investigación se centrará en los formatos propios `.MAP` y `.SPR`; todavía no debe asumirse su estructura interna por la extensión del archivo.
+
+## Investigación de los formatos MAP y SPR
+
+Se ha incorporado un analizador **de solo lectura** que inventaría los archivos `.MAP` y `.SPR` de `original/` sin asumir de antemano que contienen escenarios o sprites ni modificar los originales.
+
+```powershell
+pnpm --filter @curse/asset-extractor analyze-map-spr
+```
+
+El comando guarda `reports/map-spr-analysis.json` con los tamaños por extensión, los primeros bytes en hexadecimal y ASCII imprimible, los primeros valores de 16 y 32 bits en ambos órdenes de bytes, la entropía, la proporción de ceros, el número de valores distintos y la frecuencia de bytes consecutivos repetidos. Estos indicadores servirán para comparar estructuras y plantear hipótesis verificables sobre cabeceras, dimensiones, índices y compresión. **Aún no existe un decodificador confirmado de MAP o SPR.** El informe puede compartirse sin incluir los archivos originales; conviene revisar que sus cabeceras no contengan datos privados antes de publicarlo.
