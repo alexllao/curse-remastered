@@ -3,7 +3,7 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const absolute = (path: string): string => isAbsolute(path) ? path : resolve(root, path);
+const absolute = (path: string): string => (isAbsolute(path) ? path : resolve(root, path));
 const source = absolute(process.argv[2] ?? 'original/DATA/BENN.SPR');
 const target = absolute(process.argv[3] ?? 'reports/sprites/BENN-index.json');
 const data = await readFile(source);
@@ -33,7 +33,10 @@ const sprites = offsets.map((start, index) => {
   const end = offsets[index + 1] ?? data.length;
   if (end - start < 10) throw new Error(`Sprite ${index} has truncated header`);
   return {
-    index, start, end, bytes: end - start,
+    index,
+    start,
+    end,
+    bytes: end - start,
     widthCandidate: data.readUInt16LE(start),
     heightCandidate: data.readUInt16LE(start + 2),
     headerWords: Array.from({ length: 5 }, (_, i) => data.readUInt16LE(start + i * 2)),
@@ -42,10 +45,14 @@ const sprites = offsets.map((start, index) => {
 });
 const report = {
   source: source.replace(root, '').replaceAll('\\', '/'),
-  bytes: data.length, indexEnd, indexCount,
+  bytes: data.length,
+  indexEnd,
+  indexCount,
   sprites,
   note: 'Index and 16-byte alignment verified. Dimensions and remaining header words are hypotheses; pixel codec unknown.',
 };
 await mkdir(dirname(target), { recursive: true });
 await writeFile(target, JSON.stringify(report, null, 2) + '\n');
-console.log(JSON.stringify({ sprites: sprites.length, first: sprites[0], report: target }, null, 2));
+console.log(
+  JSON.stringify({ sprites: sprites.length, first: sprites[0], report: target }, null, 2),
+);
