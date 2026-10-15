@@ -253,3 +253,25 @@ La segunda extracción mostró 16 errores `Invalid RNC2 back-reference`. Los arc
 Después de corregir la tabla de longitudes del decodificador RNC2, la ejecución local del extractor ha informado de **192 recursos examinados, 19 extraídos, 0 no compatibles y 173 sin interpretar**. Por tanto, los **3 archivos RNC1 y los 16 RNC2** se han descomprimido sin errores según el resumen facilitado. El código comprueba el tamaño y los CRC16 antes de guardar los datos. Esta validación **no implica** que los archivos extraídos ya se hayan identificado o comprobado visualmente como imágenes.
 
 **Siguiente fase:** convertir los bloques de 64.000 bytes en PNG indexados de 320 × 200 cuando exista una paleta de 768 bytes asociable, comparar visualmente los resultados y documentar qué relación entre archivos y paletas queda realmente confirmada. Después se investigarán los formatos propios `.MAP` y `.SPR`.
+
+## Conversión de pantallas extraídas a PNG (fase de validación visual)
+
+Se ha añadido el comando:
+
+```powershell
+pnpm --filter @curse/asset-extractor images-png
+```
+
+Lee `reports/extracted/manifest.json` y convierte los recursos extraídos de **64.000 bytes** en PNG indexados de **320 × 200**. Conserva los índices de píxel y aplica una paleta VGA de 768 bytes. Los PNG se guardan en `reports/images/DATA/` y el resultado de cada conversión en `reports/images/manifest.json`. Los archivos originales no se modifican ni se suben a Git.
+
+Las asociaciones de paleta son **hipótesis basadas en los nombres**, todavía pendientes de comprobación visual:
+
+| Pantallas | Paleta candidata |
+| --- | --- |
+| `BALCONY1.DAT` a `BALCONY5.DAT` | `BALCONY.PAL` |
+| `BASEBAL1.DAT` a `BASEBAL6.DAT`, `BASEBAT.DAT` | `BASEBALL.PAL` |
+| `CAULDRN1.DAT` a `CAULDRN4.DAT` | `CAULDRN.PAL` |
+| `TITLE.DAT` | `TITLE.PAL` (asociación ya comprobada) |
+| `CORE.DAT` | `CORE.PAL` (pendiente de inspección visual) |
+
+`MENU.DAT` se omite porque tiene 10.240 bytes y no es una pantalla completa de 320 × 200. El conversor rechaza paletas que no tengan 768 bytes o que incluyan componentes superiores a 63, en lugar de inventar colores. **Una conversión técnicamente correcta no demuestra por sí sola que la paleta elegida sea la adecuada.**
