@@ -9,7 +9,8 @@
     "inventory": "tsx src/inventory.ts",
     "rnc-info": "tsx src/rnc-info.ts",
     "title-png": "tsx src/title-png.ts",
-    "extract-all": "tsx src/extract-all.ts"
+    "extract-all": "tsx src/extract-all.ts",
+    "images-png": "tsx src/images-png.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
