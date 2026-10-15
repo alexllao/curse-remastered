@@ -1,4 +1,9 @@
 import assert from 'node:assert/strict';
+import {
+  originalActorOrder,
+  originalForegroundOverlaps,
+  type OrderedActor,
+} from '../../packages/engine/src/scene-order.js';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import {
@@ -74,6 +79,25 @@ for (const scroll of report.scrolls) {
   }
   assert.deepEqual(positions, scroll.pixelOffsets, 'CRTC scrolling progression');
 }
+const order = JSON.parse(
+  await readFile(root + 'reports/navigation/scene-order-verification.json', 'utf8'),
+) as {
+  executableSha256: string;
+  orderCases: { actors: OrderedActor[]; previous: number[]; expected: number[] }[];
+  foregroundCases: {
+    piece: { x: number; y: number; width: number; height: number };
+    actors: OrderedActor[];
+    expected: boolean;
+  }[];
+};
+assert.equal(order.executableSha256, report.executableSha256);
+for (const test of order.orderCases)
+  assert.deepEqual(originalActorOrder(test.actors, test.previous), test.expected);
+for (const test of order.foregroundCases)
+  assert.equal(originalForegroundOverlaps(test.piece, test.actors), test.expected);
+console.log(
+  `Contrastadas ${order.orderCases.length} ordenaciones de 69 actores y ${order.foregroundCases.length} superposiciones originales.`,
+);
 console.log(
   `Contrastados ${report.trajectories.length} recorridos ciclo a ciclo, ${report.conditions.length} condiciones y ${report.camera.length} umbrales de cámara y ambas secuencias de scroll con el ejecutable original.`,
 );

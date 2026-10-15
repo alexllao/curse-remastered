@@ -1,6 +1,9 @@
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
   actorContact,
+  originalActorOrder,
+  originalForegroundOverlaps,
+  type OrderedActor,
   advanceOriginalScroll,
   createWalkActor,
   followOriginalCamera,
@@ -27,6 +30,11 @@ interface SceneRecord {
   name: string;
   background: VisualAsset;
   animationLayers: unknown[];
+  layers: {
+    actors: (OrderedActor & { frame: number })[];
+    foreground: { frame: number; x: number; y: number; width: number; height: number }[];
+    assets: (VisualAsset & { frame: number })[];
+  };
   navigation: {
     regions: BoxRegion[];
     state: NavigationState;
@@ -58,12 +66,12 @@ async function start() {
     throw new Error('Prepare local assets');
   const manifest: Manifest = await response.json();
   if (
-    manifest.schemaVersion !== 3 ||
+    manifest.schemaVersion !== 4 ||
     manifest.player.length !== 27 ||
     manifest.scenes.length !== 78 ||
     !manifest.navigationProfile?.programs.length ||
     manifest.scenes.some(
-      (s) => !s.navigation || s.background.width < 320 || s.background.height !== 200,
+      (s) => !s.navigation || !s.layers || s.background.width < 320 || s.background.height !== 200,
     )
   )
     throw new Error('Repeat local navigation preparation');
@@ -78,6 +86,8 @@ async function start() {
   const world = new Container(),
     sceneContent = new Container(),
     effectsLayer = new Container(),
+    actorsLayer = new Container(),
+    foregroundLayer = new Container(),
     limits = new Graphics();
   effectsLayer.eventMode = 'none'; // Capa independiente reservada para futuras animaciones.
   limits.eventMode = 'none';
@@ -96,7 +106,15 @@ async function start() {
   ben.anchor.set(0, 0);
   const destination = new Graphics().circle(0, 0, 2).stroke({ color: 0xe9c780, width: 0.7 });
   destination.visible = false;
-  sceneContent.addChild(background, effectsLayer, limits, destination, ben);
+  actorsLayer.addChild(ben);
+  sceneContent.addChild(
+    background,
+    effectsLayer,
+    actorsLayer,
+    foregroundLayer,
+    limits,
+    destination,
+  );
   const clip = new Graphics().rect(0, 0, 320, 200).fill(0xffffff);
   world.addChild(sceneContent, clip);
   world.mask = clip;
@@ -113,6 +131,51 @@ async function start() {
   new ResizeObserver(resize).observe(viewport);
   resize();
   const scene = () => manifest.scenes[sceneIndex];
+  async function loadLayers(record: SceneRecord) {
+    const assets = await Promise.all(
+      record.layers.assets.map(async (asset) => ({
+        asset,
+        visual: await loadVisual({ ...asset, remaster: false }, pack),
+      })),
+    );
+    const texture = (frame: number) => {
+      const entry = assets.find((entry) => entry.asset.frame === frame);
+      if (!entry) throw new Error('Missing original scene layer');
+      return entry.visual.texture;
+    };
+    const objects = record.layers.actors
+      .filter((a) => a.flags !== 0 && !(a.flags & 2) && a.frame !== 255)
+      .map((a) => {
+        const sprite = new Sprite(texture(a.frame & 127));
+        sprite.width = a.width;
+        sprite.height = a.height;
+        sprite.scale.x = Math.abs(sprite.scale.x) * (a.frame & 128 ? -1 : 1);
+        sprite.position.set(a.x + (a.frame & 128 ? a.width : 0), a.y);
+        sprite.eventMode = 'none';
+        return { slot: a.slot, sprite };
+      });
+    const foreground = record.layers.foreground.map((piece) => {
+      const sprite = new Sprite(texture(piece.frame));
+      sprite.position.set(piece.x, piece.y);
+      sprite.width = piece.width;
+      sprite.height = piece.height;
+      sprite.eventMode = 'none';
+      return { ...piece, sprite };
+    });
+    return { objects, foreground };
+  }
+  let layerView = await loadLayers(scene());
+  let depthOrder = Array.from({ length: 69 }, (_, i) => i + 1);
+  function installLayers(next: typeof layerView) {
+    for (const child of actorsLayer.removeChildren()) if (child !== ben) child.destroy();
+    for (const child of foregroundLayer.removeChildren()) child.destroy();
+    layerView = next;
+    actorsLayer.addChild(ben);
+    for (const item of layerView.objects) actorsLayer.addChild(item.sprite);
+    for (const item of layerView.foreground) foregroundLayer.addChild(item.sprite);
+  }
+  installLayers(layerView);
+
   const actors = new Map<number, WalkActor | null>(),
     cameras = new Map<number, number>();
   let actor: WalkActor | null = null,
@@ -170,6 +233,27 @@ async function start() {
       ben.scale.x = Math.abs(ben.scale.x) * (actor.frame & 128 ? -1 : 1);
       ben.position.set(actor.x + (actor.frame & 128 ? 32 : 0), actor.y);
     }
+    const slots: OrderedActor[] = [
+      {
+        slot: 1,
+        flags: actor ? 1 : 0,
+        x: actor?.x ?? 0,
+        y: actor?.y ?? 0,
+        width: 32,
+        height: 48,
+        depthOffset: 0,
+      },
+      ...scene().layers.actors,
+    ];
+    depthOrder = originalActorOrder(slots, depthOrder);
+    let drawIndex = 0;
+    for (const slot of depthOrder) {
+      const sprite =
+        slot === 1 ? ben : layerView.objects.find((item) => item.slot === slot)?.sprite;
+      if (sprite) actorsLayer.setChildIndex(sprite, drawIndex++);
+    }
+    for (const piece of layerView.foreground)
+      piece.sprite.visible = originalForegroundOverlaps(piece, slots);
     sceneLabel.textContent = `${scene().name} · ${sceneIndex + 1} de ${manifest.scenes.length}`;
     modeButton.textContent = `F2 · ${pack.label}`;
     modeLabel.textContent =
@@ -196,6 +280,8 @@ async function start() {
     changing = true;
     sync();
     try {
+      const nextLayers =
+        nextScene === sceneIndex ? null : await loadLayers(manifest.scenes[nextScene]);
       const loaded = await loadVisual(manifest.scenes[nextScene].background, nextPack);
       const previous = visual,
         moved = nextScene !== sceneIndex;
@@ -208,6 +294,7 @@ async function start() {
       sceneIndex = nextScene;
       pack = nextPack;
       background.texture = loaded.texture;
+      if (nextLayers) installLayers(nextLayers);
       if (moved) {
         if (actors.has(scene().id)) {
           actor = actors.get(scene().id)!;

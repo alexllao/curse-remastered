@@ -67,9 +67,19 @@ python -m pip install --target reports/tool-deps -r tools/reverse-engineering/re
 $env:PYTHONPATH = (Resolve-Path reports/tool-deps).Path
 python tools/reverse-engineering/trace-boxdet.py
 python tools/reverse-engineering/trace-navigation.py
+python tools/reverse-engineering/trace-scene-order.py
+pnpm --filter @curse/asset-extractor scene-layers
 pnpm --filter @curse/asset-extractor navigation-verify
 ```
 
 La preparación comprueba que los hashes del ejecutable, BOXDET y STD coincidan con la exportación.
 
 F4 y la prueba de luces se han retirado. El fondo estático, la capa reservada para futuros efectos y el personaje se mantienen separados. El manifiesto reserva `animationLayers`, pero no existe aún un reproductor de esas capas. Añadir animaciones será trabajo posterior y no exige sustituir los PNG estáticos ni cambiar las coordenadas lógicas.
+
+## Piezas de escenario y pantalla de título
+
+La preparación incluye las piezas originales de escenario en `original/escenario/`. Se dibujan con su orden de profundidad y se restauran los primeros planos que deben ocultar a Ben. No se han remasterizado estas piezas y sus animaciones ambientales todavía no se reproducen. El uso de objetos sigue desactivado.
+
+La pantalla de título original se prepara como `original/interfaz/title.png`, a partir de `reports/TITLE.png` generado por `title-png`. La versión mejorada se deja como `remaster/interfaz/title.png` (el nombre `TITLE.png` también funciona en Windows). Es una pantalla completa de proporción 320:200; 1280 × 800 es un ejemplo de resolución mejorada. El manifiesto registra el recurso, pero el visor sigue arrancando en STUDY: todavía no existe una pantalla de título interactiva ni se reproduce la introducción. El remaster proporcionado por el usuario se conserva intacto.
+
+El trabajo artístico queda aplazado mientras se comprueba el original. Las nuevas propuestas de Ben pueden guardarse en `remaster/ben/` para revisión, conservando los nombres STD; el visor mantiene los sprites originales hasta que se apruebe activarlas.

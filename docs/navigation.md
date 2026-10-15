@@ -81,4 +81,28 @@ pnpm --filter @curse/asset-extractor navigation-verify
 pnpm mods:prepare
 ```
 
-`walking-profile.json` y `walking-verification.json` se generan en `reports/navigation/`. Los programas derivados del ejecutable y las posiciones originales se copian al manifiesto local de `mods/`; no se incorporan a Git. F2 conserva posición y encuadre. F3 cambia de recurso y el botón «Mostrar límites» ayuda a comprobar contactos sin activar acciones. La ocultación por piezas de escenario y la actualización de sus actores se verifican por separado; el paseo normal no implica que todos los scripts de animación estén implementados.
+`walking-profile.json` y `walking-verification.json` se generan en `reports/navigation/`. Los programas derivados del ejecutable y las posiciones originales se copian al manifiesto local de `mods/`; no se incorporan a Git. F2 conserva posición y encuadre. F3 cambia de recurso y el botón «Mostrar límites» ayuda a comprobar contactos sin activar acciones. La ocultación por piezas de escenario ya está contrastada por separado; la actualización de sus actores sigue pendiente; el paseo normal no implica que todos los scripts de animación estén implementados.
+
+## Objetos y primeros planos originales
+
+El visor ya carga los objetos visibles del estado inicial y las piezas de primer plano. Se extraen 378 PNG locales usados por los 78 recursos y 82 registros de primer plano. El cargador original `0x8CA6–0x8D6E` contrasta sus posiciones y dimensiones; el decodificador geométrico existente permanece intacto. Se aplica la paleta MAP + SPRITES y la conversión RGB6 a RGB8 mediante el conversor existente. En STUDY se compararon los 2.305 píxeles opacos de la pieza de la mesa con el fondo: coinciden todos, por lo que restaurar esa pieza no cambia sus colores.
+
+Hay dos mecanismos distintos:
+
+- Los actores se ordenan según Y + altura + ajuste de profundidad, con suma de 16 bits firmada. Se reproduce la ordenación por saltos de `0xF49A–0xF50E`, incluyendo su permutación previa y los 69 huecos del original. Así se conserva también el comportamiento comprobado con profundidades iguales, en vez de sustituirlo por una ordenación estable arbitraria.
+- Los registros de escenario de tipo cero se cargan en `0x8D22–0x8D61`. Después de los actores, `0xEE12–0xEE89` restaura su sprite si solapa a un actor con indicador exactamente 1. Estas piezas pueden ocultar piernas y cuerpo, por ejemplo detrás de la mesa del estudio. Se respeta la transparencia.
+
+`trace-scene-order.py` ejecuta la ordenación original en doce casos sintéticos con 69 actores, empates y sumas que desbordan, y comprueba ocho casos de contacto de primer plano. Se detiene antes del copiador VGA: no sustituye ni ejecuta su dibujo. `navigation-verify` contrasta los resultados TypeScript con esos informes.
+
+```powershell
+python tools/reverse-engineering/trace-scene-order.py
+pnpm --filter @curse/asset-extractor scene-layers
+pnpm --filter @curse/asset-extractor navigation-verify
+pnpm mods:prepare
+```
+
+Las imágenes se generan en `reports/scenes/layers/` y se copian a `mods/original/escenario/`. Son recursos derivados locales, excluidos de Git. Los objetos se dibujan, pero todavía no pueden usarse y sus animaciones ambientales permanecen en el fotograma inicial exportado. Los scripts pueden cambiar visibilidad, fotogramas, posición y condiciones durante una partida; esos cambios dinámicos siguen pendientes. Tampoco se declaran terminados los obstáculos dinámicos que esos scripts puedan modificar.
+
+## Siguientes bloques del original
+
+La base de revisión es Original. Quedan las entradas especiales, las animaciones ambientales y sus desplazamientos, los obstáculos dinámicos, la cadencia de la partida y las transiciones completas. El uso de objetos queda fuera de la prueba actual. También falta reconstruir la reproducción de la introducción y sus tiempos; disponer de sus imágenes extraídas no significa que su secuencia animada esté implementada.

@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decode, png } from './spr-codec.js';
+import { indexPalette, colorContextPixels } from './shared-palette.js';
 import { composeScenePalette, sha256, executableSha256 } from './scene-palette.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
@@ -53,7 +54,7 @@ for (const row of data.resources) {
     await readFile(join(root, 'original/DATA', background.map)),
     shared,
   );
-  const sprites = decode(source, palette, row.sprite);
+  const sprites = decode(source, indexPalette, row.sprite);
   const actors = row.actors.filter((a) => a.flags !== 0 && !(a.flags & 2) && a.frame !== 255);
   const frames = new Set([
     ...actors.map((a) => a.frame & 127),
@@ -66,7 +67,10 @@ for (const row of data.resources) {
     const sprite = sprites[frame];
     if (!sprite) throw new Error(`Missing layer sprite ${row.resourceId}:${frame}`);
     const file = `${folder}/${frame}.png`;
-    await writeFile(join(root, file), png(sprite.width, sprite.height, sprite.pixels));
+    await writeFile(
+      join(root, file),
+      png(sprite.width, sprite.height, colorContextPixels(sprite.pixels, palette)),
+    );
     assets.push({ frame, file, width: sprite.width, height: sprite.height });
   }
   for (const object of [...actors, ...row.foreground]) {
