@@ -19,7 +19,8 @@
     "spr-preview": "tsx src/spr-preview.ts",
     "spr-compare": "tsx src/spr-compare.ts",
     "analyze-exe": "tsx src/analyze-exe.ts",
-    "spr-decode": "tsx src/spr-decode.ts"
+    "spr-decode": "tsx src/spr-decode.ts",
+    "spr-decode-all": "tsx src/spr-decode-all.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
