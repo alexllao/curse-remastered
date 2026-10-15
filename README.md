@@ -303,3 +303,14 @@ A partir del informe local `reports/map-spr-analysis.json`:
 - Ejemplos: `BENN.SPR` comienza por `3, 32, 62, 94, 124`; `CAVE.SPR` por `2, 83, 164, 245, 268`.
 
 **Próximo paso:** analizar offsets, longitudes de segmentos y cabeceras con muestras binarias originales, y contrastar varias interpretaciones antes de generar gráficos. No hay todavía decodificación MAP/SPR validada.
+
+### Verificación binaria de BENN.SPR y BENN.MAP
+
+Se han examinado muestras locales originales (no se incorporan al repositorio).
+
+- `BENN.SPR` mide **32.976 bytes**. Los primeros **22 valores uint16 little-endian** constituyen un índice de posiciones en unidades de **16 bytes**. El primer valor es `3` (posición 48); el último es `1957` (posición 31.312). Los 44 bytes del índice están seguidos de 4 bytes de relleno.
+- Los **22 offsets** llevan a cabeceras consistentes. Sus dos primeras palabras parecen dimensiones `ancho × alto`: ejemplos `24×23`, `24×21`, `176×102`, `32×45`, `48×32`. **Pendiente** validar visualmente el contenido de los sprites.
+- Cada entrada termina donde empieza la siguiente, alineada a 16 bytes. El último bloque llega al final del archivo. Los bytes siguientes a las dimensiones incluyen campos aún no interpretados y datos probablemente codificados por filas o segmentos; no se ha demostrado el algoritmo de dibujo.
+- `BENN.MAP` mide **30.450 bytes** (`16×1903+2`). Comienza con `00 00 00 00 00 02 02 00 ...`, con secuencias iniciales de valores pequeños; más adelante cambia su distribución de bytes. **No está demostrada** su relación exacta con los sprites ni el significado de los registros.
+
+Siguiente trabajo: crear un lector de índices SPR con validación de rangos y un visor experimental de bloques, sin suponer que los datos son píxeles sin comprimir.
