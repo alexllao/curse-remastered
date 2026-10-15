@@ -32,7 +32,9 @@
     "scene-backgrounds": "tsx src/scene-backgrounds.ts",
     "brd-extract": "tsx src/brd-extract.ts",
     "prepare-playtest": "tsx src/prepare-playtest.ts",
-    "boxdet-extract": "tsx src/boxdet-extract.ts"
+    "boxdet-extract": "tsx src/boxdet-extract.ts",
+    "navigation-verify": "tsx ../../tools/reverse-engineering/verify-navigation.mts",
+    "scene-layers": "tsx src/scene-layers.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

@@ -57,6 +57,19 @@ pnpm dev
 
 Abre `http://127.0.0.1:8787/`. La preparación copia los 78 fondos y los 27 fotogramas iniciales de STD.BRD. No sobrescribe los paquetes remaster ni `referencias`. Si una copia original local difiere de la extracción actual, se detiene para conservarla.
 
-Solo STUDY permite mover a Ben sobre una zona provisional de la alfombra, trazada a mano. Las demás pantallas son una galería. Falta recuperar el movimiento, las colisiones, la cámara, las transiciones, los objetos y los scripts originales. El primer análisis reproducible está en `docs/navigation.md`.
+El paseo STD y las regiones BOXDET ya sustituyen la alfombra provisional. En 66 fondos se toma una entrada STD original; los otros 12 permiten colocar a Ben manualmente en suelo libre, con sus entradas especiales pendientes. El botón «Mostrar límites» ayuda a revisar obstáculos. La cámara sigue a Ben y desliza el panorama en ocho pasos de cuatro píxeles. Las acciones y salidas se señalan sin ejecutarse; no se permite usar objetos. Las cadencias temporales son de prueba y los scripts de sala siguen pendientes. Véase `docs/navigation.md`.
+
+Antes de `mods:prepare`, genera también los datos de navegación:
+
+```powershell
+pnpm --filter @curse/asset-extractor boxdet-extract
+python -m pip install --target reports/tool-deps -r tools/reverse-engineering/requirements.txt
+$env:PYTHONPATH = (Resolve-Path reports/tool-deps).Path
+python tools/reverse-engineering/trace-boxdet.py
+python tools/reverse-engineering/trace-navigation.py
+pnpm --filter @curse/asset-extractor navigation-verify
+```
+
+La preparación comprueba que los hashes del ejecutable, BOXDET y STD coincidan con la exportación.
 
 F4 y la prueba de luces se han retirado. El fondo estático, la capa reservada para futuros efectos y el personaje se mantienen separados. El manifiesto reserva `animationLayers`, pero no existe aún un reproductor de esas capas. Añadir animaciones será trabajo posterior y no exige sustituir los PNG estáticos ni cambiar las coordenadas lógicas.

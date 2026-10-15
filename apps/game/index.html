@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>CURSE Remastered · El estudio</title>
+    <title>CURSE Remastered · Prueba de recorridos</title>
   </head>
   <body>
     <main>
@@ -20,20 +20,21 @@
           ><button id="fullscreen">Pantalla completa</button>
         </div>
       </header>
-      <div id="viewport"><p id="loading">Cargando el estudio…</p></div>
+      <div id="viewport"><p id="loading">Cargando escenarios…</p></div>
       <div class="controls panorama-controls">
+        <button id="boundaries" aria-pressed="false">Mostrar límites</button>
         <button id="pan-left" disabled>← Panorama</button
         ><button id="pan-right" disabled>Panorama →</button>
       </div>
       <footer>
         <p id="status" role="status" aria-live="polite">
-          Haz clic en la alfombra para mover a Ben.
+          Haz clic en el suelo para probar el recorrido de Ben.
         </p>
         <p id="mode">Original</p>
       </footer>
       <p>
-        F3 / Mayús+F3: escenarios · F2: paquete gráfico · Flechas: panoramas. Paseo provisional solo
-        en STUDY.
+        F3 / Mayús+F3: escenarios · F2: paquete gráfico · Flechas: panoramas. Clic: caminar. Las
+        acciones y salidas se señalan sin ejecutarlas.
       </p>
     </main>
     <script type="module" src="/src/main.ts"></script>

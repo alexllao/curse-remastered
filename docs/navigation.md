@@ -2,7 +2,7 @@
 
 ## Alcance actual
 
-La prioridad es reconstruir el juego y usar su navegación para revisar los remasters. Las propuestas de IA pueden mover puertas, muebles y otros detalles aunque mantengan la resolución y proporción. Por ahora el visor solo permite pasear por una zona de STUDY trazada a mano: **no es la navegación original**. No se habilita un paseo libre en las demás pantallas como sustituto de esa comprobación.
+La prioridad es reconstruir el juego y usar su navegación para revisar los remasters. Las propuestas de IA pueden mover puertas, muebles y otros detalles aunque mantengan la resolución y proporción. La primera prueba usaba una alfombra de STUDY trazada a mano. El visor actual incorpora el paseo STD y las regiones originales con los límites descritos al final de este documento. No se habilita un paseo libre en las demás pantallas como sustituto de esa comprobación.
 
 Se ha verificado mediante ejecución aislada el cargador de `BOXDET.DAT` para los 78 identificadores de recursos y se han extraído sus 2.344 registros. Esto prueba la estructura y carga de esos datos, no el movimiento completo ni su comportamiento en todos los estados de una partida.
 
@@ -58,4 +58,27 @@ El ensayo conserva las instrucciones originales: solo emula los servicios DOS de
 3. Interpretar regiones condicionadas y actualizar estado, objetos y transiciones sin confundir recurso con sala lógica.
 4. Incorporar al motor solo el comportamiento contrastado y usarlo para validar el encaje de cada remaster.
 
-El extractor no modifica la geometría de los sprites, no cambia los originales y no incorpora estos rectángulos al prototipo como si ya fueran un sistema de navegación terminado.
+El extractor no modifica la geometría de los sprites ni los originales. El probador incorpora los aspectos contrastados sin declararlos un sistema de navegación de partida completo.
+
+## Paseo STD incorporado al visor
+
+La zona de alfombra trazada a mano se ha sustituido por el paseo STD y las regiones BOXDET. El motor conserva acumuladores fraccionarios, pasos horizontales y verticales, fotogramas, giros y correcciones de contacto. El contraste TypeScript coincide ciclo a ciclo con 644 recorridos aislados del ejecutable: 160 trayectorias con cuatro orientaciones y obstáculos sintéticos, y 484 casos de clics cortos alrededor de los pies. No se aproxima un clic corto mediante un salto al destino: se respeta la cuantización original. La interfaz indica «Ben ya está ahí» cuando el tramo no desplaza al personaje.
+
+Se contrastan además 65 casos de condiciones de tipo 2 y seis umbrales de cámara. Las condiciones usan una instantánea del cargador inicial de objetos, con rama normal y contexto STD explícitos; no avanzan los scripts de sala. Las condiciones sin estado conocido detienen la prueba. Las secuencias especiales, decisiones aleatorias y comprobaciones de inventario no se ejecutan; al tocar una acción o salida el visor conserva la escena y lo indica. No hay uso de objetos.
+
+El perfil exporta las 126 entradas de sala. Para 66 fondos existe al menos una entrada con Ben normal STD: el visor toma la primera de ellas y conserva su posición y cámara. Esta elección es para revisar el recurso, no reproduce el progreso de una partida. En los otros 12 fondos se permite colocar manualmente a Ben en suelo libre para probar el paseo STD; su entrada especial sigue pendiente. No se presenta esa colocación como una posición original.
+
+La cámara sigue el centro de Ben con umbrales 64/223, limitada al panorama. El scroll original escribe nueve posiciones CRTC, separadas por cuatro píxeles, con esperas de retrazado: posición inicial y ocho pasos para recorrer 32 píxeles. Se han ejecutado ambos tramos de instrucciones (`0xEF9D–0xF14A` y `0xF2B8–0xF465`) capturando esos valores. El visor presenta esa progresión en lugar de saltar 32 píxeles, y detiene el avance lógico de Ben durante el deslizamiento. Las flechas manuales usan la misma progresión.
+
+La cadencia del probador está fijada en diez ciclos de paseo y sesenta pasos de presentación por segundo, independientes de los FPS de renderizado. **No se ha verificado todavía la frecuencia temporal de la partida DOS ni la duración física de sus retrazados**. Coinciden los valores y secuencias comprobados, sin afirmar una reproducción completa de los tiempos originales.
+
+Preparación y contraste adicionales:
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path reports/tool-deps).Path
+python tools/reverse-engineering/trace-navigation.py
+pnpm --filter @curse/asset-extractor navigation-verify
+pnpm mods:prepare
+```
+
+`walking-profile.json` y `walking-verification.json` se generan en `reports/navigation/`. Los programas derivados del ejecutable y las posiciones originales se copian al manifiesto local de `mods/`; no se incorporan a Git. F2 conserva posición y encuadre. F3 cambia de recurso y el botón «Mostrar límites» ayuda a comprobar contactos sin activar acciones. La ocultación por piezas de escenario y la actualización de sus actores se verifican por separado; el paseo normal no implica que todos los scripts de animación estén implementados.
