@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decodeBrd, readLogicalRooms } from './brd-resources.js';
+import { readVerifiedBrdScriptContexts } from './brd-script-context.js';
 import { composeScenePalette, sha256 } from './scene-palette.js';
 import { colorContextPixels, colorSharedPixels, inspectIndices } from './shared-palette.js';
 import { png } from './spr-codec.js';
@@ -11,6 +12,7 @@ const dataDir = join(root, 'original/DATA'),
   output = join(root, 'reports/brd');
 const exe = await readFile(join(root, 'original/CURSE.EXE'));
 const rooms = readLogicalRooms(exe);
+const scriptContexts = readVerifiedBrdScriptContexts(exe);
 const shared = await readFile(join(dataDir, 'SPRITES.PAL'));
 const results = [],
   errors = [];
@@ -19,13 +21,25 @@ for (const source of (await readdir(dataDir)).filter((name) => /\.BRD$/i.test(na
     const data = await readFile(join(dataDir, source)),
       name = source.replace(/\.BRD$/i, '');
     const decoded = decodeBrd(data, source);
-    const contexts = [
-      ...new Set(rooms.filter((room) => room.brd === source).map((room) => room.map)),
+    const contexts: {
+      map: string;
+      status: string;
+      frames?: number[];
+      evidence?: unknown;
+    }[] = [
+      ...[...new Set(rooms.filter((room) => room.brd === source).map((room) => room.map))].map(
+        (map) => ({ map, status: 'initial-room-descriptor-context' }),
+      ),
+      ...scriptContexts.filter((context) => context.source === source),
     ];
     const palettes = await Promise.all(
-      contexts.map(async (map) => {
-        const mapData = await readFile(join(dataDir, map));
-        return { map, palette: composeScenePalette(mapData, shared), mapSha256: sha256(mapData) };
+      contexts.map(async (context) => {
+        const mapData = await readFile(join(dataDir, context.map));
+        return {
+          ...context,
+          palette: composeScenePalette(mapData, shared),
+          mapSha256: sha256(mapData),
+        };
       }),
     );
     await mkdir(join(output, 'indexed', name), { recursive: true });
@@ -63,7 +77,15 @@ for (const source of (await readdir(dataDir)).filter((name) => /\.BRD$/i.test(na
         });
       } else {
         const variants = [];
-        for (const { map, palette, mapSha256 } of palettes) {
+        for (const {
+          map,
+          palette,
+          mapSha256,
+          status,
+          frames: selectedFrames,
+          evidence,
+        } of palettes) {
+          if (selectedFrames && !selectedFrames.includes(index)) continue;
           const folder = 'contexts/' + name + '/' + map.replace(/\.MAP$/i, '');
           await mkdir(join(output, folder), { recursive: true });
           const file = folder + '/' + stem + '.png';
@@ -76,13 +98,14 @@ for (const source of (await readdir(dataDir)).filter((name) => /\.BRD$/i.test(na
             file,
             mapSha256,
             paletteSha256: sha256(palette),
-            status: 'initial-room-descriptor-context',
+            status,
+            evidence,
           });
         }
         contextual.push({
           index,
           variants,
-          contextStatus: variants.length ? 'known-initial-descriptors' : 'not-yet-associated',
+          contextStatus: variants.length ? 'known-context' : 'not-yet-associated',
           note: 'Runtime script changes may select additional BRD/MAP combinations',
         });
       }
@@ -114,6 +137,10 @@ const summary = {
     (n, row) => n + row.contextual.reduce((m, frame) => m + frame.variants.length, 0),
     0,
   ),
+  unresolvedContextualFrames: results.reduce(
+    (n, row) => n + row.contextual.filter((frame) => frame.variants.length === 0).length,
+    0,
+  ),
   partialIndexFiles: results
     .filter((row) => row.indexIssues.length)
     .map((row) => ({ source: row.source, issues: row.indexIssues })),
@@ -126,9 +153,10 @@ await writeFile(
       schemaVersion: 1,
       executableSha256: sha256(exe),
       sharedSha256: sha256(shared),
-      note: 'BRD frame indices decoded with the unchanged SPR geometry algorithm; indexed RGBA preserves indices and transparency. Palette contexts come only from verified initial room descriptors, not all runtime scripts.',
+      note: 'BRD frame indices decoded with the unchanged SPR geometry algorithm; indexed RGBA preserves indices and transparency. Palette contexts come from verified initial room descriptors and explicitly observed original script frame selections; runtime scripts are not exhaustively covered.',
       summary,
       rooms,
+      scriptContexts,
       results,
     },
     null,

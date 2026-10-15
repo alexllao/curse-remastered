@@ -14,3 +14,7 @@
 ## Original MAP routine harness
 
 `trace-map-backgrounds.py` compares all exported, referenced MAP strips with the original RNC2 instructions, and tests the original VGA blitter with a synthetic pattern. Run `scene-backgrounds` first. Uses the same pinned Unicorn dependency and executable profile as `trace-palettes.py`. See [reproduction, results and limits](../../docs/map-brd-resources.md).
+
+## Scripts originales de animación BRD
+
+`trace-brd-scripts.py` verifica las condiciones de recurso, la instalación de secuencias, la carga DOS de CHANGE/CASTLE y los índices elegidos por el intérprete original. Contrasta los cinco fotogramas CHANGE exportados con su manifiesto y rechaza un contexto de recurso incorrecto. Ejecutar `brd-extract` antes del ensayo, con la misma dependencia Unicorn que los demás contrastes. Véase [evidencia, entradas sintéticas y límites](../../docs/map-brd-resources.md#selección-brd-mediante-scripts).
