@@ -424,3 +424,13 @@ pnpm --filter @curse/asset-extractor spr-decode-ui-context
 ```
 
 Genera ICONS[159] en su contexto de origen STUDY. Es el icono del objeto 175, que puede incorporarse al inventario y usa la paleta de la escena activa; [evidencia y alcance](docs/icon159-context.md).
+
+## Fondos y animaciones originales
+
+```powershell
+pnpm --filter @curse/asset-extractor scene-backgrounds
+pnpm --filter @curse/asset-extractor brd-extract
+pnpm --filter @curse/asset-extractor spr-atlas reports/brd reports/brd/atlases
+```
+
+Reconstruye 78 fondos según las tablas del ejecutable y extrae 637 fotogramas BRD. Las vistas de objetos son composiciones estáticas de revisión. SMALL.BRD tiene una tabla parcialmente válida y diez fotogramas de otros BRD siguen pendientes de contexto de color. Véase [evidencia, reproducción y límites](docs/map-brd-resources.md).

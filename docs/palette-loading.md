@@ -114,7 +114,7 @@ asociación: la prueba procede del cargador y la tabla del ejecutable.
 
 1. Capturar escrituras DAC del juego completo para verificar activación y temporización. Las rutinas de fundido y selector ya se han contrastado mediante ejecución aislada; véase [Paletas dinámicas](palette-effects.md).
 2. Rastrear todos los productores y consumidores del búfer de paleta y la tabla DS:B63E.
-3. Completar la relación entre salas lógicas, tabla de recursos y BRD especiales.
+3. La relación inicial entre 126 salas lógicas, 78 recursos y selectores BRD ya está documentada en [Fondos MAP y BRD](map-brd-resources.md). Quedan por rastrear las selecciones dinámicas mediante scripts.
 4. El contexto de ICONS.SPR[159] ya está resuelto: objeto 175 de STUDY, transportable y coloreado según el MAP activo. Véase [evidencia y exportación contextual](icon159-context.md). Queda pendiente comprobar rutas completas de partida.
 
 Las comprobaciones específicas de los archivos cambiados (ESLint, Prettier y TypeScript) pasan. La comprobación global del repositorio sigue fallando por problemas previos en rnc2.ts (ramas duplicadas), importaciones sin usar en spr-atlas.ts y spr-decode.ts, y Object.groupBy con lib ES2022 en analyze-map-spr.ts. Estos archivos no se han modificado en este cambio.
