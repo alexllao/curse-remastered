@@ -14,7 +14,8 @@
     "analyze-map-spr": "tsx src/analyze-map-spr.ts",
     "spr-index": "tsx src/spr-index.ts",
     "spr-stream": "tsx src/spr-stream.ts",
-    "spr-layout": "tsx src/spr-layout.ts"
+    "spr-layout": "tsx src/spr-layout.ts",
+    "spr-rows": "tsx src/spr-rows.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
