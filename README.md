@@ -330,3 +330,13 @@ pnpm --filter @curse/asset-extractor spr-stream
 ```
 
 El comando inspecciona los bloques de `BENN.SPR` y prueba, **sin darla por válida**, una gramática de secuencias `00 [FF opcional] longitud colores...` a partir del byte 12 de cada bloque. Guarda `reports/sprites/BENN-stream.json` con las secuencias detectadas, los bytes consumidos y los restantes. Los marcadores, el desplazamiento inicial de datos y la semántica de transparencia siguen por demostrar. No produce PNG ni modifica los originales.
+
+### Análisis de cabeceras y estructura de bloques SPR
+
+El informe de `spr-stream` mostró que la hipótesis de secuencias `00 [FF] longitud colores` solo interpreta 20 secuencias (115 bytes) del sprite 0 y ninguna de los otros 21. **No es un decodificador validado**.
+
+```powershell
+pnpm --filter @curse/asset-extractor spr-layout
+```
+
+Genera `reports/sprites/BENN-layout.json`, con las primeras palabras de cada cabecera, relaciones aritméticas candidatas, muestras hexadecimales al inicio y al final de los datos, histogramas y posiciones de marcadores. El propósito es identificar límites y tipos de secciones antes de reconstruir los píxeles. No se añaden datos originales al repositorio.
