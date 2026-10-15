@@ -263,6 +263,7 @@ async function start() {
       visual = { ...assets.base[0], disposable: false };
       background.texture = visual.texture;
       playback = { ...assets, elapsed: resume, event: -1 };
+      renderPresentationFrame();
       status.textContent =
         'Presentación en curso. F2 compara gráficos; F3 permite revisar fotogramas. Puedes omitirla.';
     } catch {
@@ -273,6 +274,51 @@ async function start() {
       changing = false;
       sync();
     }
+  }
+  function renderPresentationFrame() {
+    if (!playback) return;
+    const tick = (playback.elapsed * manifest.presentationPlayback.referenceHz) / 1000;
+    const events = manifest.presentationPlayback.events;
+    let index = playback.event;
+    while (index + 1 < events.length && events[index + 1].tick <= tick) index++;
+    if (index >= 0 && index !== playback.event) {
+      playback.event = index;
+      const event = events[index],
+        base = playback.base[event.index];
+      visual = { ...base, disposable: false };
+      background.texture =
+        base.usedPack === 'original' ? playback.original[index].texture : base.texture;
+      background.alpha = base.usedPack === 'original' ? 1 : event.brightness;
+      staticIndex = currentView = event.index;
+      sync();
+    }
+  }
+  let transition: { sprite: Sprite; elapsed: number } | null = null;
+  const transitionDuration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 320;
+  function finishTransition() {
+    if (!transition) return;
+    transition.sprite.removeFromParent();
+    transition.sprite.texture.destroy(true);
+    transition.sprite.destroy();
+    transition = null;
+  }
+  function captureTransition() {
+    if (!transitionDuration) return;
+    // Captura a la resolución de presentación; no modifica recursos ni coordenadas.
+    const texture = app.renderer.generateTexture({
+      target: world,
+      frame: new Rectangle(0, 0, 320, 200),
+      resolution: Math.max(1, world.scale.x),
+      clearColor: '#000000',
+      textureSourceOptions: { scaleMode: 'linear' },
+    });
+    finishTransition();
+    const sprite = new Sprite(texture);
+    sprite.eventMode = 'none';
+    sprite.width = 320;
+    sprite.height = 200;
+    world.addChild(sprite);
+    transition = { sprite, elapsed: 0 };
   }
   function resetActor() {
     const spawn = showingStatic ? null : scene().navigation.spawn;
@@ -355,8 +401,8 @@ async function start() {
       ? `${currentView} · ${staticScreens[staticIndex].name}`
       : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
     sceneSelect.value = String(currentView);
-    sceneSelect.disabled = changing;
-    introButton.disabled = changing;
+    sceneSelect.disabled = changing || selectingPack;
+    introButton.disabled = changing || selectingPack;
     introButton.textContent = playback ? 'Omitir presentación' : 'Reproducir presentación';
     const asset = showingStatic ? staticScreens[staticIndex].asset : scene().background;
     assetInfo.textContent = `${asset.file} · Original: ${asset.width} × ${asset.height} · Remaster ×6: ${asset.width * 6} × ${asset.height * 6}`;
@@ -367,7 +413,8 @@ async function start() {
       (visual.fallback
         ? ` · ${visual.usedPack === 'original' ? 'Original' : visual.usedPack} donde falta`
         : '');
-    for (const b of [modeButton, nextButton, previousButton, restartButton]) b.disabled = changing;
+    for (const b of [modeButton, nextButton, previousButton, restartButton])
+      b.disabled = changing || selectingPack;
     leftButton.disabled = showingStatic || changing || cameraX === 0;
     rightButton.disabled = showingStatic || changing || cameraX >= scene().background.width - 320;
     boundaryButton.disabled = showingStatic || changing;
@@ -375,7 +422,7 @@ async function start() {
     boundaryButton.setAttribute('aria-pressed', String(showLimits));
   }
   function pan(direction: number) {
-    if (changing || showingStatic) return;
+    if (changing || selectingPack || transition || showingStatic) return;
     if (actor) stopOriginalWalk(actor);
     destination.visible = false;
     cameraX = Math.max(0, Math.min(scene().background.width - 320, cameraX + direction * 32));
@@ -384,6 +431,7 @@ async function start() {
   }
   async function show(nextView: number, nextPack: GraphicsPack) {
     if (changing) return;
+    if (!selectingPack) finishTransition();
     stopPresentation();
     const nextStatic = nextView < staticScreens.length,
       nextScene = Math.max(0, nextView - staticScreens.length);
@@ -440,19 +488,24 @@ async function start() {
     if (changing || selectingPack) return;
     const resume = playback?.elapsed;
     selectingPack = true;
+    sync();
     try {
+      captureTransition();
       packs = await discoverPacks();
       const current = packs.findIndex((p) => p.id === pack.id);
       await show(currentView, packs[(current + 1) % packs.length]);
       if (resume !== undefined) await playPresentation(resume);
     } finally {
       selectingPack = false;
+      sync();
     }
   }
   const nextScene = (direction: number) =>
-    show((currentView + direction + screenCount) % screenCount, pack);
+    selectingPack
+      ? Promise.resolve()
+      : show((currentView + direction + screenCount) % screenCount, pack);
   world.on('pointertap', (event) => {
-    if (changing || renderCameraX !== cameraX) return;
+    if (changing || selectingPack || transition || renderCameraX !== cameraX) return;
     if (showingStatic) {
       if (staticIndex === 0) void playPresentation();
       else void nextScene(1);
@@ -484,25 +537,21 @@ async function start() {
       fps.textContent = `${Math.round((fpsFrames * 1000) / fpsElapsed)} FPS`;
       fpsElapsed = fpsFrames = 0;
     }
-    if (changing) return;
+    if (changing || selectingPack) return;
+    if (transition) {
+      transition.elapsed += ticker.elapsedMS;
+      const progress = Math.min(1, transition.elapsed / transitionDuration);
+      transition.sprite.alpha = 1 - progress * progress * (3 - 2 * progress);
+      if (progress === 1) finishTransition();
+      return;
+    }
     if (playback) {
       playback.elapsed += ticker.elapsedMS;
-      const tick = (playback.elapsed * manifest.presentationPlayback.referenceHz) / 1000;
-      const events = manifest.presentationPlayback.events;
-      let index = playback.event;
-      while (index + 1 < events.length && events[index + 1].tick <= tick) index++;
-      if (index >= 0 && index !== playback.event) {
-        playback.event = index;
-        const event = events[index],
-          base = playback.base[event.index];
-        visual = { ...base, disposable: false };
-        background.texture =
-          base.usedPack === 'original' ? playback.original[index].texture : base.texture;
-        background.alpha = base.usedPack === 'original' ? 1 : event.brightness;
-        staticIndex = currentView = event.index;
-        sync();
-      }
-      if (tick >= manifest.presentationPlayback.durationTicks)
+      renderPresentationFrame();
+      if (
+        (playback.elapsed * manifest.presentationPlayback.referenceHz) / 1000 >=
+        manifest.presentationPlayback.durationTicks
+      )
         void show(staticScreens.length, pack);
       return;
     }
