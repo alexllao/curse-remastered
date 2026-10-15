@@ -80,7 +80,10 @@ for (const entry of manifest.files) {
   const paletteName = paletteFor(entry.file);
   if (entry.unpackedSize !== WIDTH * HEIGHT || !entry.output || !paletteName) {
     results.push({
-      source: entry.file, palette: paletteName, output: null, status: 'skipped',
+      source: entry.file,
+      palette: paletteName,
+      output: null,
+      status: 'skipped',
       note: 'Sin 64.000 bytes o sin una paleta candidata identificada',
     });
     continue;
@@ -95,22 +98,33 @@ for (const entry of manifest.files) {
     await mkdir(dirname(output), { recursive: true });
     await writeFile(output, png);
     results.push({
-      source: entry.file, palette: paletteName,
-      output: relativeOutput.replaceAll('\\', '/'), status: 'converted',
+      source: entry.file,
+      palette: paletteName,
+      output: relativeOutput.replaceAll('\\', '/'),
+      status: 'converted',
       note: 'PNG generado; comprobar visualmente la asociación de paleta',
     });
   } catch (error) {
     results.push({
-      source: entry.file, palette: paletteName, output: null, status: 'error',
+      source: entry.file,
+      palette: paletteName,
+      output: null,
+      status: 'error',
       note: error instanceof Error ? error.message : String(error),
     });
   }
 }
 await mkdir(outputDir, { recursive: true });
 await writeFile(join(outputDir, 'manifest.json'), JSON.stringify({ results }, null, 2) + '\n');
-console.log(JSON.stringify({
-  converted: results.filter((r) => r.status === 'converted').length,
-  skipped: results.filter((r) => r.status === 'skipped').length,
-  errors: results.filter((r) => r.status === 'error').length,
-  report: 'reports/images/manifest.json',
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      converted: results.filter((r) => r.status === 'converted').length,
+      skipped: results.filter((r) => r.status === 'skipped').length,
+      errors: results.filter((r) => r.status === 'error').length,
+      report: 'reports/images/manifest.json',
+    },
+    null,
+    2,
+  ),
+);

@@ -49,7 +49,9 @@ export function unpackRnc2(source: Uint8Array): Uint8Array {
   };
   const copy = (distance: number, count: number): void => {
     if (distance < 1 || distance > out || count < 1 || out + count > size) {
-      throw new Error(`Invalid RNC2 back-reference: offset=${out}, distance=${distance}, count=${count}, inputOffset=${pos}, bitsLeft=${left}`);
+      throw new Error(
+        `Invalid RNC2 back-reference: offset=${out}, distance=${distance}, count=${count}, inputOffset=${pos}, bitsLeft=${left}`,
+      );
     }
     for (let i = 0; i < count; i++) {
       output[out] = output[out - distance];
@@ -57,10 +59,22 @@ export function unpackRnc2(source: Uint8Array): Uint8Array {
     }
   };
   const distanceCodes = new Map<string, number>([
-    ['0', 0], ['110', 1], ['1000', 2], ['1001', 3],
-    ['10101', 4], ['10111', 5], ['11101', 6], ['11111', 7],
-    ['101000', 8], ['101001', 9], ['101100', 10], ['101101', 11],
-    ['111000', 12], ['111001', 13], ['111100', 14], ['111101', 15],
+    ['0', 0],
+    ['110', 1],
+    ['1000', 2],
+    ['1001', 3],
+    ['10101', 4],
+    ['10111', 5],
+    ['11101', 6],
+    ['11111', 7],
+    ['101000', 8],
+    ['101001', 9],
+    ['101100', 10],
+    ['101101', 11],
+    ['111000', 12],
+    ['111001', 13],
+    ['111100', 14],
+    ['111101', 15],
   ]);
   const distance = (): number => {
     let code = '';
@@ -94,6 +108,8 @@ export function unpackRnc2(source: Uint8Array): Uint8Array {
   if (chunks === 0) throw new Error('RNC2 missing chunk count');
   let found = 0;
   let done = false;
+  // Cada llamada a bit() consume entrada: las condiciones repetidas no son equivalentes.
+  /* eslint-disable no-dupe-else-if */
   while (!done && found < chunks) {
     if (bit() === 0) {
       literal();
@@ -116,6 +132,7 @@ export function unpackRnc2(source: Uint8Array): Uint8Array {
       }
     }
   }
+  /* eslint-enable no-dupe-else-if */
   if (out !== size || found !== chunks) throw new Error('Incomplete RNC2 output or chunk count');
   if (crc16(output) !== data.readUInt16BE(12)) {
     throw new Error('RNC2 unpacked CRC mismatch');

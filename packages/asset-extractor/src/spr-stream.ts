@@ -28,26 +28,52 @@ const sprites = starts.map((start, index) => {
     const at = p;
     p++;
     let marker = '00';
-    if (p < end && data[p] === 255) { marker = '00ff'; p++; }
+    if (p < end && data[p] === 255) {
+      marker = '00ff';
+      p++;
+    }
     if (p >= end) break;
     const count = data[p++];
     if (!count || p + count > end) break;
-    candidates.push({ at: at - start, marker, count, colors: data.subarray(p, p + count).toString('hex') });
+    candidates.push({
+      at: at - start,
+      marker,
+      count,
+      colors: data.subarray(p, p + count).toString('hex'),
+    });
     p += count;
     stoppedAt = p;
   }
   return {
-    index, start, end, widthCandidate: width, heightCandidate: height,
-    first12Hex: header.toString('hex'), parsedCandidateRuns: candidates.length,
-    parsedBytes: stoppedAt - (start + 12), remainingBytes: end - stoppedAt,
+    index,
+    start,
+    end,
+    widthCandidate: width,
+    heightCandidate: height,
+    first12Hex: header.toString('hex'),
+    parsedCandidateRuns: candidates.length,
+    parsedBytes: stoppedAt - (start + 12),
+    remainingBytes: end - stoppedAt,
     runs: candidates,
     note: '00/00ff + length + literal colors is only a candidate grammar, not a validated image codec.',
   };
 });
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, JSON.stringify({ source: 'local original SPR', sprites }, null, 2) + '\n');
-console.log(JSON.stringify({ sprites: sprites.length, first: {
-  width: sprites[0]?.widthCandidate, height: sprites[0]?.heightCandidate,
-  candidateRuns: sprites[0]?.parsedCandidateRuns,
-  parsedBytes: sprites[0]?.parsedBytes, remainingBytes: sprites[0]?.remainingBytes,
-}, report: output }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      sprites: sprites.length,
+      first: {
+        width: sprites[0]?.widthCandidate,
+        height: sprites[0]?.heightCandidate,
+        candidateRuns: sprites[0]?.parsedCandidateRuns,
+        parsedBytes: sprites[0]?.parsedBytes,
+        remainingBytes: sprites[0]?.remainingBytes,
+      },
+      report: output,
+    },
+    null,
+    2,
+  ),
+);
