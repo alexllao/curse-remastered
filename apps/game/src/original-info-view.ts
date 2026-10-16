@@ -1,9 +1,15 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
 import { loadVisual } from './presentation.js';
-import { originalInfoPage, type OriginalInfoProfile } from './original-info-layout.js';
+import {
+  originalInfoPage,
+  originalInfoGlyph,
+  withPortCredits,
+  type OriginalInfoProfile,
+} from './original-info-layout.js';
 
 /** Texto y glifos originales; no usa fuentes web ni contenido nuevo del proyecto. */
 export async function createOriginalInfo(profile: OriginalInfoProfile, onClose: () => void) {
+  profile = withPortCredits(profile);
   const glyphs = await Promise.all(
     profile.glyphs.map((asset) => loadVisual(asset, { id: 'original', label: 'Original' })),
   );
@@ -20,7 +26,8 @@ export async function createOriginalInfo(profile: OriginalInfoProfile, onClose: 
     );
     current.rows.forEach((row, y) =>
       row.forEach((code, x) => {
-        const index = profile.mapping[code];
+        const glyph = originalInfoGlyph(code);
+        const index = profile.mapping[glyph.code];
         if (index === undefined || index < 0 || !glyphs[index]) return;
         const sprite = new Sprite(glyphs[index].texture);
         sprite.position.set(
@@ -30,6 +37,15 @@ export async function createOriginalInfo(profile: OriginalInfoProfile, onClose: 
         sprite.width = profile.glyphs[index].width;
         sprite.height = profile.glyphs[index].height;
         layer.addChild(sprite);
+        if (glyph.accent) {
+          const mark = new Graphics();
+          const x = sprite.x + (glyph.accent === 'grave' ? 2 : 4);
+          mark
+            .rect(x, sprite.y - 2, 1, 1)
+            .rect(x + (glyph.accent === 'grave' ? 1 : -1), sprite.y - 1, 1, 1)
+            .fill(0xa6ceae);
+          layer.addChild(mark);
+        }
       }),
     );
   }

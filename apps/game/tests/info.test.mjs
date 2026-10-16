@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { originalInfoPage } from '../src/original-info-layout.ts';
+import {
+  originalInfoPage,
+  originalInfoGlyph,
+  withPortCredits,
+} from '../src/original-info-layout.ts';
 import { createProjectInfo } from '../src/project-info.ts';
 import { buildLabel } from '../src/build-label.ts';
 
@@ -64,4 +68,16 @@ test('la etiqueta usa la versión y el instante de compilación con horario de M
   assert.match(label, /^v1\.0\.0 · Compilado:/);
   assert.ok(label.includes('16/10/2026'));
   assert.ok(label.includes('12:30'));
+});
+
+test('el crédito del port conserva las páginas nativas y el nombre con sus acentos', () => {
+  const native = { pages: [{ width: 20, height: 10, rows: [[65]] }], fields: [] };
+  const credited = withPortCredits(native);
+  assert.equal(credited.pages.length, 2);
+  assert.equal(native.pages.length, 1);
+  assert.equal(credited.pages[0], native.pages[0]);
+  assert.equal(String.fromCharCode(...credited.pages[1].rows[2]).trim(), 'ÀLEX LLAÓ');
+  assert.deepEqual(originalInfoGlyph(192), { code: 65, accent: 'grave' });
+  assert.deepEqual(originalInfoGlyph(211), { code: 79, accent: 'acute' });
+  assert.deepEqual(originalInfoGlyph(65), { code: 65, accent: null });
 });

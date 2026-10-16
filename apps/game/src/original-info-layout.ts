@@ -25,3 +25,22 @@ export function originalInfoPage(profile: OriginalInfoProfile, page: number, sco
     y: Math.floor((200 - source.height) / 2),
   };
 }
+
+/** Página propia del port; conserva intactas las cuatro páginas del juego de 1992. */
+export function withPortCredits(profile: OriginalInfoProfile): OriginalInfoProfile {
+  const columns = 22;
+  const rows = ['WEB Y REMASTER', '', 'ÀLEX LLAÓ', '', 'CURSE REMASTERED'].map((line) =>
+    Array.from(
+      line.padStart(line.length + Math.floor((columns - line.length) / 2), ' '),
+      (character) => character.charCodeAt(0),
+    ),
+  );
+  return { ...profile, pages: [...profile.pages, { width: 192, height: 70, rows }] };
+}
+
+/** Dos acentos añadidos con píxeles del mismo estilo que FONT.SPR. */
+export function originalInfoGlyph(code: number) {
+  if (code === 192) return { code: 65, accent: 'grave' as const };
+  if (code === 211) return { code: 79, accent: 'acute' as const };
+  return { code, accent: null };
+}

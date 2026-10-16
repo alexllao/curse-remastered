@@ -183,3 +183,5 @@ Se sustituye el desplazamiento aproximado de la esquina del PNG por el centro ge
 - La bienvenida muestra arriba a la izquierda la versión raíz (1.0.0) y la fecha de compilación inyectada por Vite, fija durante esa compilación o sesión del servidor de desarrollo.
 - La partida ocupa la ventana disponible, con dos controles discretos para menú y pantalla completa. El marco puede verse también fuera de pantalla completa. F4 lo muestra u oculta durante la partida y guarda la preferencia. Las fuentes del juego se mantienen para una revisión posterior.
 - La música de las salas usa el selector RS verificado; la primera mazmorra reproduce CURSE.RS1. Véase MUSIC_SYNC.md para alcance y pruebas. La vista en un navegador real queda pendiente de comprobación visual.
+
+La información del modo Original añade una quinta página propia del port: «Web y remaster · Àlex Llaó», con los acentos adaptados al estilo de FONT.SPR. Las cuatro páginas nativas se conservan. La dirección musical y las alternativas parciales Amiga/AdLib están documentadas en DIRECCION_MUSICAL.md.

@@ -5,6 +5,8 @@ const priorities = ['.ogg', '.opus', '.mp3', '.m4a', '.wav', '.flac', '.aac', '.
 const labels = {
   original: 'Original',
   remaster: 'Remaster',
+  amiga: 'Amiga',
+  adlib: 'AdLib (OPL2)',
   medieval: 'Medieval',
   cinematic: 'Cinematic',
   symphonic: 'Symphonic',
