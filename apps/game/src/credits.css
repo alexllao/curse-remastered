@@ -1,0 +1,73 @@
+.project-attribution {
+  margin: 6px 0 14px;
+  color: #bdb4a5;
+  font-size: 12px;
+}
+
+#project-credits {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: clamp(20px, 4vw, 32px);
+  color: #eae0cd;
+  background: #191817;
+  border: 1px solid #7f6842;
+  border-radius: 8px;
+  box-shadow: 0 12px 50px #000b;
+}
+
+#project-credits::backdrop {
+  background: rgb(0 0 0 / 75%);
+}
+
+#project-credits h2 {
+  margin: 0 0 20px;
+  color: #f3dfb4;
+  font:
+    normal clamp(24px, 5vw, 30px) Georgia,
+    serif;
+}
+
+#project-credits p {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+#project-credits .credits-port {
+  margin: 14px 0;
+  color: #f3dfb4;
+}
+
+#project-credits .credits-disclaimer {
+  font-size: 12px;
+}
+
+#project-credits section {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #40372b;
+}
+
+#project-credits h3 {
+  margin: 0 0 10px;
+  color: #f3dfb4;
+  font:
+    normal 18px Georgia,
+    serif;
+}
+
+#project-credits a {
+  color: #e5c283;
+  text-underline-offset: 3px;
+}
+
+#project-credits a:focus-visible {
+  outline: 2px solid #e9ba6e;
+  outline-offset: 3px;
+}
+
+#project-credits form {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
