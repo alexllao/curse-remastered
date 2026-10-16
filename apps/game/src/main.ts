@@ -1,4 +1,5 @@
 import { chooseFrame } from './frame-layout.js';
+import { needsSceneLayers } from './scene-layer-selection.js';
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
   createDungeon,
@@ -434,9 +435,19 @@ async function start() {
     status.textContent = 'Portada original.';
   }
 
-  const player = await Promise.all(
-    manifest.player.map((asset) => loadVisual({ ...asset, remaster: false }, pack)),
-  );
+  const playerPacks = new Map<string, Promise<Awaited<ReturnType<typeof loadVisual>>[]>>();
+  function preparePlayer(next: GraphicsPack) {
+    let pending = playerPacks.get(next.id);
+    if (!pending) {
+      pending = Promise.all(
+        manifest.player.map((asset) => loadVisual({ ...asset, remaster: true }, next)),
+      );
+      playerPacks.set(next.id, pending);
+      void pending.catch(() => playerPacks.delete(next.id));
+    }
+    return pending;
+  }
+  let player = await preparePlayer(pack);
   const background = new Sprite(visual.texture),
     ben = new Sprite(player[9].texture);
   ben.anchor.set(0, 0);
@@ -549,16 +560,13 @@ async function start() {
   const assetInfo = document.querySelector<HTMLParagraphElement>('#asset-info')!;
   const scene = () => manifest.scenes[sceneIndex];
   async function loadLayers(record: SceneRecord, targetPack = pack) {
-    // Los bancos del protagonista se mantienen originales. Solo se sustituyen piezas de sala.
+    // La primera sala admite todos sus bancos; cada recurso ausente vuelve al original.
     const sourceAssets =
       record.animation?.assets ?? record.layers.assets.map((asset) => ({ ...asset, bank: 24576 }));
     const assets = await Promise.all(
       sourceAssets.map(async (asset) => ({
         asset,
-        visual: await loadVisual(
-          { ...asset, remaster: record.id === 0 && asset.bank === 24576 },
-          targetPack,
-        ),
+        visual: await loadVisual({ ...asset, remaster: record.id === 0 }, targetPack),
       })),
     );
     const texture = (frame: number, bank = 24576) => {
@@ -589,9 +597,23 @@ async function start() {
       sprite.width = piece.width;
       sprite.height = piece.height;
       sprite.eventMode = 'none';
-      return { ...piece, sprite };
+      // La diagonal VGA se conserva; en ×6 su borde se recorta como geometría,
+      // evitando escalones de seis píxeles sin modificar el PNG ni las colisiones.
+      const mask =
+        record.id === 0 && piece.frame === 2 && targetPack.id !== 'original'
+          ? new Graphics()
+              .poly([301, 99, 313, 99, 313, 199, 265, 199, 265, 198.5, 301, 162.5])
+              .fill(0xffffff)
+          : undefined;
+      if (mask) {
+        mask.eventMode = 'none';
+        sprite.mask = mask;
+      }
+      return { ...piece, sprite, mask };
     });
     return {
+      sceneId: record.id,
+      packId: targetPack.id,
       objects,
       foreground,
       texture,
@@ -609,7 +631,10 @@ async function start() {
     layerView = next;
     actorsLayer.addChild(ben);
     for (const item of layerView.objects) actorsLayer.addChild(item.sprite);
-    for (const item of layerView.foreground) foregroundLayer.addChild(item.sprite);
+    for (const item of layerView.foreground) {
+      foregroundLayer.addChild(item.sprite);
+      if (item.mask) foregroundLayer.addChild(item.mask);
+    }
   }
   installLayers(layerView);
 
@@ -786,6 +811,8 @@ async function start() {
     limits.visible = showLimits && !showingStatic;
     background.height = 200;
     sceneContent.x = -renderCameraX;
+    sceneContent.tint =
+      !showingStatic && scene().id === 0 && pack.id !== 'original' ? 0xe0e3e9 : 0xffffff;
     const animated = animationState?.actors.map((raw, index) => originalActorView(raw, index + 1));
     const animatedBen = scene().animation?.includePlayer ? animated?.[0] : undefined;
     ben.visible = actor !== null;
@@ -937,14 +964,19 @@ async function start() {
     changing = true;
     sync();
     try {
-      const nextLayers =
-        !nextStatic && (nextScene !== sceneIndex || nextPack.id !== pack.id)
-          ? await loadLayers(manifest.scenes[nextScene], nextPack)
-          : null;
+      const nextLayers = needsSceneLayers(
+        nextStatic,
+        manifest.scenes[nextScene].id,
+        nextPack.id,
+        layerView,
+      )
+        ? await loadLayers(manifest.scenes[nextScene], nextPack)
+        : null;
       const loaded = await loadVisual(
         nextStatic ? staticScreens[nextView].asset : manifest.scenes[nextScene].background,
         nextPack,
       );
+      const nextPlayer = await preparePlayer(nextPack);
       await originalHud.setPack(nextPack);
       cursorVisuals = await prepareCursors(nextPack);
       const previous = visual,
@@ -967,6 +999,7 @@ async function start() {
       currentView = nextView;
       if (nextStatic) staticIndex = nextView;
       pack = nextPack;
+      player = nextPlayer;
       savePreferences();
       background.texture = loaded.texture;
       if (nextLayers) installLayers(nextLayers);

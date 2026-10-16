@@ -383,7 +383,7 @@ for (let index = 0; index < 27; index++)
     await prepare(
       `reports/brd/shared/STD/frame-${String(index).padStart(3, '0')}.png`,
       `ben/STD-${String(index).padStart(3, '0')}.png`,
-      false,
+      true,
     ),
   );
 const originalHud = await prepareOriginalHud(root, prepare);

@@ -113,3 +113,15 @@ Opciones separa Música del menú (Música del juego durante la partida), Efecto
 El selector de tipografía permite comparar IM Fell English, Cinzel, Alegreya, Cormorant Garamond y Georgia en la propia interfaz, con una muestra y preferencia persistente. Las fuentes abiertas se distribuyen localmente con sus licencias; la elección también alcanza el loading. Los textos dibujados en sprites originales permanecen intactos.
 
 Pendiente para la futura PWA: conservar los PNG remaster como maestros y generar salidas optimizadas aparte mediante el empaquetado local. Precargar lo necesario para el arranque y cachear los escenarios por uso, con versiones y actualización de caché. Esta previsión no implica que ya exista un service worker ni compresión de los maestros; no se incorporarán recursos del juego al repositorio.
+
+### Ben, objetos y separación de paquetes — 16/10/2026
+
+Se instala el diseño de Ben aprobado por Àlex: 88 fotogramas de los cuatro bancos de la primera sala, 27 alias de marcha y siete recursos de llave/clip, 122 PNG en total. Las dimensiones son nativas ×6, con alpha del dibujo y cajas originales. Los maestros, prompts, hashes y copias anteriores se guardan en `reports/remaster/ben/`; guía en `prompts-ben-remaster.md`. Sustituye las notas anteriores que mantenían a Ben original.
+
+Se corrige una mezcla de paquetes del port: cambiar los gráficos en la portada podía conservar las capas preparadas antes de ese cambio al entrar en la sala inicial. Ahora se compara la identidad del paquete y la sala realmente cargados. Ben también prepara sus texturas por paquete; Original carga sus propios recursos. Hay pruebas de regresión para ambos sentidos del cambio y para cambiar de sala.
+
+El fondo incorpora musgo y raíces discretas solo en las filas 0–330 de su lienzo 1920×1200; las filas 331–1199 conservan los píxeles anteriores. La piedra, el suelo y sus apoyos quedan preservados. Un tinte común a la escena Remaster atenúa la iluminación del fondo y sus piezas juntas, sin afectar al HUD ni a Original. Fuentes e informe en `reports/remaster/dungeon/techo-integracion.json` y `prompts-techo-musgo.txt`.
+
+El recorte derecho identificado por el usuario es `animation-24576-2`. En Remaster se limita su diagonal mediante geometría de presentación, sin editar el PNG ni cambiar las colisiones. Original conserva su máscara nativa. Àlex ha comprobado que en DOSBox el borde está mejor conseguido: se retira la hipótesis inicial de fallo confirmado del juego original. La mezcla de paquetes es un fallo del port; el contorno sigue pendiente de comparación visual con DOSBox.
+
+Pendiente de aceptación en partida: animaciones completas de Ben, llave y clip a su escala real, rotura de la piedra y cruce del primer plano derecho en ambos modos. No se considera terminada al 100% la primera sala. La moneda inicial tiene un fotograma exportado vacío; su visibilidad y disponibilidad siguen pendientes de comprobación, aunque exista lógica de recogida.

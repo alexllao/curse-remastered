@@ -12,7 +12,7 @@ En la primera mazmorra: piedra gris azulada, hierro oscuro con reflejos fríos, 
 
 Ben es un joven de pelo medio rojizo/cobrizo con flequillo visible. No lleva gorra, boina, sombrero, casco ni capucha. La indicación también se aplica a los iconos que lo representen. Conservar su ropa y su identidad original.
 
-**Sus sprites de juego permanecen originales en este lote.** El guardia de la mazmorra es otro personaje: conservar el casco metálico que sí tiene en el original. No confundirlo con Ben ni trasladar su casco al protagonista.
+Àlex ha autorizado el remaster de sus sprites de juego y aprobado el diseño de referencia; el lote y sus límites se documentan en `prompts-ben-remaster.md`. El guardia de la mazmorra es otro personaje: conservar el casco metálico que sí tiene en el original. No confundirlo con Ben ni trasladar su casco al protagonista.
 
 ## Geometría y capas
 
