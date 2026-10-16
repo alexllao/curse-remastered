@@ -75,6 +75,7 @@ export async function framesCatalog(root) {
           width,
           height,
           fit: info.fit === 'cover' ? 'cover' : 'height',
+          mirrorRight: info.mirrorRight === true,
           left,
           right,
           innerPadding: {

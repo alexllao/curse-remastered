@@ -47,6 +47,7 @@ test('respeta las bandas declaradas e ignora metadatos inválidos y falsos PNG',
       JSON.stringify({
         label: 'Piedra',
         fit: 'cover',
+        mirrorRight: true,
         contexts: ['scene:0', 'title', 'scene:0', '../invalid', null],
         left: { x: 0, y: 0, width: 80, height: 900 },
         right: { x: 1520, y: 0, width: 80, height: 900 },
@@ -62,6 +63,7 @@ test('respeta las bandas declaradas e ignora metadatos inválidos y falsos PNG',
     assert.equal(result.frames[0].label, 'Piedra');
     assert.deepEqual(result.frames[0].contexts, ['scene:0', 'title']);
     assert.equal(result.frames[0].variants.original.fit, 'cover');
+    assert.equal(result.frames[0].variants.original.mirrorRight, true);
     assert.equal(result.frames[0].variants.original.left.width, 80);
     assert.ok(result.frames[0].variants.original.url.endsWith('/Piedra%20y%20oro.png'));
   }));

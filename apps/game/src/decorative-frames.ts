@@ -13,6 +13,7 @@ export interface FrameVariant {
   left: Panel;
   right: Panel;
   fit?: 'height' | 'cover';
+  mirrorRight?: boolean;
   innerPadding?: { left: number; right: number };
 }
 export interface FrameChoice {
@@ -44,6 +45,7 @@ export class DecorativeFrames {
   private right = new Sprite();
   private generation = 0;
   private cover = false;
+  private mirrorRight = false;
   private clip = new Graphics();
   private innerFraction = { left: 0, right: 0 };
   private crops: Texture[] = [];
@@ -68,6 +70,7 @@ export class DecorativeFrames {
         }),
     );
     this.cover = variant.fit === 'cover';
+    this.mirrorRight = variant.mirrorRight === true;
     this.innerFraction = {
       left: (variant.innerPadding?.left ?? 0) / variant.left.width,
       right: (variant.innerPadding?.right ?? 0) / variant.right.width,
@@ -100,8 +103,12 @@ export class DecorativeFrames {
         right,
         this.cover,
       );
-      sprite.scale.set(bounds.scale);
-      sprite.position.set(bounds.x, bounds.y);
+      const mirrored = right && this.mirrorRight;
+      sprite.scale.set(mirrored ? -bounds.scale : bounds.scale, bounds.scale);
+      sprite.position.set(
+        bounds.x + (mirrored ? sprite.texture.width * bounds.scale : 0),
+        bounds.y,
+      );
     }
     this.left.visible = gameX > 0;
     this.right.visible = rightMargin > 0;
