@@ -1,7 +1,7 @@
 # Segunda mazmorra: CORRIDOR
 
-La primera mazmorra queda aprobada por Àlex. El trabajo actual se limita al recurso 1,
-pasillo panorámico de 1216 × 200; DROP se aborda después de revisar esta sala.
+La primera mazmorra queda aprobada por Àlex. El recurso 1 es el pasillo panorámico de 1216 × 200. Àlex ha autorizado preparar
+también DROP y validar después las dos pantallas juntas.
 
 ## Juego e interfaz
 

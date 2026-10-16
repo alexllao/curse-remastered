@@ -80,7 +80,7 @@ for n,x,y in [(6,41,184),(8,600,0)]:
 for n in [3,4,5,13,14,15,16,17]:
  original=Image.open(r/f'assets/original/graficos/escenario/001/animation-24576-{n}.png').convert('RGBA');save(original.resize((original.width*6,original.height*6),Image.Resampling.NEAREST),f'escenario/001/animation-24576-{n}.png','native small detail x6')
 if 'marco' in sources:
- frame=Image.open(sources['marco']).convert('RGBA');bb=frame.getbbox();frame=frame.crop(bb)
+ frame=Image.open(sources['marco']).convert('RGBA');bb=frame.getchannel('A').point(lambda v:255 if v>8 else 0).getbbox();frame=frame.crop(bb)
  for pack,im in [('remaster',frame),('original',frame.resize((64,200),Image.Resampling.LANCZOS).quantize(colors=64).convert('RGBA'))]:
   folder=r/'assets'/pack/'graficos/marcos';folder.mkdir(parents=True,exist_ok=True);im.save(folder/'corridor.png');w,h=im.size
   info={'label':'Pasillo · gárgolas y hierro','contexts':['scene:1'],'left':{'x':0,'y':0,'width':w,'height':h},'right':{'x':0,'y':0,'width':w,'height':h},'mirrorRight':True,'fit':'cover','innerPadding':{'left':0,'right':0},'note':'Arte nuevo del port; variante Original reducida a64x200/64colores, no recurso DOS nativo.'};(folder/'corridor.png.json').write_text(json.dumps(info,ensure_ascii=False,indent=2),encoding='utf-8')

@@ -104,6 +104,11 @@ try {
   ]);
   run(python, ['tools/extract-dungeon-sounds.py']);
   run(python, ['tools/reverse-engineering/trace-corridor.py']);
+  run(python, ['tools/reverse-engineering/trace-drop.py']);
+  run(process.execPath, [
+    '--experimental-strip-types',
+    'tools/reverse-engineering/verify-drop.mjs',
+  ]);
   run(process.execPath, [
     '--experimental-strip-types',
     'tools/reverse-engineering/verify-corridor.mjs',

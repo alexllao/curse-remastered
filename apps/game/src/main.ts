@@ -173,12 +173,14 @@ async function start() {
     )
   )
     throw new Error('Repeat local navigation preparation');
-  let corridorProfile: NativeSceneProfile | null = null;
-  if (manifest.nativeScenes?.['1']) {
-    const nativeResponse = await fetch(manifest.nativeScenes['1'], { cache: 'no-store' });
-    if (!nativeResponse.ok) throw new Error('Prepare CORRIDOR native profile');
-    corridorProfile = await nativeResponse.json();
-  }
+  const nativeProfiles = new Map<number, NativeSceneProfile>();
+  await Promise.all(
+    Object.entries(manifest.nativeScenes ?? {}).map(async ([id, url]) => {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Prepare native scene profile');
+      nativeProfiles.set(Number(id), await response.json());
+    }),
+  );
   const gameClock = manifest.scenes.find((scene) => scene.id === 0)?.animation;
   if (!gameClock || gameClock.cyclePulses !== 5 || gameClock.referenceHz <= 0)
     throw new Error('Missing verified game clock');
@@ -696,7 +698,7 @@ async function start() {
           {
             ...asset,
             remaster:
-              [0, 1].includes(record.id) &&
+              [0, 1, 2].includes(record.id) &&
               !preserveDungeonGlint(record.id, asset.bank, asset.frame),
           },
           targetPack,
@@ -728,7 +730,7 @@ async function start() {
     const objects = initialActors
       .filter(
         (a) =>
-          record.id === 1 ||
+          [1, 2].includes(record.id) ||
           (a.flags !== 0 && (record.animation || !(a.flags & 2)) && a.frame !== 255),
       )
       .map((a) => {
@@ -983,17 +985,23 @@ async function start() {
       animationState.programs = manifest.actorPrograms;
     if (animationState && scene().id === 0)
       dungeonState = createDungeon(animationState, manifest.dungeon);
-    if (!showingStatic && scene().id === 1 && corridorProfile) {
-      let machine = nativeMachines.get(1);
+    if (!showingStatic && nativeProfiles.has(scene().id)) {
+      const id = scene().id;
+      if (id === 2 || nativeMachines.get(id)?.pendingRoom != null) nativeMachines.delete(id); // Repetir escenas terminadas al volver con F10/F11.
+      let machine = nativeMachines.get(id);
       if (!machine) {
-        machine = new OriginalSceneMachine(corridorProfile);
-        if (dungeonState) {
+        machine = new OriginalSceneMachine(nativeProfiles.get(id)!);
+        const previous = id === 2 ? nativeMachines.get(1) : undefined;
+        if (previous) {
+          for (let at = 0x5225; at < 0x52d0; at++) machine.setByte(at, previous.byte(at));
+          machine.setWord(0x35c7, previous.word(0x35c7));
+        } else if (dungeonState) {
           // Inventario, vocabulario y flags de objetos conservados al salir de la celda.
           for (let at = 0x5225; at < 0x52d0; at++)
             machine.setByte(at, dungeonByte(dungeonState, at));
           machine.setWord(0x35c7, dungeonWord(dungeonState, 0x35c7));
         }
-        nativeMachines.set(1, machine);
+        nativeMachines.set(id, machine);
       }
       syncNativeScene(machine);
     }
@@ -1002,7 +1010,7 @@ async function start() {
       showingStatic || scene().animation?.includePlayer ? null : scene().navigation.spawn;
     actor = spawn ? createWalkActor(spawn.x + spawn.cameraX, spawn.y, spawn.frame) : null;
     cameraX = spawn ? Math.max(0, Math.min(scene().background.width - 320, spawn.cameraX)) : 0;
-    if (nativeScene()) cameraX = cameras.get(scene().id) ?? 896;
+    if (nativeScene()) cameraX = cameras.get(scene().id) ?? (scene().id === 1 ? 896 : 0);
     renderCameraX = cameraX;
     scrollElapsed = 0;
     elapsed = 0;
@@ -1281,7 +1289,12 @@ async function start() {
       background.alpha = 1;
       if (nextLayers) installLayers(nextLayers);
       if (moved) {
-        if (!showingStatic && actors.has(scene().id)) {
+        if (
+          !showingStatic &&
+          actors.has(scene().id) &&
+          scene().id !== 2 &&
+          nativeScene()?.pendingRoom == null
+        ) {
           actor = actors.get(scene().id)!;
           animationState = animationStates.get(scene().id) ?? null;
           if (nativeScene()) syncNativeScene(nativeScene()!);

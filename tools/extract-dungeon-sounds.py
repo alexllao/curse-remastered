@@ -55,13 +55,14 @@ def main():
     # CORRIDOR comparte grupo de sonidos 0 con DUNGEON en esta revisión.
     exe = (ROOT / 'original/CURSE.EXE').read_bytes()
     data_offset = 0xf510
-    if exe[data_offset + 0x9048:data_offset + 0x904a] != b'\0\0':
+    if exe[data_offset + 0x9048:data_offset + 0x904b] != b'\0\0\0':
         raise RuntimeError('Repetir la asociación de sonidos de CORRIDOR')
-    corridor = mapping.setdefault('scenes', {}).setdefault('1', {})
-    for field in ('events', 'priorities'):
-        target = corridor.setdefault(field, {})
-        for key, value in mapping['scenes']['0'][field].items():
-            target.setdefault(key, value)
+    for resource in ('1','2'):
+        scene = mapping.setdefault('scenes', {}).setdefault(resource, {})
+        for field in ('events', 'priorities'):
+            target = scene.setdefault(field, {})
+            for key, value in mapping['scenes']['0'][field].items():
+                target.setdefault(key, value)
     for relative, data in outputs.items():
         target = folder / relative
         target.parent.mkdir(parents=True, exist_ok=True)
