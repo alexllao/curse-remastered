@@ -102,3 +102,7 @@ Opciones ofrece Música, Efectos y Ambiente con porcentajes guardados por separa
 El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. Se conservan los audios locales y su repetición completa. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.
 
 La dirección musical permanente y la referencia de sonoridad están en [DIRECCION_MUSICAL.md](DIRECCION_MUSICAL.md). RS5 es la referencia aprobada y se conserva.
+
+Durante la partida, F5 recorre las versiones musicales disponibles y «Sin música». F3 conserva su función previa como atajo compatible (en depuración recorre pantallas). El cambio guarda la preferencia y muestra un aviso azul y dorado durante 3,4 segundos; también aparece al seleccionar silencio. Solo se muestra por un cambio explícito del jugador, nunca al arrancar, reanudar o cambiar automáticamente de sala. Entra y sale mediante fundido suave. El aviso no produce efectos de sonido y respeta movimiento reducido. Silenciar música conserva los niveles de efectos y ambiente.
+
+F2 comparte el mismo aviso y fundido: muestra «Gráficos» y el paquete realmente cargado después de completar el cambio. Si no cambia el paquete por un fallo de carga, no anuncia un destino falso. Las confirmaciones de reproducción musical no abren un aviso nuevo ni sustituyen el de gráficos.

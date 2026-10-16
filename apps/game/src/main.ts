@@ -1,3 +1,4 @@
+import { createSettingNotice } from './setting-notice.js';
 import { buildLabel } from './build-label.js';
 import { createOriginalInfo } from './original-info-view.js';
 import type { OriginalInfoProfile } from './original-info-layout.js';
@@ -57,6 +58,7 @@ import { fullscreenElement, toggleFullscreen } from './fullscreen.js';
 import './style.css';
 import './welcome-menu.css';
 import './play-layout.css';
+import './setting-notice.css';
 import { createWelcomeMenu } from './welcome-menu.js';
 import { DecorativeFrames, discoverFrames, frameVariant } from './decorative-frames.js';
 import { createOriginalHud, type OriginalHudAssets } from './original-hud.js';
@@ -331,16 +333,36 @@ async function start() {
       gameToast.hidden = true;
     }, 2600);
   }
-  const toast = document.querySelector<HTMLElement>('#music-toast')!;
-  let toastTimer: number | undefined;
+  const settingNotice = createSettingNotice(document.querySelector<HTMLElement>('#setting-toast')!);
+  function showMusicSelection() {
+    if (!gameStarted || menuOpen || debugMode) return;
+    const label =
+      musicCatalog.versions.find((version) => version.id === musicSelect.value)?.label ??
+      'Sin música';
+    const muted = musicSelect.value === 'none' || Number(volume.value) === 0;
+    settingNotice.show({
+      kind: 'music',
+      label,
+      muted,
+      detail:
+        musicSelect.value === 'none'
+          ? 'Efectos y ambiente conservan su volumen'
+          : muted
+            ? 'Volumen de música: 0 %'
+            : 'Versión seleccionada',
+    });
+  }
+  function showGraphicsSelection() {
+    if (!gameStarted || menuOpen || debugMode) return;
+    settingNotice.show({
+      kind: 'graphics',
+      label: pack.label,
+      detail: visual.fallback ? 'Fondo Original · remaster no disponible' : 'Modo gráfico activo',
+    });
+  }
   music.onTrackPlaying((label) => {
     welcomeMenu.setMusicHint('');
-    toast.textContent = `♫ ${label}`;
-    toast.hidden = false;
-    window.clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => {
-      toast.hidden = true;
-    }, 4500);
+    settingNotice.playingMusic(label);
   });
   graphicsSelect.replaceChildren(...packs.map((p) => new Option(p.label, p.id)));
   graphicsSelect.value = pack.id;
@@ -415,6 +437,7 @@ async function start() {
       ? 'La aventura te espera'
       : 'Tu aventura comienza aquí';
     if (open) {
+      settingNotice.hide();
       originalInfo.close();
       originalHud.close();
       sounds.stop();
@@ -1024,7 +1047,7 @@ async function start() {
     void updateFrame();
     modeButton.textContent = `F2 · ${pack.label}`;
     button('music-mode').textContent =
-      `F3 · ${musicCatalog.versions.find((v) => v.id === musicSelect.value)?.label ?? 'Sin música'}`;
+      `F5 · ${musicCatalog.versions.find((v) => v.id === musicSelect.value)?.label ?? 'Sin música'}`;
     button('music-mode').disabled =
       changing || startingGame || selectingPack || !!startup || debugMode;
     document.querySelector('#title-prompt')!.toggleAttribute('hidden', !awaitingTitle || menuOpen);
@@ -1139,6 +1162,7 @@ async function start() {
   }
   async function nextPack() {
     if (startup || changing || selectingPack) return;
+    const previousPack = pack.id;
     const resume = playback?.elapsed;
     selectingPack = true;
     sync();
@@ -1152,7 +1176,7 @@ async function start() {
     } finally {
       selectingPack = false;
       sync();
-      notifyGame(`Gráficos · ${modeLabel.textContent}`);
+      if (pack.id !== previousPack) showGraphicsSelection();
     }
   }
   const nextScene = (direction: number) =>
@@ -1476,7 +1500,7 @@ async function start() {
     music.start();
     savePreferences();
     sync();
-    notifyGame(`Música · ${selected.label}`);
+    showMusicSelection();
     app.canvas.focus({ preventScroll: true });
   }
   button('music-mode').addEventListener('click', nextMusic);
@@ -1513,6 +1537,11 @@ async function start() {
       return;
     }
     if (event.altKey || event.ctrlKey || event.metaKey || !resourceLoading.hidden) return;
+    if (event.key === 'F5' && gameStarted) {
+      event.preventDefault();
+      if (!event.repeat && !menuOpen) nextMusic();
+      return;
+    }
     const target = event.target;
     if (
       target instanceof HTMLElement &&
@@ -1683,6 +1712,7 @@ async function start() {
   graphicsSelect.addEventListener('change', () => {
     const selected = packs.find((p) => p.id === graphicsSelect.value);
     if (!selected || changing || selectingPack) return;
+    const previousPack = pack.id;
     const resume = playback?.elapsed;
     void (async () => {
       selectingPack = true;
@@ -1694,11 +1724,13 @@ async function start() {
       } finally {
         selectingPack = false;
         sync();
+        if (pack.id !== previousPack) showGraphicsSelection();
       }
     })();
   });
   musicSelect.addEventListener('change', () => {
     selectMusic();
+    showMusicSelection();
     if (!gameStarted && !document.hidden) music.start();
     savePreferences();
     sync();
@@ -1734,7 +1766,7 @@ async function start() {
   function pauseAudio() {
     music.pause();
     sounds.stop();
-    toast.hidden = true;
+    settingNotice.hide();
   }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pauseAudio();
@@ -1768,7 +1800,10 @@ async function start() {
     savePreferences();
     sync();
   }
-  button('preview-music').addEventListener('click', toggleMusicMute);
+  button('preview-music').addEventListener('click', () => {
+    toggleMusicMute();
+    showMusicSelection();
+  });
   button('welcome-audio').addEventListener('click', toggleMusicMute);
   button('fullscreen').addEventListener('click', () => {
     const reportFullscreen = () => {

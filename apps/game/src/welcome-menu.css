@@ -35,7 +35,7 @@ body.welcome.has-wallpaper #viewport canvas {
   visibility: hidden;
 }
 body.welcome #fps,
-body.welcome #music-toast {
+body.welcome #setting-toast {
   display: none;
 }
 .welcome-only {
@@ -589,6 +589,6 @@ header h1,
 header button,
 footer p,
 #game-toast,
-#music-toast {
+#setting-toast {
   font-family: var(--interface-font);
 }

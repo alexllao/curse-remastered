@@ -85,7 +85,47 @@
         </p>
         <p id="original-hud-note" class="screen-prompt hud-note" hidden>Clic derecho · Acciones</p>
         <div id="game-toast" role="status" hidden></div>
-        <div id="music-toast" role="status" hidden></div>
+        <div id="setting-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+          <span class="setting-notice-icon" aria-hidden="true">
+            <svg
+              viewBox="0 0 32 32"
+              width="30"
+              height="30"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 12h5l7-6v20l-7-6H5Z" />
+              <path class="setting-notice-waves" d="M22 11a7 7 0 0 1 0 10m4-14a12 12 0 0 1 0 18" />
+              <path class="setting-notice-muted" d="m22 12 7 8m0-8-7 8" />
+            </svg>
+            <svg
+              class="setting-notice-graphics"
+              viewBox="0 0 32 32"
+              width="30"
+              height="30"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="5" width="26" height="22" rx="2" />
+              <circle cx="11" cy="12" r="2" />
+              <path d="m4 24 8-7 5 4 5-8 7 11" />
+            </svg>
+          </span>
+          <span class="setting-notice-copy">
+            <span class="setting-notice-caption" data-setting-caption>Música de fondo</span>
+            <strong data-setting-label></strong>
+            <span data-setting-detail></span>
+          </span>
+          <kbd data-setting-shortcut aria-hidden="true">F5</kbd>
+          <span class="setting-notice-progress" aria-hidden="true"></span>
+        </div>
         <img id="welcome-wallpaper" class="welcome-only" alt="" hidden />
         <div id="welcome-border" class="welcome-only" aria-hidden="true">
           <span></span><span></span><span></span><span></span>
@@ -147,7 +187,7 @@
               </button>
             </div>
             <p class="shortcut-note">
-              <span><kbd>F2</kbd> · Gráficos</span><span><kbd>F3</kbd> · Música</span
+              <span><kbd>F2</kbd> · Gráficos</span><span><kbd>F5</kbd> · Música</span
               ><span><kbd>Esc</kbd> · Menú</span>
             </p>
           </div>
@@ -229,7 +269,7 @@
               >
             </div>
             <p class="shortcut-note">
-              Durante la partida: F2 · Gráficos · F3 · Música · F4 · Marco · Esc · Menú
+              Durante la partida: F2 · Gráficos · F5 · Música · F4 · Marco · Esc · Menú
             </p>
             <p class="shortcut-note">
               Acciones: clic derecho, Espacio o Intro · Elegir: flechas · Confirmar: Intro
