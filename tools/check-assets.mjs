@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 const files = execFileSync('git', ['ls-files', '--cached', '-z'], { encoding: 'utf8' })
   .split('\0')
   .filter(Boolean);
-const permitted = new Set(['reports/.gitignore', 'mods/README.md']);
+const permitted = new Set(['reports/.gitignore', 'mods/README.md', 'docs/images/cover.webp']);
 const forbidden = files.filter(
   (file) =>
     !permitted.has(file) &&

@@ -1,4 +1,6 @@
-# CURSE Remastered
+![Curse of Enchantia Remastered](docs/images/cover.webp)
+
+# Curse of Enchantia Remastered
 
 Reconstrucción moderna en TypeScript y PixiJS 8 de la aventura gráfica clásica de DOS, orientada a Windows actual.
 
@@ -512,3 +514,17 @@ El primer comando necesita Visual Studio 2022 con C++ y Windows SDK; obtiene y c
 - Repositorio: [alexllao/curse-remastered](https://github.com/alexllao/curse-remastered).
 
 Los recursos originales pertenecen a sus respectivos titulares. No se incluyen en el repositorio ni se les concede una licencia mediante este proyecto. Estas atribuciones no modifican las condiciones de licencia existentes.
+
+## Aviso legal y derechos de autor
+
+_Curse of Enchantia_ es un videojuego publicado originalmente por Core Design en 1992.
+
+**Curse Remastered** es un proyecto independiente, no oficial y sin ánimo de lucro, creado como homenaje y ejercicio de preservación e ingeniería inversa.
+
+Este repositorio no distribuye el juego original ni sus archivos gráficos, musicales o de datos. Para utilizar los recursos originales es necesario disponer de una copia obtenida legalmente.
+
+Las ilustraciones promocionales del remaster son reinterpretaciones artísticas creadas para este proyecto y no constituyen material oficial del juego original.
+
+Todos los derechos sobre el videojuego original, sus personajes, nombres y demás elementos protegidos pertenecen a sus respectivos titulares.
+
+Este proyecto no está afiliado, autorizado ni respaldado por dichos titulares.
