@@ -44,7 +44,7 @@ assets/
 - `reports/`: extracciones intermedias, referencias, descartes, aportaciones e informes. Las ROM opcionales se conservan en `reports/audio/roms/` y no se sirven a la web.
 - `docs/`: investigación, criterios artísticos y prompts versionados.
 
-Por ejemplo, `assets/original/graficos/fondos/000-DUNGEON.png` corresponde a `assets/remaster/graficos/fondos/000-DUNGEON.png`. El original lógico320×200 se remasteriza habitualmente a1920×1200 (×6). Un panorama conserva su ancho completo. Los sprites conservan su propio lienzo multiplicado por seis y sus anclajes; no todos miden1920×1200.
+Por ejemplo, `assets/original/graficos/fondos/000-DUNGEON.png` corresponde a `assets/remaster/graficos/fondos/000-DUNGEON.png`. El original lógico de 320 × 200 se remasteriza habitualmente a 1920 × 1200 (×6). Un panorama conserva su ancho completo. Los sprites conservan su propio lienzo multiplicado por seis y sus anclajes; no todos miden 1920 × 1200.
 
 Ben mantiene sus sprites originales hasta que se apruebe sustituirlos. Aplicar la [dirección artística](../docs/ESTILO_ARTISTICO.md) a fondos, objetos, HUD, cursores y marcos.
 
@@ -83,3 +83,9 @@ node tools/migrate-assets.mjs --apply
 Cerrar antes el servidor local. La primera ejecución solo presenta el inventario. La segunda valida las rutas, rechaza destinos ocupados, conserva los archivos y comprueba sus SHA-256. El informe queda en `reports/asset-migration/`. Los metadatos antiguos de los WAV originales quedan en `assets/original/sonidos/`.
 
 No publiques una compilación que incluya recursos protegidos. La comprobación `pnpm assets:check` impide versionar originales, gráficos, audio y derivados, también dentro de `assets/`.
+
+## Wallpaper del menú de la web
+
+Guardar la imagen de bienvenida como `assets/remaster/graficos/menu/WALLPAPER.png`. Esta carpeta pertenece a la presentación del port, no al arranque DOS. El título del juego se conserva en `interfaz/TITLE.png`. Para el menú se recomienda una composición 16:9, por ejemplo 1920 × 1080 o 3840 × 2160; no aplicar el lienzo lógico de 320 × 200 a esta imagen.
+
+La nueva distribución del menú está en fase de maqueta: reservar esta ruta no significa que el menú actual ya la cargue. Las futuras capas ambientales del menú podrán acompañar al wallpaper en esta carpeta, conservando una imagen estática de respaldo.

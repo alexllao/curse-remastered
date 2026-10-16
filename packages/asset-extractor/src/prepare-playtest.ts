@@ -391,6 +391,7 @@ const title = await prepare('reports/TITLE.png', 'interfaz/TITLE.png', true);
 await mkdir(join(assetsRoot, 'remaster/graficos/interfaz'), { recursive: true });
 await mkdir(join(assetsRoot, 'remaster/graficos/fondos'), { recursive: true });
 await mkdir(join(assetsRoot, 'remaster/graficos/ben'), { recursive: true });
+await mkdir(join(assetsRoot, 'remaster/graficos/menu'), { recursive: true });
 await mkdir(join(root, 'reports/referencias'), { recursive: true });
 await mkdir(join(root, 'reports/playtest'), { recursive: true });
 await writeFile(
