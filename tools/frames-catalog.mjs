@@ -52,13 +52,29 @@ export async function framesCatalog(root) {
         const right = info.right ?? { x: width - strip, y: 0, width: strip, height };
         if (!validRect(left, width, height) || !validRect(right, width, height)) continue;
         const id = file.name.slice(0, -4);
-        const frame = frames.get(id) ?? { id, label: id.replaceAll('-', ' '), variants: {} };
+        const frame = frames.get(id) ?? {
+          id,
+          label: id.replaceAll('-', ' '),
+          variants: {},
+          contexts: [],
+        };
+        if (Array.isArray(info.contexts))
+          frame.contexts = [
+            ...new Set([
+              ...frame.contexts,
+              ...info.contexts.filter(
+                (value) =>
+                  typeof value === 'string' && /^(title|core|intro|scene:\d+)$/.test(value),
+              ),
+            ]),
+          ];
         if (typeof info.label === 'string' && info.label.trim())
           frame.label = info.label.slice(0, 80);
         frame.variants[pack.name] = {
           url: `/graficos/${encodeURIComponent(pack.name)}/marcos/${encodeURIComponent(file.name)}`,
           width,
           height,
+          fit: info.fit === 'cover' ? 'cover' : 'height',
           left,
           right,
           innerPadding: {

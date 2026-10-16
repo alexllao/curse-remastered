@@ -1,3 +1,4 @@
+import { presentationBounds } from './frame-layout.js';
 import { Application, Assets, Container, ImageSource, Rectangle, Texture } from 'pixi.js';
 
 export interface GraphicsPack {
@@ -36,14 +37,18 @@ export async function discoverPacks(): Promise<GraphicsPack[]> {
   }
 }
 /** El tamaño lógico no depende de la resolución del PNG ni de la ventana. */
-export function fitPresentation(app: Application, world: Container, host: HTMLElement) {
+export function fitPresentation(
+  app: Application,
+  world: Container,
+  host: HTMLElement,
+  framed = false,
+) {
   const width = Math.max(1, host.clientWidth),
     height = Math.max(1, host.clientHeight);
   app.renderer.resize(width, height);
-  const fit = Math.min(width / 320, height / 200),
-    scale = fit;
-  world.scale.set(scale);
-  world.position.set(Math.floor((width - 320 * scale) / 2), Math.floor((height - 200 * scale) / 2));
+  const bounds = presentationBounds(width, height, framed);
+  world.scale.set(bounds.scale);
+  world.position.set(bounds.x, bounds.y);
 }
 export async function loadVisual(asset: VisualAsset, pack: GraphicsPack) {
   const candidates =

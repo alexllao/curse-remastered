@@ -1,3 +1,4 @@
+import { chooseFrame } from './frame-layout.js';
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
   originalActorOrder,
@@ -225,10 +226,14 @@ async function start() {
   const frameSelect = document.querySelector<HTMLSelectElement>('#frame-select')!;
   const showFrame = document.querySelector<HTMLInputElement>('#show-frame')!;
   showFrame.checked = preferences.showFrame === true;
-  frameSelect.replaceChildren(...frameCatalog.map((frame) => new Option(frame.label, frame.id)));
-  frameSelect.value = frameCatalog.some((frame) => frame.id === preferences.frame)
-    ? preferences.frame!
-    : (frameCatalog[0]?.id ?? '');
+  frameSelect.replaceChildren(
+    new Option('Automático · según escenario', 'auto'),
+    ...frameCatalog.map((frame) => new Option(frame.label, frame.id)),
+  );
+  frameSelect.value =
+    preferences.frame === 'auto' || frameCatalog.some((frame) => frame.id === preferences.frame)
+      ? preferences.frame!
+      : 'auto';
   showFrame.disabled = !frameCatalog.length;
   const menu = document.querySelector<HTMLElement>('#game-menu')!,
     graphicsSelect = document.querySelector<HTMLSelectElement>('#graphics-select')!,
@@ -425,7 +430,7 @@ async function start() {
   fps.textContent = '— FPS';
   viewport.replaceChildren(app.canvas, fps);
   const resize = () => {
-    fitPresentation(app, world, viewport);
+    fitPresentation(app, world, viewport, decorativeFrames.layer.visible);
     decorativeFrames.resize(
       app.screen.width,
       world.x,
@@ -439,15 +444,23 @@ async function start() {
   function updateFrame() {
     frameSelect.disabled = !showFrame.checked || !frameCatalog.length;
     const active = showFrame.checked && !!document.fullscreenElement;
-    const key = `${active}/${frameSelect.value}/${pack.id}`;
+    const context = startup
+      ? 'core'
+      : playback
+        ? 'intro'
+        : showingStatic
+          ? 'title'
+          : `scene:${manifest.scenes[sceneIndex].id}`;
+    const selected = chooseFrame(frameCatalog, frameSelect.value, context);
+    const key = `${active}/${selected?.id}/${pack.id}`;
     if (key === lastFrameKey) return frameTask;
     lastFrameKey = key;
-    const selected = frameCatalog.find((frame) => frame.id === frameSelect.value);
     frameTask = decorativeFrames
       .show(active ? frameVariant(selected, pack.id) : undefined, pack.id === 'original')
       .then(resize)
       .catch(() => {
         status.textContent = 'No se ha podido cargar el marco seleccionado.';
+        resize();
       });
     return frameTask;
   }
