@@ -12,7 +12,7 @@ Criterio permanente acordado con Àlex el 16 de octubre de 2026.
 
 ## Alternativas históricas parciales
 
-Los identificadores `amiga` (etiqueta Amiga) y `adlib` (etiqueta AdLib (OPL2)) quedan reservados para paquetes musicales independientes de los gráficos. Sus carpetas locales están preparadas, pero no aparecen en el selector hasta añadir audio compatible. No se han descargado ni inventado pistas ausentes.
+Los identificadores `amiga` (etiqueta Amiga) y `adlib` (etiqueta AdLib (OPL2)) quedan reservados para paquetes musicales independientes de los gráficos. Amiga contiene ya el título; AdLib conserva solo las instrucciones de importación. Los paquetes aparecen cuando contienen audio compatible. No se han inventado pistas ausentes.
 
 - Àlex identifica el enlace de [KHInsider Amiga](https://downloads.khinsider.com/game-soundtracks/album/curse-of-enchantia-amiga-gamerip-1992/Curse%2528Titlemusic%2529.mp3) como RS5 / título. Es una correspondencia aportada por el usuario; el sitio bloqueó la consulta automática. Se puede importar una copia local como `assets/amiga/musica/CURSE.RS5.mp3`.
 - [VGMRips](https://vgmrips.net/packs/pack/curse-of-enchantia-pc) lista YM3812 y una única pista Main BGM. No afirmar que esto sea el catálogo de cinco RS/MPU ni que demuestre toda la música de Amiga. Falta verificar su correspondencia antes de importarla.
@@ -24,4 +24,6 @@ Los identificadores `amiga` (etiqueta Amiga) y `adlib` (etiqueta AdLib (OPL2)) q
 - Un remaster debe conservar la melodía reconocible, el ritmo y la estructura de la música original. Cambiar la instrumentación y la producción no autoriza sustituir la composición. Àlex señaló que «Bajo la piedra» sonaba bien pero no era reconocible como el tema original.
 - RS1 Remaster usa la versión orquestal v2 de 159,87 segundos. Se han conservado los 3.125 eventos de nota del MIDI provisional local, con sus tiempos, duraciones y velocidades; cambian instrumentos, balance y reverberación. Esto verifica fidelidad al MIDI disponible, no demuestra una captura exacta de la temporización DOS. Sonoridad −19,61 LUFS y pico real −7,95 dBTP; RS5 sigue intacta.
 - El paquete Alternativa conserva la composición nueva «Bajo la piedra» en RS1 y una copia idéntica de la RS5 Remaster aprobada en el título. Las pistas restantes pueden volver a Original. F5 permite compararlo con Original, Remaster y Sin música.
-- Amiga sigue pendiente de importar el FLAC o MP3 local aportado por Àlex. El enlace de KHInsider está identificado como RS5 / título, pero el sitio bloquea el acceso automático; no se ha simulado su descarga.
+- Amiga incorpora RS5 / título desde el enlace FLAC directo aportado por Àlex en vgmtreasurechest. Se conserva el FLAC intacto en `assets/amiga/musica/fuentes/` y una copia MP3 ajustada a RS5 en `assets/amiga/musica/CURSE.RS5.mp3`. Dura 148,98 segundos; las pistas RS1–RS4 ausentes vuelven a Original. La página de KHInsider bloqueó el acceso automático, pero el enlace directo aportado posteriormente funcionó.
+
+El título Amiga importado mide -19.59 LUFS integrados, frente a -19.34 LUFS de RS5 Remaster; pico real -2.26 dBTP. No se han alterado los controles de volumen del juego ni el archivo de referencia.
