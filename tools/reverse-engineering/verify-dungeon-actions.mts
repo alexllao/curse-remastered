@@ -62,6 +62,7 @@ function compare(expected, label) {
     ),
   );
   assert.deepEqual(differences.slice(0, 12), [], `${label}: actors @${cycle}`);
+  assert.deepEqual(animation.sounds, expected.sounds, `${label}: sound requests @${cycle}`);
   assert.deepEqual(animation.controls, expected.controls, `${label}: controls @${cycle}`);
   assert.equal(animation.bank, expected.bank, `${label}: bank @${cycle}`);
   assert.deepEqual(animation.seed, expected.seed, `${label}: seed @${cycle}`);

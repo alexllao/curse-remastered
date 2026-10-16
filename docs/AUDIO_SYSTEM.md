@@ -41,10 +41,34 @@ Estos audios se identifican como **Original · MT-32 provisional**. Los MIDI sum
 
 ## Sonidos opcionales
 
-Los 109 WAV aportados, procedentes de 19 SFX, figuran en `mods/sonidos/manifest.json` como `experimental_unverified`. Su frecuencia, codificación y correspondencia con eventos del juego siguen pendientes. `sourceIndex` es secuencial y empieza en 1; no se interpreta como identificador de evento. Permanecen sin activar en la partida.
+Los 109 WAV aportados, procedentes de 19 SFX, figuran en `mods/sonidos/manifest.json` como `experimental_unverified`. Ese lote sigue siendo experimental; no se activa por sus índices secuenciales. La primera mazmorra dispone ahora de una extracción independiente contrastada con el ejecutable, descrita a continuación. `sourceIndex` es secuencial y empieza en 1; no se interpreta como identificador de evento. Los archivos de ese lote permanecen sin activar directamente en la partida.
 
 Para efectos contrastados se admite un mapa explícito `mods/sonidos/original/sounds.json` con `events`, donde las claves son los argumentos de sonido originales y los valores archivos locales existentes. También se reserva el nombre numérico `42.wav` para un evento 42 ya identificado. La ausencia de archivos o asociaciones mantiene el silencio. Los canales de actores ya recogen sus solicitudes de sonido; todavía faltan los controladores completos de sala.
 
 Los formatos, posiciones y eventos deberán contrastarse en el EXE antes de habilitar las extracciones experimentales. Los efectos de ejemplo de las pruebas son archivos sintéticos temporales y no se incluyen sonidos reales en el repositorio.
 
 Los paquetes de efectos se descubren en `mods/sonidos/<paquete>/`; «Sin efectos» desactiva la reproducción y «Original» conserva las asociaciones originales disponibles. Las carpetas adicionales aparecen cuando contienen audio. Cada paquete puede declarar su `sounds.json`; un evento ausente vuelve al original si existe. No se enlazan los WAV experimentales por sus índices secuenciales ni se da por validado su formato al elegir «Original».
+
+## Efectos originales de la primera mazmorra
+
+`trace-dungeon-sounds.py` ejecuta la selección Sound Blaster de `CURSE.EXE` (`0x5507–0x5570`) y captura los argumentos de la transferencia DMA sin ejecutar el hardware. Contrasta 21 asociaciones y 126 casos de prioridad. Los eventos 0–14 utilizan STD.SFX y los eventos 15–20 de recurso 0 utilizan DUNGEON.SFX. El mismo ID local no se reutiliza al entrar en otra sala.
+
+Cada entrada original contiene prioridad, constante de tiempo, recorte final y número de muestra. La tabla de la muestra apunta a una longitud de dos bytes; el PCM empieza después. Los WAV se construyen con la porción que solicita el controlador, sin normalizar, remuestrear ni incluir esa cabecera. El DSP usa el comando de frecuencia 40h y la transferencia 14h de PCM mono de 8 bits. La interpretación del formato y de la constante se apoya en la [guía de programación de Creative](https://www.ardent-tool.com/sound/Sound_Blaster_HW_Programming_Guide_1st.pdf), capítulo 3. La constante 131 corresponde a 8.000 Hz; existen eventos con otras constantes, por lo que no se fuerza una frecuencia común. La cabecera WAV redondea las frecuencias fraccionarias al entero más próximo; el informe conserva el valor calculado.
+
+```powershell
+python tools/reverse-engineering/trace-dungeon-sounds.py
+python tools/extract-dungeon-sounds.py
+```
+
+La preparación completa `pnpm assets:prepare` también ejecuta ambos pasos. Salidas locales:
+
+- `mods/sonidos/original/verificados/000.wav` a `020.wav`: WAV por evento, incluidos los recortes y frecuencias distintos de una misma muestra.
+- `mods/sonidos/original/sounds.json`: asociaciones explícitas globales y por sala, con prioridades.
+- `reports/audio/dungeon-sounds.json`: argumentos nativos, hashes y casos de prioridad.
+- `reports/audio/prepared-dungeon-sounds.json`: archivos generados y metadatos de los WAV.
+
+Se conservan los WAV experimentales anteriores y los mapas personalizados. Una salida generada modificada manualmente no se sobrescribe sin acreditación. Ninguna de estas salidas se versiona.
+
+En el juego se elige **Efectos de sonido → Original**. Ayuda, saludo, cadenas, recogida de objetos, pared, puerta y ambiente utilizan los eventos de sus canales originales; sus solicitudes también se comparan en la traza de 577 ciclos. La reproducción mantiene una sola voz PCM: una solicitud con prioridad igual o menor se ignora mientras suena otra. Los remasters parciales pueden sustituir cada evento y volver al original cuando falte. «Sin efectos», el cambio de sala, el menú y ocultar la página detienen la voz según el flujo existente.
+
+Esto valida datos y solicitudes digitales, no una comparación auditiva con DOSBox ni la salida analógica de una Sound Blaster. Las pruebas automatizadas usan audio simulado y se ejecutan en silencio.

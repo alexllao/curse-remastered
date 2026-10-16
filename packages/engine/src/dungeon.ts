@@ -149,6 +149,7 @@ export type DungeonAction =
   | 'unlock-door';
 /** Ramas de 0x3503, 0x587E, 0x58A6, 0x58D0 y 0x9A9E–0x9B91. */
 export function performDungeonAction(s: DungeonState, action: DungeonAction, profile: WalkProfile) {
+  s.animation.sounds = [];
   s.cursor = 'failure';
   switch (action) {
     case 'help':

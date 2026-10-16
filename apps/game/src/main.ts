@@ -678,6 +678,7 @@ async function start() {
     transition = { sprite, elapsed: 0 };
   }
   function resetActor() {
+    sounds.stop();
     animationState =
       !showingStatic && scene().animation ? structuredClone(scene().animation!) : null;
     if (animationState && !animationState.programs.length)
@@ -902,6 +903,7 @@ async function start() {
       visual = loaded;
       sceneIndex = nextScene;
       showingStatic = nextStatic;
+      sounds.setScene(nextStatic ? null : manifest.scenes[nextScene].id);
       currentView = nextView;
       if (nextStatic) staticIndex = nextView;
       pack = nextPack;
@@ -992,8 +994,11 @@ async function start() {
         action = 'unlock-door';
       if (verb === 2 && item === 2) action = 'push-wall';
     }
-    if (action) performDungeonAction(dungeonState, action, manifest.navigationProfile);
-    else if (command.kind === 'disk')
+    if (action) {
+      performDungeonAction(dungeonState, action, manifest.navigationProfile);
+      for (const id of dungeonState.animation.sounds) sounds.play(id);
+      dungeonState.animation.sounds = [];
+    } else if (command.kind === 'disk')
       notifyGame('Guardar y cargar todavía no están implementados.');
     else if (command.kind === 'info')
       notifyGame(`Puntuación · ${dungeonWord(dungeonState, 0x35c7)}`);

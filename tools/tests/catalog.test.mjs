@@ -66,3 +66,27 @@ test('detecta paquetes de efectos y mantiene separados sus eventos', () =>
       '/sonidos/restaurados/42.ogg',
     );
   }));
+
+test('los mapas explícitos admiten subcarpetas verificadas y mantienen eventos por sala', () =>
+  fixture(async (root) => {
+    await mkdir(join(root, 'original', 'verificados'), { recursive: true });
+    await writeFile(join(root, 'original', 'verificados', 'ayuda original.wav'), 'fixture');
+    await writeFile(join(root, 'original', 'verificados', 'puerta.wav'), 'fixture');
+    await writeFile(join(root, 'fuera.wav'), 'fixture');
+    await writeFile(
+      join(root, 'original', 'sounds.json'),
+      JSON.stringify({
+        events: { 0: 'verificados/ayuda original.wav', 8: '../fuera.wav', 9: '/fuera.wav' },
+        priorities: { 0: 255, 8: 50 },
+        scenes: { 0: { events: { 15: 'verificados/puerta.wav' }, priorities: { 15: 100 } } },
+      }),
+    );
+    const result = await soundPacksCatalog(root);
+    assert.equal(result.events['0'], '/sonidos/original/verificados/ayuda%20original.wav');
+    assert.equal(result.events['8'], undefined);
+    assert.equal(result.events['9'], undefined);
+    assert.equal(result.events['15'], undefined);
+    assert.equal(result.priorities['0'], 255);
+    assert.equal(result.scenes['0'].events['15'], '/sonidos/original/verificados/puerta.wav');
+    assert.equal(result.versions[0].scenes['0'].priorities['15'], 100);
+  }));

@@ -8,18 +8,18 @@ Completar la primera mazmorra con el comportamiento original antes de ampliar ot
 
 ## Primera mazmorra
 
-| Parte                                   | Implementado                    | Contraste con CURSE.EXE                                                                   | Comparación visual/temporal con DOSBox                |
-| --------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Barra contextual y submenús originales  | Sí, integración en revisión     | Posición, bloqueo por canal y selección; 135 consultas de objetos según estado y posición | Pendiente                                             |
-| Pedir ayuda y secuencia del guardia     | Sí                              | Incluida en la traza completa                                                             | Pendiente                                             |
-| Recoger llave y liberar al protagonista | Sí                              | Canales, bancos y estado contrastados                                                     | Pendiente                                             |
-| Moneda opcional e inventario            | Sí                              | La moneda suma puntos sin ocupar inventario; llave y clip se conservan según esta traza   | Pendiente                                             |
-| Empujar pared y recoger clip            | Sí                              | Aproximación automática y animaciones contrastadas                                        | Pendiente                                             |
-| Abrir puerta y salir al corredor        | Sí                              | Condición de puerta, región de salida y destino lógico 0 → recurso 1                      | Pendiente                                             |
-| Movimiento y colisiones                 | Sí                              | Motor STD y traza de acciones; ampliar ensayos manuales en la sala                        | Pendiente                                             |
-| Gotas, fuego y rata                     | Sí                              | Canales originales; animación ambiental y acciones verificadas por ciclos                 | Cadencia física pendiente                             |
-| Primer plano al pasar la rata           | Sí, conserva la lógica anterior | Selección, geometría e índices de dos piezas contrastados                                 | Sigue pendiente comprobar la discontinuidad reportada |
-| Guardar/cargar desde la barra           | No                              | Fuera de los cinco puntos de esta sala                                                    | Pendiente                                             |
+| Parte                                   | Implementado                    | Contraste con CURSE.EXE                                                                   | Comparación visual/temporal con DOSBox                                          |
+| --------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Barra contextual y submenús originales  | Sí, integración en revisión     | Posición, bloqueo por canal y selección; 135 consultas de objetos según estado y posición | Pendiente                                                                       |
+| Pedir ayuda y secuencia del guardia     | Sí                              | Incluida en la traza completa                                                             | Pendiente                                                                       |
+| Recoger llave y liberar al protagonista | Sí                              | Canales, bancos y estado contrastados                                                     | Pendiente                                                                       |
+| Moneda opcional e inventario            | Sí                              | La moneda suma puntos sin ocupar inventario; llave y clip se conservan según esta traza   | Pendiente                                                                       |
+| Empujar pared y recoger clip            | Sí                              | Aproximación automática y animaciones contrastadas                                        | Pendiente                                                                       |
+| Abrir puerta y salir al corredor        | Sí                              | Condición de puerta, región de salida y destino lógico 0 → recurso 1                      | Pendiente                                                                       |
+| Movimiento y colisiones                 | Corregida la deriva tras chocar | 500 ciclos hacia cinco bordes y traza de acciones contrastados                            | El usuario ha completado el recorrido hasta la segunda sala; continuar probando |
+| Gotas, fuego y rata                     | Sí                              | Canales originales; animación ambiental y acciones verificadas por ciclos                 | Cadencia física pendiente                                                       |
+| Primer plano al pasar la rata           | Sí, conserva la lógica original | Selección, geometría e índices contrastados                                               | El usuario confirma que el fallo visual también existe en el original           |
+| Guardar/cargar desde la barra           | No                              | Fuera de los cinco puntos de esta sala                                                    | Pendiente                                                                       |
 
 La sala **todavía no se considera terminada al 100 %**. La integración visual de las acciones está en revisión; faltan la comparación DOSBox y resolver cualquier diferencia que aparezca, especialmente la velocidad percibida de las animaciones. La discontinuidad de la pared queda conservada tras la confirmación del usuario.
 
@@ -50,7 +50,28 @@ El motor comparte paseo, colisiones BOXDET, canales de animación, cambio de ban
 - **Cursor pequeño:** se dibuja como sprite a la escala de la presentación, igual que las opciones del HUD, en vez de usar el PNG sin ampliar como cursor CSS. Pendiente validar visualmente en ventana y pantalla completa.
 - **Cambio brusco de marco:** fundido de 320 ms entre marcos, conservando el anterior durante la carga. Respeta la preferencia de reducir movimiento. Pendiente prueba visual.
 - **Selección del HUD:** ciclo original de 24 colores RGB, cambio cada cuatro vueltas modales. La traza contrasta 96 vueltas y las 24 escrituras del DAC. La cadencia de pantalla usa 70 Hz como referencia; no equivale a una medición física completa en DOSBox.
-- **Validación ya ejecutada:** siete acciones y salida, 577 ciclos; 135 consultas de objetos; cinco paseos de borde, 500 ciclos. Tras los últimos ajustes pasan las 40 pruebas automatizadas, los tipos, ESLint, el formato de los archivos modificados, la compilación y la comprobación de exclusión de recursos. La preparación local de recursos también terminó correctamente. La traza ambiental anterior sigue coincidiendo durante 1000 ciclos.
+- **Validación ya ejecutada:** siete acciones y salida, 577 ciclos; 135 consultas de objetos; cinco paseos de borde, 500 ciclos. Tras incorporar los efectos pasan las 45 pruebas automatizadas, los tipos, ESLint, el formato de los archivos modificados, la compilación y la comprobación de exclusión de recursos. La preparación local de recursos también terminó correctamente. La traza ambiental anterior sigue coincidiendo durante 1000 ciclos.
 - **Comparación visual DOSBox:** arrancó una copia de prueba con sonido deshabilitado. La captura falló con `FrameArrived timed out: timed out waiting on channel` después de recuperar la ventana minimizada. No se presenta ese intento como comparación visual realizada.
 
 Este documento se versiona; los informes de ejecución, las capturas y los recursos derivados siguen en las carpetas locales excluidas de Git.
+
+## Efectos de sonido y prueba del usuario
+
+El usuario confirma que ha conseguido salir de la primera mazmorra y alcanzar la segunda. Las acciones de la segunda siguen pendientes; la prioridad continúa en la primera.
+
+Se han generado 21 WAV originales por evento en `mods/sonidos/original/verificados/`, a partir de STD.SFX y DUNGEON.SFX. La selección de muestras, cabeceras, recortes, frecuencias y prioridades se contrasta con las rutinas Sound Blaster del EXE: 21 asociaciones y 126 casos de prioridad. Los efectos de esta sala no se asignan a la siguiente. Las extracciones experimentales anteriores se conservan. La reproducción está conectada a las solicitudes de los canales originales, incluido el saludo inmediato del HUD. Falta comparar la escucha con DOSBox; no se da por completada la validación auditiva.
+
+### Lista de comprobación manual de la primera sala
+
+- [ ] Pedir ayuda y esperar la secuencia completa del guardia.
+- [ ] Recoger la llave y desbloquear las cadenas.
+- [ ] Caminar por la sala, insistir contra sus bordes y comprobar clics cercanos a los pies.
+- [ ] Recoger la moneda opcional y comprobar puntuación e inventario.
+- [ ] Empujar la pared, recoger el clip y desbloquear la puerta.
+- [x] Alcanzar la salida y llegar a la siguiente sala: confirmado por el usuario.
+- [ ] Escuchar ayuda/saludo, cadenas, objetos, puerta y ambiente con Efectos → Original.
+- [ ] Repetir tras reiniciar y comprobar que «Sin efectos» silencia los eventos.
+
+La lista no da por implementadas todas las respuestas posibles de mirar, luchar, saltar o combinaciones incorrectas; siguen pendientes de auditoría, al igual que guardar/cargar.
+
+Validación del bloque de sonidos: 45 pruebas automatizadas, ESLint, tipos y compilación correctos. El servidor local entrega los 21 WAV; sus muestras y longitudes coinciden por SHA-256 con las porciones solicitadas por el EXE. Las pruebas no emiten sonido.

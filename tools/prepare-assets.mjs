@@ -64,6 +64,7 @@ try {
     'trace-original-hud',
     'trace-dungeon-actions',
     'trace-dungeon-boundaries',
+    'trace-dungeon-sounds',
     'trace-game-clock',
     'trace-ambient',
   ]) {
@@ -94,6 +95,7 @@ try {
     'tsx',
     '../../tools/reverse-engineering/verify-dungeon-actions.mts',
   ]);
+  run(python, ['tools/extract-dungeon-sounds.py']);
   for (const name of ['scene-layers', 'navigation-verify', 'prepare-playtest']) packageStep(name);
   console.log('\nRecursos locales preparados. Ejecuta pnpm dev. Tus remasters se han conservado.');
 } catch (error) {
