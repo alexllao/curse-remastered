@@ -86,3 +86,13 @@ test('recoger, mirar y saltar consultan máscaras diferentes; empujar solo requi
   assert.equal(menu.select(2), true);
   assert.deepEqual(commands, [{ kind: 'use', verb: 2, item: 2, other: undefined }]);
 });
+
+test('comer, ponerse y lanzar se ejecutan con un solo objeto del inventario', () => {
+  for (const verb of [3, 4, 5]) {
+    const { menu, commands } = fixture();
+    menu.select(2);
+    menu.select(verb);
+    assert.equal(menu.select(0), true);
+    assert.deepEqual(commands, [{ kind: 'use', verb, item: 1, other: undefined }]);
+  }
+});

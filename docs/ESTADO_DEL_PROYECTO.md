@@ -4,7 +4,11 @@ Actualizado: 16 de octubre de 2026. Rama de trabajo: `development`.
 
 ## Prioridad y criterio de cierre
 
-Completar la primera mazmorra con el comportamiento original antes de ampliar otras salas. Las demás salas y los marcos quedan aparcados. Àlex ha solicitado ahora el remaster coherente del fondo, las piezas, el HUD y los cursores de esta primera sala; El aspecto y las animaciones remasterizadas de Ben ya han sido aceptados por Àlex. Probar siempre en silencio. Una comparación de rutinas no equivale a una captura visual ni verifica la velocidad física del juego DOS.
+La primera mazmorra queda aprobada por Àlex. Se continúa zona por zona con
+CORRIDOR, DROP y ahora LAKEBED, incluyendo animaciones, interacciones, HUD,
+sonidos originales y marcos en Original y Remaster. No pasar a la siguiente
+zona hasta cerrar su preparación y revisión. Una comparación de rutinas no
+certifica por sí sola el acabado visual ni una partida completa en Firefox.
 
 ## Primera mazmorra
 
@@ -185,3 +189,10 @@ Se sustituye el desplazamiento aproximado de la esquina del PNG por el centro ge
 - La música de las salas usa el selector RS verificado; la primera mazmorra reproduce CURSE.RS1. Véase MUSIC_SYNC.md para alcance y pruebas. La vista en un navegador real queda pendiente de comprobación visual.
 
 La información del modo Original añade una quinta página propia del port: «Web y remaster · Àlex Llaó», con los acentos adaptados al estilo de FONT.SPR. Las cuatro páginas nativas se conservan. La dirección musical y las alternativas parciales Amiga/AdLib están documentadas en DIRECCION_MUSICAL.md.
+
+## Fondo submarino: LAKEBED
+
+Integración nativa y arte de la cuarta zona documentados en [LAKEBED.md](LAKEBED.md).
+Contraste:1540 ciclos de entrada/pecera/paseo y40 acciones con3200 ciclos de desarrollo.
+Diez efectos locales de LAKEBED.SFX y música CURSE.RS3. Pendiente la validación
+interactiva completa de Àlex; no se declara resuelto el puzle entero por estas pruebas.

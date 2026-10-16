@@ -19,6 +19,7 @@ export async function prepareNativeScenes(
   for (const { id, name, modes } of [
     { id: 1, name: 'CORRIDOR', modes: [1, 3] },
     { id: 2, name: 'DROP', modes: [4] },
+    { id: 3, name: 'LAKEBED', modes: [1, 2, 3, 5, 6, 7, 8, 9, 10] },
   ]) {
     const key = String(id).padStart(3, '0');
     let bytes: Buffer;

@@ -698,7 +698,7 @@ async function start() {
           {
             ...asset,
             remaster:
-              [0, 1, 2].includes(record.id) &&
+              [0, 1, 2, 3].includes(record.id) &&
               !preserveDungeonGlint(record.id, asset.bank, asset.frame),
           },
           targetPack,
@@ -730,7 +730,7 @@ async function start() {
     const objects = initialActors
       .filter(
         (a) =>
-          [1, 2].includes(record.id) ||
+          [1, 2, 3].includes(record.id) ||
           (a.flags !== 0 && (record.animation || !(a.flags & 2)) && a.frame !== 255),
       )
       .map((a) => {
@@ -801,6 +801,7 @@ async function start() {
     animationElapsed = 0;
   let dungeonState: DungeonState | null = null;
   const nativeMachines = new Map<number, OriginalSceneMachine>();
+  let testingScenes = false;
   function nativeScene() {
     return !showingStatic ? nativeMachines.get(scene().id) : undefined;
   }
@@ -991,11 +992,14 @@ async function start() {
       let machine = nativeMachines.get(id);
       if (!machine) {
         machine = new OriginalSceneMachine(nativeProfiles.get(id)!);
-        const previous = id === 2 ? nativeMachines.get(1) : undefined;
-        if (previous) {
+        const previous =
+          id === 2 ? nativeMachines.get(1) : id === 3 ? nativeMachines.get(2) : undefined;
+        // El salto de prueba necesita la pecera sin completar las salas anteriores.
+        const carryInventory = !(testingScenes && id === 3);
+        if (previous && carryInventory) {
           for (let at = 0x5225; at < 0x52d0; at++) machine.setByte(at, previous.byte(at));
           machine.setWord(0x35c7, previous.word(0x35c7));
-        } else if (dungeonState) {
+        } else if (dungeonState && carryInventory) {
           // Inventario, vocabulario y flags de objetos conservados al salir de la celda.
           for (let at = 0x5225; at < 0x52d0; at++)
             machine.setByte(at, dungeonByte(dungeonState, at));
@@ -1010,7 +1014,8 @@ async function start() {
       showingStatic || scene().animation?.includePlayer ? null : scene().navigation.spawn;
     actor = spawn ? createWalkActor(spawn.x + spawn.cameraX, spawn.y, spawn.frame) : null;
     cameraX = spawn ? Math.max(0, Math.min(scene().background.width - 320, spawn.cameraX)) : 0;
-    if (nativeScene()) cameraX = cameras.get(scene().id) ?? (scene().id === 1 ? 896 : 0);
+    if (nativeScene())
+      cameraX = cameras.get(scene().id) ?? (scene().id === 1 ? 896 : scene().id === 3 ? 1280 : 0);
     renderCameraX = cameraX;
     scrollElapsed = 0;
     elapsed = 0;
@@ -1732,6 +1737,7 @@ async function start() {
       : (sceneIndex + direction + manifest.scenes.length) % manifest.scenes.length;
     startup = null;
     awaitingTitle = false;
+    testingScenes = true;
     await show(staticScreens.length + index, pack);
     notifyGame(`Escenario ${scene().id} · ${scene().name}`);
   }
@@ -1906,6 +1912,7 @@ async function start() {
     await show(0, pack);
     actors.clear();
     nativeMachines.clear();
+    testingScenes = false;
     cameras.clear();
     animationStates.clear();
     resetActor();

@@ -105,6 +105,13 @@ try {
   run(python, ['tools/extract-dungeon-sounds.py']);
   run(python, ['tools/reverse-engineering/trace-corridor.py']);
   run(python, ['tools/reverse-engineering/trace-drop.py']);
+  run(python, ['tools/reverse-engineering/trace-lakebed.py']);
+  run(python, ['tools/reverse-engineering/trace-lakebed-sounds.py']);
+  run(python, ['tools/extract-lakebed-sounds.py']);
+  run(process.execPath, [
+    '--experimental-strip-types',
+    'tools/reverse-engineering/verify-lakebed.mjs',
+  ]);
   run(process.execPath, [
     '--experimental-strip-types',
     'tools/reverse-engineering/verify-drop.mjs',

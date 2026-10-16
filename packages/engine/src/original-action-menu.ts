@@ -146,7 +146,7 @@ export class OriginalActionMenu {
           this.choosingInventory = true;
           return false;
         }
-        if (this.first === undefined && this.verb !== 2) {
+        if (this.first === undefined && ![2, 3, 4, 5].includes(this.verb)) {
           this.first = value;
           this.choosingInventory = false;
           return false;
