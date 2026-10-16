@@ -405,3 +405,10 @@ body.playing #viewport {
   height: 100%;
   aspect-ratio: auto;
 }
+
+.settings-grid:has(#frame-select) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.menu-options {
+  flex-wrap: wrap;
+}

@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import { soundPacksCatalog } from '../../tools/sounds-catalog.mjs';
+import { framesCatalog } from '../../tools/frames-catalog.mjs';
 import { musicCatalog } from '../../tools/music-catalog.mjs';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -68,6 +69,18 @@ function localPacks(): Plugin {
             res.end('Unable to list local music');
           });
       });
+      server.middlewares.use('/__mods/frames.json', (_req, res) => {
+        void framesCatalog(modsRoot)
+          .then((result) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Cache-Control', 'no-store');
+            res.end(JSON.stringify(result));
+          })
+          .catch(() => {
+            res.statusCode = 500;
+            res.end('Unable to list local frames');
+          });
+      });
       server.middlewares.use('/__mods/packs.json', (_req, res) => {
         void packs()
           .then((result) => {
@@ -82,6 +95,11 @@ function localPacks(): Plugin {
       });
     },
     async generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: '__mods/frames.json',
+        source: JSON.stringify(await framesCatalog(modsRoot)),
+      });
       this.emitFile({
         type: 'asset',
         fileName: '__mods/game.json',

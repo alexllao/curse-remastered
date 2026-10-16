@@ -26,6 +26,7 @@ import {
   type VisualAsset,
 } from './presentation.js';
 import './style.css';
+import { DecorativeFrames, discoverFrames, frameVariant } from './decorative-frames.js';
 import { createOriginalHud, type OriginalHudAssets } from './original-hud.js';
 import { discoverSounds, SoundPlayer } from './sounds.js';
 import { discoverMusic, MusicPlayer, type MusicCatalog } from './music.js';
@@ -175,6 +176,8 @@ async function start() {
     volume?: number;
     intro?: boolean;
     sounds?: boolean;
+    frame?: string;
+    showFrame?: boolean;
   } = {};
   try {
     preferences = JSON.parse(localStorage.getItem('curse.preferences.v1') ?? '{}') ?? {};
@@ -186,6 +189,7 @@ async function start() {
       packs.find((p) => p.id === preferences.graphics) ??
       packs.find((p) => p.id === 'remaster') ??
       packs[0];
+  const frameCatalog = await discoverFrames();
   let musicCatalog: MusicCatalog = { schemaVersion: 1, versions: [], contexts: {} };
   let musicCatalogFailed = false;
   try {
@@ -218,6 +222,14 @@ async function start() {
         : '';
   }
   selectSounds();
+  const frameSelect = document.querySelector<HTMLSelectElement>('#frame-select')!;
+  const showFrame = document.querySelector<HTMLInputElement>('#show-frame')!;
+  showFrame.checked = preferences.showFrame === true;
+  frameSelect.replaceChildren(...frameCatalog.map((frame) => new Option(frame.label, frame.id)));
+  frameSelect.value = frameCatalog.some((frame) => frame.id === preferences.frame)
+    ? preferences.frame!
+    : (frameCatalog[0]?.id ?? '');
+  showFrame.disabled = !frameCatalog.length;
   const menu = document.querySelector<HTMLElement>('#game-menu')!,
     graphicsSelect = document.querySelector<HTMLSelectElement>('#graphics-select')!,
     musicSelect = document.querySelector<HTMLSelectElement>('#music-select')!,
@@ -292,6 +304,8 @@ async function start() {
           volume: Number(volume.value),
           intro: introEnabled.checked,
           effects: soundSelect.value,
+          frame: frameSelect.value,
+          showFrame: showFrame.checked,
         }),
       );
     } catch {
@@ -401,7 +415,8 @@ async function start() {
   world.eventMode = 'static';
   world.hitArea = new Rectangle(0, 0, 320, 200);
   world.cursor = 'pointer';
-  app.stage.addChild(world);
+  const decorativeFrames = new DecorativeFrames();
+  app.stage.addChild(world, decorativeFrames.layer);
   const fps = document.createElement('span');
   app.canvas.tabIndex = 0;
   app.canvas.setAttribute('aria-label', 'Pantalla del juego');
@@ -409,7 +424,42 @@ async function start() {
   fps.setAttribute('aria-hidden', 'true');
   fps.textContent = '— FPS';
   viewport.replaceChildren(app.canvas, fps);
-  const resize = () => fitPresentation(app, world, viewport);
+  const resize = () => {
+    fitPresentation(app, world, viewport);
+    decorativeFrames.resize(
+      app.screen.width,
+      world.x,
+      world.y,
+      320 * world.scale.x,
+      200 * world.scale.y,
+    );
+  };
+  let lastFrameKey = '';
+  let frameTask: Promise<void> = Promise.resolve();
+  function updateFrame() {
+    frameSelect.disabled = !showFrame.checked || !frameCatalog.length;
+    const active = showFrame.checked && !!document.fullscreenElement;
+    const key = `${active}/${frameSelect.value}/${pack.id}`;
+    if (key === lastFrameKey) return frameTask;
+    lastFrameKey = key;
+    const selected = frameCatalog.find((frame) => frame.id === frameSelect.value);
+    frameTask = decorativeFrames
+      .show(active ? frameVariant(selected, pack.id) : undefined, pack.id === 'original')
+      .then(resize)
+      .catch(() => {
+        status.textContent = 'No se ha podido cargar el marco seleccionado.';
+      });
+    return frameTask;
+  }
+  for (const control of [frameSelect, showFrame])
+    control.addEventListener('change', () => {
+      savePreferences();
+      void updateFrame();
+    });
+  document.addEventListener('fullscreenchange', () => {
+    void updateFrame();
+    resize();
+  });
   new ResizeObserver(resize).observe(viewport);
   resize();
   const introButton = button('play-intro');
@@ -726,6 +776,7 @@ async function start() {
     const asset = showingStatic ? staticScreens[staticIndex].asset : scene().background;
     assetInfo.textContent = `${asset.file} · Original: ${asset.width} × ${asset.height} · Remaster ×6: ${asset.width * 6} × ${asset.height * 6}`;
     restartButton.textContent = showingStatic ? 'Continuar' : 'Reiniciar';
+    void updateFrame();
     modeButton.textContent = `F2 · ${pack.label}`;
     button('music-mode').textContent =
       `F3 · ${musicCatalog.versions.find((v) => v.id === musicSelect.value)?.label ?? 'Sin música'}`;
@@ -1278,6 +1329,7 @@ async function start() {
   selectMusic();
   sync();
   status.textContent = 'Elige gráficos y música y comienza la partida.';
+  await updateFrame();
   revealGame();
   resize();
   app.render();

@@ -25,6 +25,6 @@ La preparación completa incluye la nueva traza. Los PNG se generan en `reports/
 
 Clic derecho abre la barra arriba o abajo y vuelve a cerrarla. Flechas izquierda/derecha cambian la selección, Entrar selecciona y Escape cierra primero la barra. El inventario muestra sus casillas vacías. Las acciones bloqueadas conservan el selector. Las demás acciones aún pendientes cierran la barra y avisan de que no están disponibles. No se simula su ejecución.
 
-Mientras el selector está abierto se detienen los actores, como en el bucle modal original. Los controles del port (menú, F2, F3 y pantalla completa) quedan fuera del lienzo. La partida completa se ajusta a la ventana conservando 320:200; el futuro marco decorativo no cambia esas coordenadas.
+Mientras el selector está abierto se detienen los actores, como en el bucle modal original. Los controles del port (menú, F2, F3 y pantalla completa) quedan fuera del lienzo. La partida completa se ajusta a la ventana conservando 320:200; el marco decorativo opcional no cambia esas coordenadas.
 
-La espera del título continúa siendo original; se añade solamente un aviso de tecla/clic. El HUD propio de opciones y los marcos se diseñarán después de completar la mazmorra.
+La espera del título continúa siendo original; se añade solamente un aviso de tecla/clic. El HUD propio de opciones sigue pendiente. Por petición del usuario se ha añadido una capa de marcos opcionales, con selector y reborde mínimo, separada de la interfaz DOS.
