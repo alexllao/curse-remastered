@@ -1,10 +1,9 @@
-import { NativeMusicAudio, type MusicAudio, type LoopRegion } from './music-audio.ts';
 export interface MusicTrack {
   id: string;
   label: string;
   file: string;
   midi: boolean;
-  loopRegion?: LoopRegion;
+  loopRegion?: { start: number; end: number };
 }
 export interface MusicVersion {
   id: string;
@@ -15,6 +14,7 @@ export interface MusicCatalog {
   schemaVersion: number;
   versions: MusicVersion[];
   contexts: Record<string, string>;
+  menuTrack?: MusicTrack;
 }
 export async function discoverMusic(): Promise<MusicCatalog> {
   const response = await fetch('/__assets/music.json', { cache: 'no-store' });
@@ -56,17 +56,20 @@ export class MusicPlayer {
   }
   private catalog: MusicCatalog;
   private notify: (message: string) => void;
-  private audio: MusicAudio;
+  private audio: HTMLAudioElement;
   constructor(
     catalog: MusicCatalog,
     notify: (message: string) => void,
-    audio: MusicAudio = new NativeMusicAudio(),
+    audio: HTMLAudioElement = new Audio(),
   ) {
     this.catalog = catalog;
     this.notify = notify;
     this.audio = audio;
     audio.preload = 'metadata';
     audio.loop = true;
+    audio.addEventListener('ended', () => {
+      if (this.current?.loopRegion && audio.ended) this.play(this.request);
+    });
     audio.addEventListener('playing', () => {
       this.needsGesture = false;
       if (this.current && !this.paused) this.onPlaying(this.playingLabel);
@@ -123,19 +126,13 @@ export class MusicPlayer {
     this.paused = false;
     this.update();
   }
-  unlock() {
-    if (!this.current || !this.enabled) return;
-    void this.audio
-      .unlock?.()
-      .then(() => {
-        if (this.needsGesture && !this.paused) this.play(this.request);
-      })
-      .catch(() => {
-        /* El intento normal de reproducción muestra el aviso. */
-      });
-  }
   private play(request: number) {
     if (!this.enabled || this.paused || !this.current) return;
+    if (this.audio.ended && this.current.loopRegion) {
+      const start = this.current.loopRegion.start;
+      if (Number.isFinite(start) && start >= 0 && start < this.audio.duration)
+        this.audio.currentTime = start;
+    }
     void this.audio.play().catch((error: unknown) => {
       if (request !== this.request || this.paused || !this.enabled) return;
       if (
@@ -150,7 +147,10 @@ export class MusicPlayer {
     });
   }
   private update() {
-    const version = this.catalog.versions.find((item) => item.id === this.version);
+    const version =
+      this.version === '__menu' && this.catalog.menuTrack
+        ? { id: '__menu', label: 'Inicio', tracks: [this.catalog.menuTrack] }
+        : this.catalog.versions.find((item) => item.id === this.version);
     const id =
       this.manual ||
       this.catalog.contexts[this.context] ||
@@ -188,7 +188,9 @@ export class MusicPlayer {
         ? `${version!.label} · ${track.label}`
         : `Original · ${track.label} (no disponible en ${version!.label})`,
     );
+    this.audio.loop = !track.loopRegion;
     if (unchanged) {
+      this.current = track;
       if (this.audio.paused) this.play(this.request);
       return;
     }
@@ -201,7 +203,6 @@ export class MusicPlayer {
       if (Number.isFinite(this.audio.duration) && this.audio.duration > 0)
         this.audio.currentTime = seconds % this.audio.duration;
     };
-    this.audio.setLoopRegion?.(track.loopRegion);
     this.audio.src = track.file;
     this.play(request);
   }

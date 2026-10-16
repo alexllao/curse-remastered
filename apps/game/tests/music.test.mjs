@@ -227,3 +227,44 @@ test('dos salas con el mismo RS conservan la reproducción; otro RS comienza des
   assert.equal(audio.src, '/original/RS3.ogg');
   assert.equal(audio.currentTime, 0);
 });
+
+test('el audio nativo repite solo su tramo y no se reanuda si el menú lo ha pausado', () => {
+  const audio = new AudioFixture(),
+    local = globalThis.structuredClone(catalog);
+  local.versions[0].tracks[0].loopRegion = { start: 36, end: 120 };
+  const player = new MusicPlayer(local, () => {}, audio);
+  player.select('original');
+  player.start();
+  assert.equal(audio.loop, false);
+  audio.ended = true;
+  audio.currentTime = 120;
+  audio.dispatchEvent(new globalThis.Event('ended'));
+  assert.equal(audio.currentTime, 36);
+  const plays = audio.plays;
+  player.pause();
+  audio.dispatchEvent(new globalThis.Event('ended'));
+  assert.equal(audio.plays, plays);
+});
+
+test('el menú propio suena independientemente del catálogo de música del juego', () => {
+  const local = globalThis.structuredClone(catalog);
+  local.menuTrack = {
+    id: 'WEB.MENU',
+    label: 'Audio de presentación',
+    file: '/menu.mp3',
+    midi: false,
+  };
+  const audio = new AudioFixture(),
+    player = new MusicPlayer(local, () => {}, audio);
+  player.select('__menu', 'WEB.MENU');
+  player.start();
+  assert.equal(audio.src, '/menu.mp3');
+  assert.equal(audio.loop, true);
+  player.setContext('scene:0');
+  assert.equal(audio.src, '/menu.mp3');
+  player.select('none');
+  assert.equal(audio.paused, true);
+  player.select('original');
+  player.start();
+  assert.equal(audio.src, local.versions[0].tracks[0].file);
+});

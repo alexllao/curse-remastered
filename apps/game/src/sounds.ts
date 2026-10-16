@@ -18,6 +18,7 @@ export function soundBus(resource: number | null, id: number): SoundBus {
 export class SoundPlayer {
   private active: { audio: HTMLAudioElement; priority: number | undefined; bus: SoundBus } | null =
     null;
+  private prepared = new Map<string, HTMLAudioElement>();
   enabled = true;
   private version = 'original';
   private volumes: Record<SoundBus, number> = { effects: 1, ambience: 1 };
@@ -43,19 +44,31 @@ export class SoundPlayer {
     this.stop();
     this.resource = resource;
   }
+  private sources() {
+    const selected = this.catalog.versions?.find((v) => v.id === this.version);
+    const resource = String(this.resource);
+    return [selected?.scenes?.[resource], selected, this.catalog.scenes?.[resource], this.catalog];
+  }
+  /** Preparar solo globales y sala actual, sin emitir ningún sonido. */
+  preload() {
+    if (!this.enabled) return;
+    const candidates = this.sources();
+    const keys = new Set(candidates.flatMap((source) => Object.keys(source?.events ?? {})));
+    for (const key of keys) {
+      const file = candidates.find((source) => source?.events[key])?.events[key];
+      if (!file || this.prepared.has(file)) continue;
+      const audio = new Audio(file);
+      audio.preload = 'auto';
+      audio.load();
+      this.prepared.set(file, audio);
+    }
+  }
   play(id: number) {
     if (!this.enabled) return;
     const bus = soundBus(this.resource, id);
     if (!this.volumes[bus]) return;
     const key = String(id);
-    const selected = this.catalog.versions?.find((v) => v.id === this.version);
-    const resource = String(this.resource);
-    const candidates = [
-      selected?.scenes?.[resource],
-      selected,
-      this.catalog.scenes?.[resource],
-      this.catalog,
-    ];
+    const candidates = this.sources();
     const entry = candidates.find((source) => source?.events[key]);
     const file = entry?.events[key];
     if (!file) return;
@@ -70,7 +83,8 @@ export class SoundPlayer {
     )
       return;
     this.stop();
-    const audio = new Audio(file);
+    const audio = this.prepared.get(file) ?? new Audio(file);
+    audio.currentTime = 0;
     audio.volume = this.volumes[bus];
     const current = { audio, priority, bus };
     this.active = current;

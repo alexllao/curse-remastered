@@ -10,3 +10,6 @@ __pycache__/
 mods/*
 assets/*
 !assets/README.md
+
+# Recursos retirados de la web; conservar localmente.
+archive/

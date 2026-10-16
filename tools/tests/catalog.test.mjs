@@ -118,6 +118,7 @@ test('publica asociaciones nativas y permite sustituirlas mediante configuració
       'scene:0': 'CURSE.RS1',
       'scene:1': 'CURSE.RS1',
       'scene:3': 'CURSE.RS2',
+      title: 'CURSE.RS5',
     });
   }));
 
@@ -147,3 +148,35 @@ test('los bucles se aplican solo al audio verificado de su versión', async () =
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('se pueden desactivar paquetes musicales conservando todos sus archivos', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'curse-music-enabled-'));
+  try {
+    for (const version of ['original', 'remaster', 'amiga']) {
+      await mkdir(join(root, version, 'musica'), { recursive: true });
+      await writeFile(join(root, version, 'musica', 'CURSE.RS5.mp3'), version);
+    }
+    assert.deepEqual(
+      (await musicCatalog(root, { enabledVersions: ['original'] })).versions.map((v) => v.id),
+      ['original'],
+    );
+    assert.equal((await musicCatalog(root)).versions.length, 3);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('el MP3 propio del menú no es una versión y cambia de URL al reemplazarlo', () =>
+  fixture(async (root) => {
+    const folder = join(root, 'menu', 'musica');
+    await mkdir(folder, { recursive: true });
+    await writeFile(join(folder, 'menu.mp3'), 'primera');
+    const first = await musicCatalog(root, { enabledVersions: ['dosbox-mt32'] });
+    assert.deepEqual(first.versions, []);
+    assert.equal(first.menuTrack.id, 'WEB.MENU');
+    assert.match(first.menuTrack.file, /^\/menu\/musica\/menu\.mp3\?v=[a-f0-9]{64}$/);
+    await writeFile(join(folder, 'menu.mp3'), 'segunda');
+    const second = await musicCatalog(root);
+    assert.notEqual(first.menuTrack.file, second.menuTrack.file);
+    assert.deepEqual(second.versions, []);
+  }));

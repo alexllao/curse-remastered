@@ -29,11 +29,12 @@ async function metadata(path) {
   }
 }
 /** Solo publica archivos locales; las asociaciones de música son explícitas. */
-export async function musicCatalog(root) {
+export async function musicCatalog(root, { enabledVersions } = {}) {
   const versions = [],
     config = await metadata(join(root, 'music.json'));
   for (const folder of await entries(root)) {
-    if (!folder.isDirectory() || folder.name.startsWith('.')) continue;
+    if (!folder.isDirectory() || folder.name.startsWith('.') || folder.name === 'menu') continue;
+    if (enabledVersions && !enabledVersions.includes(folder.name)) continue;
     const selected = new Map();
     const loopInfo = await metadata(join(root, folder.name, 'musica', 'loops.json'));
     for (const file of await entries(join(root, folder.name, 'musica'))) {
@@ -64,6 +65,7 @@ export async function musicCatalog(root) {
           .digest('hex');
         if (hash === loop.sha256) {
           track.loopRegion = { start: loop.start, end: loop.end };
+          if (loop.transport === 'media') track.loopRegion.transport = 'media';
           track.file += `?v=${hash}`;
         }
       }
@@ -93,7 +95,7 @@ export async function musicCatalog(root) {
   if (native.schemaVersion === 1 && native.contexts && typeof native.contexts === 'object')
     for (const [context, track] of Object.entries(native.contexts))
       if (
-        /^scene:\d+$/.test(context) &&
+        /^(?:scene:\d+|core|title|intro)$/.test(context) &&
         typeof track === 'string' &&
         /^CURSE\.RS[1-5]$/.test(track)
       )
@@ -101,5 +103,18 @@ export async function musicCatalog(root) {
   if (config.contexts && typeof config.contexts === 'object')
     for (const [context, track] of Object.entries(config.contexts))
       if (typeof track === 'string') contexts[context] = track.toUpperCase();
-  return { schemaVersion: 1, versions, contexts };
+  let menuTrack;
+  try {
+    const bytes = await readFile(join(root, 'menu', 'musica', 'menu.mp3'));
+    const hash = createHash('sha256').update(bytes).digest('hex');
+    menuTrack = {
+      id: 'WEB.MENU',
+      label: 'Audio de presentación',
+      file: `/menu/musica/menu.mp3?v=${hash}`,
+      midi: false,
+    };
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  return { schemaVersion: 1, versions, contexts, ...(menuTrack ? { menuTrack } : {}) };
 }

@@ -11,7 +11,12 @@ export async function graphicsCatalog(root) {
   }
   const names = [];
   for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name === 'original') continue;
+    if (
+      !entry.isDirectory() ||
+      entry.name.startsWith('.') ||
+      ['original', 'menu'].includes(entry.name)
+    )
+      continue;
     try {
       if ((await stat(join(root, entry.name, 'graficos'))).isDirectory()) names.push(entry.name);
     } catch (error) {

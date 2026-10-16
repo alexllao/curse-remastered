@@ -5,6 +5,10 @@ import { soundBus, SoundPlayer } from '../src/sounds.ts';
 class AudioFixture extends globalThis.EventTarget {
   static instances = [];
   paused = false;
+  loads = 0;
+  load() {
+    this.loads++;
+  }
   constructor(src) {
     super();
     this.src = src;
@@ -130,3 +134,25 @@ test('la clasificación ambiental se limita a los eventos de la sala comprobada'
   assert.equal(soundBus(1, 17), 'effects');
   assert.equal(soundBus(null, 19), 'effects');
 });
+
+test('la precarga prepara globales y sala, reutiliza el reproductor y no toca otras salas', () =>
+  fixture(() => {
+    const player = new SoundPlayer(catalog);
+    player.setScene(0);
+    player.preload();
+    const count = AudioFixture.instances.length;
+    assert.equal(count, 4);
+    assert.ok(
+      AudioFixture.instances.every((audio) => audio.preload === 'auto' && audio.loads === 1),
+    );
+    const drop = AudioFixture.instances.find((audio) => audio.src === '/original/drop.wav');
+    player.preload();
+    assert.equal(AudioFixture.instances.length, count);
+    player.play(17);
+    assert.equal(AudioFixture.instances.length, count);
+    assert.equal(drop.currentTime, 0);
+    player.setScene(1);
+    player.play(17);
+    assert.equal(drop.paused, true);
+    assert.equal(AudioFixture.instances.length, count);
+  }));

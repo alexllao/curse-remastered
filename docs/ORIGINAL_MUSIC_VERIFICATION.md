@@ -36,7 +36,7 @@ Las ROM y los datos derivados permanecen fuera de Git. Los anteriores MIDI/OGG s
 
 Los MIDI principales contienen una primera pasada y marcas NATIVE_LOOP_START / NATIVE_LOOP_END. Los `.expanded.mid` incluyen otra vuelta nativa explícita para conservar su estado de canal. El audio se genera a partir de estos últimos. Su región de reproducción repetida corresponde a esa segunda vuelta, después de haber tocado toda la primera pasada; así no se reinician instrumentos ni la introducción.
 
-assets/original/musica/loops.json declara archivo, límites en segundos y SHA-256. El catálogo solo aplica límites si coincide el hash del archivo y añade una versión a la URL para evitar audio antiguo en caché. El transporte Web Audio usa AudioBufferSourceNode.loopStart / loopEnd: no depende del evento ended ni de un temporizador de interfaz. Los archivos sin metadatos verificados conservan el transporte HTML Audio. Se respetan silencio, pausa, volumen, fundido, cambios de tema y el modo de pruebas silencioso.
+`assets/dosbox-mt32/musica/loops.json` declara archivo, límites en segundos y SHA-256. El catálogo solo aplica límites si coincide el hash y añade una versión a la URL para evitar audio antiguo en caché. El transporte activo es HTML Audio; véanse sus límites más abajo.
 
 Preparación (Python con mido, Munt compilado y FFmpeg disponibles):
 
@@ -51,3 +51,17 @@ python tools/render-native-mt32.py --input reports/audio/native-verified
 ```
 
 La verificación y el render escriben en preparación, **no publican automáticamente** los archivos activos. La herramienta anterior `pnpm audio:prepare` sigue siendo el renderizador histórico provisional y no debe usarse para sustituir este lote; sus comprobaciones de huellas impiden sobrescribirlo sin coincidencia.
+
+## Audio activo y límites actuales
+
+El menú web tiene recursos propios: `assets/menu/graficos/WALLPAPER.png` y `assets/menu/musica/menu.mp3`. El MP3 lo aporta Àlex y se conserva sin sobrescribirlo; puede reemplazarlo sin cambiar la música del juego. El altavoz controla su estado independiente, guardado en localStorage. No muestra nombres de controladores. Al comenzar se aplica un fundido de 450 ms.
+
+Durante la partida se ofrece `assets/dosbox-mt32/musica/CURSE.RS1.mp3` a `CURSE.RS5.mp3`: capturas desde arranque limpio de DOSBox-X con Munt y las ROM MT-32 locales. Son grabaciones, no un reproductor RS nativo. La captura limpia de RS1 fue aprobada por Àlex; las comprobaciones MIDI no sustituyen la escucha de cada pista. `dosbox-adlib/musica` queda reservado y vacío: no aparece en F5 hasta disponer de audio. Remaster se conserva en `archive/remaster/musica`, fuera de los recursos públicos; Amiga también permanece desactivada. Esto no desactiva los gráficos Remaster.
+
+El transporte activo usa HTML Audio y los puntos de `loops.json`: al terminar busca el tramo repetido. **No garantiza una unión sin huecos a nivel de muestra.** El transporte Web Audio experimental se retiró tras los problemas de escucha. Los MIDI corregidos y los renders anteriores se conservan como investigación; aún no se ha demostrado una causa única de las diferencias del render con Munt. La API inmediata usada por el renderizador y la cola de eventos usada por DOSBox requieren comparación, especialmente al agotar voces; es una hipótesis pendiente, no un resultado certificado.
+
+La captura normal de arranque confirma RS5 durante CORE, TITLE y la presentación, seguida por RS1 en la mazmorra. El extractor publica esas asociaciones y las de los 78 escenarios. Seguir con el mismo RS conserva su reproducción; cambiar de RS lo reinicia. La sincronía audiovisual completa todavía necesita contraste de recorrido.
+
+Esc pausa la partida y su música sin mostrar la cabecera de depuración. Continuar reanuda la misma posición; Volver al inicio recupera el menú y su MP3 propio. Intro permite avanzar la presentación con un fundido. F2 cambia gráficos, F4 marcos, F5 música y F10/F11 retroceden/avanzan salas para pruebas. La carpeta `menu` está excluida del catálogo gráfico y de las versiones musicales. Los avisos de cambio solo aparecen por acciones explícitas.
+
+Los efectos globales y de la sala actual se precargan y reutilizan. Se mantienen las prioridades de la única voz PCM original. La precarga solicita datos al navegador; no garantiza latencia cero ni sustituye una prueba de escucha en Firefox.

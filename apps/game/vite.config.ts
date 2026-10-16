@@ -13,6 +13,9 @@ const buildTimestamp = new Date().toISOString();
 
 const assetsRoot = fileURLToPath(new URL('../../assets', import.meta.url));
 const packs = () => graphicsCatalog(assetsRoot);
+// Paquetes musicales Remaster/Amiga conservados, desactivados hasta nueva revisión.
+// Solo se publican capturas de controladores originales; «Sin música» sigue disponible en la interfaz.
+const music = () => musicCatalog(assetsRoot, { enabledVersions: ['dosbox-mt32', 'dosbox-adlib'] });
 function localPacks(): Plugin {
   return {
     name: 'curse-local-graphics-packs',
@@ -45,7 +48,7 @@ function localPacks(): Plugin {
           });
       });
       server.middlewares.use('/__assets/music.json', (_req, res) => {
-        void musicCatalog(assetsRoot)
+        void music()
           .then((result) => {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Cache-Control', 'no-store');
@@ -103,7 +106,7 @@ function localPacks(): Plugin {
       this.emitFile({
         type: 'asset',
         fileName: '__assets/music.json',
-        source: JSON.stringify(await musicCatalog(assetsRoot)),
+        source: JSON.stringify(await music()),
       });
       this.emitFile({
         type: 'asset',

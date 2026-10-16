@@ -30,7 +30,7 @@
         <div class="controls">
           <button id="open-menu" disabled>Menú</button>
           <button id="visual-mode" disabled>F2 · Original</button>
-          <button id="music-mode" disabled>F3 · Sin música</button>
+          <button id="music-mode" disabled>F5 · Sin música</button>
           <button id="fullscreen">Pantalla completa</button>
           <button id="toggle-debug" aria-pressed="false">Depuración</button>
         </div>
@@ -182,13 +182,13 @@
             <div class="menu-actions">
               <button id="start-game" class="primary" disabled>Comenzar partida</button>
               <button id="resume-game" class="primary" hidden>Continuar partida</button>
+              <button id="return-home" hidden>Volver al inicio</button>
               <button id="open-options" aria-haspopup="dialog" aria-controls="menu-settings">
                 Opciones
               </button>
             </div>
-            <p class="shortcut-note">
-              <span><kbd>F2</kbd> · Gráficos</span><span><kbd>F5</kbd> · Música</span
-              ><span><kbd>Esc</kbd> · Menú</span>
+            <p id="menu-shortcuts" class="shortcut-note">
+              <span>Sonido · Altavoz</span><span>Ajustes · Opciones</span>
             </p>
           </div>
           <dialog id="menu-settings" aria-labelledby="settings-heading">

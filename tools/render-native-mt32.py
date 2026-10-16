@@ -24,7 +24,7 @@ sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 def level(path):
  p=subprocess.run(['ffmpeg','-hide_banner','-nostats','-i',str(path),'-af','loudnorm=print_format=json','-f','null','NUL'],capture_output=True,text=True,check=True)
  return json.loads(p.stderr[p.stderr.rfind('{'):p.stderr.rfind('}')+1])
-reference=level(root/'assets/remaster/musica/CURSE.RS5.mp3')
+reference=level(root/'archive/remaster/musica/CURSE.RS5.mp3')
 for item in report['tracks']:
  name=item['track'];midi=folder/f'{name}.expanded.mid'
  assert sha(midi)==item['expandedMidiSha256']
@@ -55,5 +55,5 @@ for item in report['tracks']:
   item.update({'outputSha256':sha(ogg),'sampleRate':sample_rate,'gainDb':gain,'loudness':final})
   print(json.dumps({'track':name,'LUFS':final['input_i'],'sampleRate':sample_rate}),flush=True)
  finally:free(context)
-report.update({'librarySha256':sha(library_path),'romSha256':{p.name:sha(p) for p in roms},'referenceSha256':sha(root/'assets/remaster/musica/CURSE.RS5.mp3'), 'emulatorSettings':{'analogOutputMode':2,'stereoOutputSampleRate':48000,'niceAmpRamp':True,'partialCount':32,'reverb':'ROM default','dacInputMode':0}})
+report.update({'librarySha256':sha(library_path),'romSha256':{p.name:sha(p) for p in roms},'referenceSha256':sha(root/'archive/remaster/musica/CURSE.RS5.mp3'), 'emulatorSettings':{'analogOutputMode':2,'stereoOutputSampleRate':48000,'niceAmpRamp':True,'partialCount':32,'reverb':'ROM default','dacInputMode':0}})
 (folder/'render.json').write_text(json.dumps(report,indent=2)+'\n')

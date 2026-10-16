@@ -7,21 +7,25 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
   const options = document.querySelector<HTMLButtonElement>('#open-options')!;
   const image = document.querySelector<HTMLImageElement>('#welcome-wallpaper')!;
   const frame = document.querySelector<HTMLElement>('#welcome-border')!;
-  const music = document.querySelector<HTMLSelectElement>('#music-select')!;
   const showFrame = document.querySelector<HTMLInputElement>('#show-frame')!;
   const status = document.querySelector<HTMLElement>('#welcome-status')!;
   const audioButton = document.querySelector<HTMLButtonElement>('#welcome-audio')!;
   let musicHint = '';
+  let presentationMuted = false;
   function updateStatus() {
-    const musicLabel = music.selectedOptions[0]?.textContent ?? 'Sin música';
     const mutedMusic =
-      music.value === 'none' ||
+      presentationMuted ||
       Number(document.querySelector<HTMLInputElement>('#music-volume')!.value) === 0;
     audioButton.classList.toggle('is-muted', mutedMusic);
     audioButton.setAttribute('aria-pressed', String(mutedMusic));
-    audioButton.title = mutedMusic || musicHint ? 'Activar música' : 'Silenciar música';
+    audioButton.title =
+      mutedMusic || musicHint
+        ? 'Activar audio de presentación'
+        : 'Desactivar audio de presentación';
     audioButton.setAttribute('aria-label', audioButton.title);
-    status.textContent = `${musicLabel}${musicHint ? ` · ${musicHint}` : ''}`;
+    status.textContent = mutedMusic
+      ? 'Audio de presentación desactivado'
+      : musicHint || 'Audio de presentación activado';
   }
 
   const effects = document.querySelector<HTMLSelectElement>('#sounds-select')!;
@@ -113,6 +117,10 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
         notice.hidden = true;
       }, 8000);
     },
+    setPresentationMuted(value: boolean) {
+      presentationMuted = value;
+      updateStatus();
+    },
     setMusicHint(message: string) {
       musicHint = message;
       updateStatus();
@@ -121,7 +129,7 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
       await interfaceFontsReady;
       // La imagen se decodifica bajo el loading; una ausencia conserva TITLE.
       for (const path of [
-        '/remaster/graficos/menu/WALLPAPER.png',
+        '/menu/graficos/WALLPAPER.png',
         '/remaster/graficos/interfaz/TITLE.png',
         '/original/graficos/interfaz/TITLE.png',
       ]) {

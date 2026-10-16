@@ -5,12 +5,13 @@ import { join, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { graphicsCatalog } from '../graphics-catalog.mjs';
 
-test('descubre gráficos por versión sin incluir versiones solo musicales', async () => {
+test('descubre gráficos por versión sin incluir el menú ni versiones solo musicales', async () => {
   const root = await mkdtemp(join(tmpdir(), 'curse-packs-test-'));
   try {
     await mkdir(join(root, 'remaster2', 'graficos'), { recursive: true });
     await mkdir(join(root, 'cinematic', 'musica'), { recursive: true });
     await mkdir(join(root, 'restaurados', 'sonidos'), { recursive: true });
+    await mkdir(join(root, 'menu', 'graficos'), { recursive: true });
     const result = await graphicsCatalog(root);
     assert.deepEqual(
       result.packs.map((p) => p.id),

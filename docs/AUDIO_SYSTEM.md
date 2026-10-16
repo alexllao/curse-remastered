@@ -18,13 +18,13 @@ reports/audio/
 
 Cada versión musical conserva el mismo identificador de tema, incluido `CURSE.`. Se admiten OGG, Opus, MP3, M4A, WAV, FLAC y AAC según los decodificadores del navegador. Cuando conviven MIDI y audio renderizado con el mismo nombre, se ofrece el audio renderizado. Las versiones se descubren al arrancar y mediante «Actualizar música». Un `version.json` opcional dentro de una versión permite declarar `label` y `provisional`.
 
-El selector gráfico descubre únicamente las versiones que contienen `assets/<versión>/graficos/`. Música, sonidos y referencias no aparecen en F2. El directorio `original/` de la raíz no se sirve a la web: las ROM opcionales permanecen en `reports/audio/roms/`. Las compilaciones que contienen recursos también están excluidas de Git y no deben publicarse con ellos.
+El selector gráfico excluye `menu` y descubre las versiones que contienen `assets/<versión>/graficos/`. Música, sonidos y referencias no aparecen en F2. El directorio `original/` de la raíz no se sirve a la web: las ROM opcionales permanecen en `reports/audio/roms/`. Las compilaciones que contienen recursos también están excluidas de Git y no deben publicarse con ellos.
 
 ## Reproducción
 
-Gráficos, música y efectos se eligen de forma independiente; no hay selector manual de temas en el menú. La presentación propia de la web (TITLE por ahora) reproduce `CURSE.RS5` de la versión elegida en bucle y al 30 % del volumen configurado. Es una decisión de presentación de la adaptación, no una asociación atribuida al DOS. Abrir o cerrar el menú no modifica esa reproducción. «Comenzar partida» apaga esa pista mediante un fundido de 450 ms y pasa al arranque original. Los cambios de tema del juego usan únicamente el mapa explícito de escenas. Un solo elemento de audio evita superposiciones. El aviso se muestra al recibir `playing`. Si el navegador bloquea el primer sonido, el primer clic o tecla vuelve a intentarlo, sin abrir y cerrar el menú. Ocultar o abandonar la página pausa el audio. Las preferencias se guardan sin guardar la partida.
+Gráficos, música y efectos se eligen de forma independiente; no hay selector manual de temas en el menú. La bienvenida reproduce `assets/menu/musica/menu.mp3` en bucle al 30 % del volumen configurado, independientemente del controlador del juego. Es una decisión de presentación de la adaptación, no una asociación atribuida al DOS. Abrir o cerrar el menú no modifica esa reproducción. «Comenzar partida» apaga esa pista mediante un fundido de 450 ms y pasa al arranque original. Los cambios de tema del juego usan únicamente el mapa explícito de escenas. Un solo elemento de audio evita superposiciones. El aviso se muestra al recibir `playing`. Si el navegador bloquea el primer sonido, el primer clic o tecla vuelve a intentarlo, sin abrir y cerrar el menú. Ocultar o abandonar la página pausa el audio. Las preferencias se guardan sin guardar la partida.
 
-Si falta un tema en una versión, se intenta el mismo identificador en Original. Sin audio disponible se conserva el silencio. Un MIDI por sí solo se muestra como pendiente de renderizado; no se sustituye por una síntesis genérica. La selección automática necesita el mapa explícito descrito en [ORIGINAL_MUSIC_MAPPING.md](ORIGINAL_MUSIC_MAPPING.md). Mientras no esté verificado, las escenas sin asociación permanecen en silencio; RS5 solo se fija para el menú de la adaptación.
+Si falta un tema en una versión, se intenta el mismo identificador en Original. Sin audio disponible se conserva el silencio. Un MIDI por sí solo se muestra como pendiente de renderizado; no se sustituye por una síntesis genérica. La selección automática necesita el mapa explícito descrito en [ORIGINAL_MUSIC_MAPPING.md](ORIGINAL_MUSIC_MAPPING.md). Mientras no esté verificado, las escenas sin asociación permanecen en silencio; La bienvenida tiene un MP3 propio.
 
 ## Render MT-32 histórico (sustituido)
 
@@ -79,10 +79,6 @@ El menú del port reutiliza provisionalmente los eventos globales 7 (señalar, 7
 
 Su voz es independiente del controlador PCM del juego, sin superponer sonidos de interfaz entre sí. Respeta «Sin efectos», el volumen general, la página oculta y `?silent=1`. El hover solo responde al ratón y al foco visible de teclado, con límite entre repeticiones; los bloqueos de reproducción no se reintentan más tarde. El menú se mantiene azul y muestra el dorado al señalar o enfocar cada botón.
 
-### Continuidad de RS5 en la bienvenida
-
-Sin una preferencia previa se elige Remaster, después Original o el primer paquete disponible. Una elección guardada de «Sin música» se respeta. La bienvenida fija CURSE.RS5 en bucle; volver de una pestaña oculta reanuda su posición. El botón de audio silencia mediante «Sin música» y permite recuperar la versión anterior: abrir Opciones o Créditos no pausa la pista. Al comenzar la partida se mantiene el fundido de 450 ms. Si el navegador exige interacción para reproducir, el aviso se muestra junto al estado musical y el primer clic o tecla lo reintenta.
-
 ### Nivel de escucha de los renders MT-32
 
 La RS5 local tenía un nivel medio de −34,1 dBFS frente a −21,9 dBFS del remaster. El render provisional aplica ahora ganancia constante por pista hacia −22 dBFS de media RMS, limitada por un pico PCM de −2 dBFS. Se conserva la dinámica; no se comprime, modifica el MIDI ni se presenta este ajuste como volumen de salida original verificado. RS5 recibe +12,12 dB: el OGG final mide −22,0 dBFS de media y −3,4 dBFS de pico de muestra.
@@ -99,7 +95,7 @@ Opciones ofrece Música, Efectos y Ambiente con porcentajes guardados por separa
 
 `tools/reverse-engineering/trace-music.py` ejecuta 156 casos del tramo 0x4FD5–0x5017: una carga inicial y una entrada con el mismo tema para cada recurso. Si el índice coincide con DS:0x80B8, salta directamente a 0x5098; conserva la pista. Si cambia, 0x7F5D activa DS:0x9955 y espera a que el controlador termine antes de liberar y cargar el RS. La respuesta sintética F0 en 0x7FF9 emite los bytes 00 FC hacia el puerto MPU 0x330. No aplica una rampa de volumen en esta ruta: el port cambia de tema directamente y conserva su posición cuando sigue el mismo RS. Los fundidos de paleta de 0x79E4 no demuestran un fundido musical.
 
-El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. El lote actual de Original usa los bucles nativos verificados; véase ORIGINAL_MUSIC_VERIFICATION.md. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.
+El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. El lote actual de Original usa los bucles nativos verificados; véase ORIGINAL_MUSIC_VERIFICATION.md. El MP3 independiente y el fundido de 450 ms del menú web son decisiones propias de esa pantalla.
 
 La dirección musical permanente y la referencia de sonoridad están en [DIRECCION_MUSICAL.md](DIRECCION_MUSICAL.md). RS5 es la referencia aprobada y se conserva.
 
@@ -107,6 +103,16 @@ Durante la partida, F5 recorre las versiones musicales disponibles y «Sin músi
 
 F2 comparte el mismo aviso y fundido: muestra «Gráficos» y el paquete realmente cargado después de completar el cambio. Si no cambia el paquete por un fallo de carga, no anuncia un destino falso. Las confirmaciones de reproducción musical no abren un aviso nuevo ni sustituyen el de gráficos.
 
-## Original verificado y bucles nativos
+## Audio activo y límites actuales
 
-Los cinco MIDI/OGG originales han sido sustituidos con copia de seguridad por el lote contrastado con DOSBox-X. Tempos: RS1 140, RS2 135, RS3 140, RS4 125 y RS5 110 BPM. F8 E1 de RS1 son 465 ticks. El render actual usa Munt con ROM locales y ajustes del ensayo DOSBox; el nivel ronda −19,34 LUFS, referencia RS5 Remaster. Web Audio repite el tramo nativo con loopStart/loopEnd, conservando introducción y estado heredado. Los paquetes Remaster y Amiga no se han modificado. Métodos, límites, comandos e informes: [ORIGINAL_MUSIC_VERIFICATION.md](ORIGINAL_MUSIC_VERIFICATION.md).
+El menú web tiene recursos propios: `assets/menu/graficos/WALLPAPER.png` y `assets/menu/musica/menu.mp3`. El MP3 lo aporta Àlex y se conserva sin sobrescribirlo; puede reemplazarlo sin cambiar la música del juego. El altavoz controla su estado independiente, guardado en localStorage. No muestra nombres de controladores. Al comenzar se aplica un fundido de 450 ms.
+
+Durante la partida se ofrece `assets/dosbox-mt32/musica/CURSE.RS1.mp3` a `CURSE.RS5.mp3`: capturas desde arranque limpio de DOSBox-X con Munt y las ROM MT-32 locales. Son grabaciones, no un reproductor RS nativo. La captura limpia de RS1 fue aprobada por Àlex; las comprobaciones MIDI no sustituyen la escucha de cada pista. `dosbox-adlib/musica` queda reservado y vacío: no aparece en F5 hasta disponer de audio. Remaster se conserva en `archive/remaster/musica`, fuera de los recursos públicos; Amiga también permanece desactivada. Esto no desactiva los gráficos Remaster.
+
+El transporte activo usa HTML Audio y los puntos de `loops.json`: al terminar busca el tramo repetido. **No garantiza una unión sin huecos a nivel de muestra.** El transporte Web Audio experimental se retiró tras los problemas de escucha. Los MIDI corregidos y los renders anteriores se conservan como investigación; aún no se ha demostrado una causa única de las diferencias del render con Munt. La API inmediata usada por el renderizador y la cola de eventos usada por DOSBox requieren comparación, especialmente al agotar voces; es una hipótesis pendiente, no un resultado certificado.
+
+La captura normal de arranque confirma RS5 durante CORE, TITLE y la presentación, seguida por RS1 en la mazmorra. El extractor publica esas asociaciones y las de los 78 escenarios. Seguir con el mismo RS conserva su reproducción; cambiar de RS lo reinicia. La sincronía audiovisual completa todavía necesita contraste de recorrido.
+
+Esc pausa la partida y su música sin mostrar la cabecera de depuración. Continuar reanuda la misma posición; Volver al inicio recupera el menú y su MP3 propio. Intro permite avanzar la presentación con un fundido. F2 cambia gráficos, F4 marcos, F5 música y F10/F11 retroceden/avanzan salas para pruebas. La carpeta `menu` está excluida del catálogo gráfico y de las versiones musicales. Los avisos de cambio solo aparecen por acciones explícitas.
+
+Los efectos globales y de la sala actual se precargan y reutilizan. Se mantienen las prioridades de la única voz PCM original. La precarga solicita datos al navegador; no garantiza latencia cero ni sustituye una prueba de escucha en Firefox.

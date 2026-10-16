@@ -4,6 +4,13 @@ Cada carpeta agrupa una versión, y dentro se separan sus gráficos, música y s
 
 ```text
 assets/
+  menu/
+    graficos/WALLPAPER.png
+    musica/menu.mp3
+  dosbox-mt32/
+    musica/                  # capturas RS1–RS5, loops.json y procedencia
+  dosbox-adlib/
+    musica/                  # reservado; todavía sin pistas
   original/
     graficos/
       fondos/
@@ -29,9 +36,6 @@ assets/
       presentacion/
       marcos/
     sonidos/
-    musica/
-      CURSE.RS1.mp3
-      ...
 ```
 
 `remaster` es el nombre del paquete mejorado de respaldo, también para los sonidos. No se usa `remastered` como nombre alternativo. Puedes añadir `assets/remaster2/graficos/`, `assets/storybook/musica/` u otra versión sin tener que aportar los tres tipos de recurso.
@@ -49,6 +53,8 @@ Por ejemplo, `assets/original/graficos/fondos/000-DUNGEON.png` corresponde a `as
 Ben mantiene sus sprites originales hasta que se apruebe sustituirlos. Aplicar la [dirección artística](../docs/ESTILO_ARTISTICO.md) a fondos, objetos, HUD, cursores y marcos.
 
 ## Detección de versiones
+
+La carpeta `menu` agrupa exclusivamente la bienvenida y nunca aparece como versión gráfica ni musical. Su MP3 tiene un silencio independiente guardado; reemplazarlo no cambia el audio del juego. Los arreglos Remaster están preservados en `archive/remaster/musica`, fuera de `assets` y de Git. Durante la revisión solo se habilita DOSBox MT-32; AdLib todavía no contiene audio.
 
 Los selectores son independientes: gráficos descubre las subcarpetas `graficos/`, música las `musica/` con pistas y efectos las `sonidos/` con audio. Una versión solo musical no aparece en F2. Los marcos se guardan en `assets/<versión>/graficos/marcos/`, con su PNG y el `.png.json` correspondiente.
 

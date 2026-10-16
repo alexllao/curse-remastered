@@ -1,4 +1,3 @@
-import { NativeMusicAudio } from './music-audio';
 import { createSettingNotice } from './setting-notice.js';
 import { buildLabel } from './build-label.js';
 import { createOriginalInfo } from './original-info-view.js';
@@ -214,6 +213,7 @@ async function start() {
     graphics?: string;
     music?: string;
     musicBeforeMute?: string;
+    menuMusicMuted?: boolean;
     effects?: string;
     effectsVolume?: number;
     ambienceVolume?: number;
@@ -228,6 +228,7 @@ async function start() {
   } catch {
     /* Preferencias locales opcionales. */
   }
+  let menuMusicMuted = preferences.menuMusicMuted === true;
   let packs = await discoverPacks(),
     pack: GraphicsPack =
       packs.find((p) => p.id === preferences.graphics) ??
@@ -269,6 +270,7 @@ async function start() {
   function selectSounds() {
     sounds.select(soundSelect.value);
     if (silentPreview) sounds.enabled = false;
+    sounds.preload();
     const selected = soundVersions.find((v) => v.id === soundSelect.value);
     document.querySelector('#sound-note')!.textContent =
       selected && !Object.keys(selected.events).length
@@ -318,7 +320,7 @@ async function start() {
         message.startsWith('Haz clic') ? 'Haz clic para activar la música' : '',
       );
     },
-    new NativeMusicAudio(musicAudio),
+    musicAudio,
   );
   const gameToast = document.querySelector<HTMLElement>('#game-toast')!;
   let gameToastTimer: number | undefined;
@@ -386,6 +388,7 @@ async function start() {
           graphics: pack.id,
           music: musicSelect.value,
           musicBeforeMute: lastMusicVersion,
+          menuMusicMuted,
           volume: Number(volume.value),
           intro: introEnabled.checked,
           effects: soundSelect.value,
@@ -401,11 +404,22 @@ async function start() {
   }
   function selectMusic() {
     const version = musicCatalog.versions.find((v) => v.id === musicSelect.value);
-    button('preview-music').disabled = !musicCatalog.versions.length;
+    button('preview-music').disabled = !gameStarted
+      ? !musicCatalog.menuTrack
+      : !musicCatalog.versions.length;
     if (version) lastMusicVersion = version.id;
-    music.select(musicSelect.value, !gameStarted ? 'CURSE.RS5' : '');
+    if (!gameStarted && musicCatalog.menuTrack)
+      music.select(menuMusicMuted ? 'none' : '__menu', musicCatalog.menuTrack.id);
+    else music.select(musicSelect.value, !gameStarted ? 'CURSE.RS5' : '');
+    welcomeMenu.setPresentationMuted(menuMusicMuted);
     music.setVolume((Number(volume.value) / 100) * (!gameStarted ? 0.3 : 1));
-    button('preview-music').textContent = version ? 'Silenciar música' : 'Activar música';
+    button('preview-music').textContent = !gameStarted
+      ? menuMusicMuted
+        ? 'Activar audio de presentación'
+        : 'Desactivar audio de presentación'
+      : version
+        ? 'Silenciar música'
+        : 'Activar música';
     if (musicCatalogFailed) musicNote.textContent = 'No se ha podido leer el catálogo de música.';
   }
   async function refreshMusic() {
@@ -433,6 +447,22 @@ async function start() {
     menu.hidden = !open;
     resumeButton.hidden = !gameStarted;
     startButton.hidden = gameStarted;
+    button('return-home').hidden = !gameStarted;
+    const shortcuts = document.querySelector<HTMLElement>('#menu-shortcuts')!;
+    shortcuts.replaceChildren(
+      ...(gameStarted
+        ? ['F2 · Gráficos', 'F4 · Marco', 'F5 · Música', 'Esc · Continuar']
+        : ['Sonido · Altavoz', 'Ajustes · Opciones']
+      ).map((text) => {
+        const item = document.createElement('span');
+        item.textContent = text;
+        return item;
+      }),
+    );
+    if (gameStarted) {
+      if (open) music.pause();
+      else if (!startingGame && !document.hidden) music.resume();
+    }
     welcomeMenu.sync(!gameStarted && !debugMode, open);
     document.querySelector('#menu-heading')!.textContent = gameStarted
       ? 'La aventura te espera'
@@ -459,18 +489,23 @@ async function start() {
   setResourceLoading('Cargando gráficos y personajes…');
   let visual = await loadVisual(manifest.title, pack);
   let awaitingTitle = false;
+  // DOSBox: 24 fotogramas negros tras los 32 pasos DAC de CORE, antes de TITLE.
+  const coreTitleBlackTicks = 24;
   let startup: {
     elapsed: number;
+    waiting: boolean;
     event: number;
     visual: typeof visual;
     frames: Awaited<ReturnType<typeof loadVisual>>[];
   } | null = null;
   function skipStartup() {
-    if (startup)
+    if (startup) {
+      startup.waiting = false;
       startup.elapsed = Math.max(
         startup.elapsed,
         (manifest.startupPlayback.holdTicks * 1000) / manifest.startupPlayback.referenceHz,
       );
+    }
   }
   async function finishStartup() {
     startup = null;
@@ -764,6 +799,48 @@ async function start() {
       original: Awaited<ReturnType<typeof loadVisual>>[];
     }>
   >();
+  let presentationExit: { overlay: Graphics; cancelled: boolean } | null = null;
+  async function leavePresentation(alreadyBlack = false) {
+    if (!playback || presentationExit || changing || selectingPack) return;
+    const overlay = new Graphics().rect(0, 0, 320, 200).fill(0x000000);
+    overlay.eventMode = 'none';
+    const state = { overlay, cancelled: false };
+    presentationExit = state;
+    world.addChild(overlay);
+    const duration = matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? 0
+      : 32000 / manifest.presentationPlayback.referenceHz;
+    const fade = (from: number, to: number) =>
+      new Promise<void>((resolve) => {
+        let elapsed = 0,
+          previous = performance.now();
+        overlay.alpha = from;
+        const step = (now: number) => {
+          if (state.cancelled) {
+            resolve();
+            return;
+          }
+          if (!menuOpen) elapsed += now - previous;
+          previous = now;
+          const progress = duration ? Math.min(1, elapsed / duration) : 1;
+          overlay.alpha = from + (to - from) * progress;
+          if (progress === 1) resolve();
+          else requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    try {
+      if (!alreadyBlack) await fade(0, 1);
+      else overlay.alpha = 1;
+      if (state.cancelled) return;
+      await show(staticScreens.length, pack);
+      if (!state.cancelled) await fade(1, 0);
+    } finally {
+      overlay.removeFromParent();
+      overlay.destroy();
+      if (presentationExit === state) presentationExit = null;
+    }
+  }
   function stopPresentation() {
     playback = null;
     background.alpha = 1;
@@ -1022,7 +1099,7 @@ async function start() {
       ? `${currentView} · ${staticScreens[staticIndex].name}`
       : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
     skipButton.hidden = !debugMode || !playback || menuOpen;
-    document.body.classList.toggle('playing', gameStarted && !menuOpen && !debugMode);
+    document.body.classList.toggle('playing', gameStarted && !debugMode);
     const musicVolumeLabel = gameStarted ? 'Música del juego' : 'Música del menú';
     document.querySelector('#music-volume-label')!.textContent = musicVolumeLabel;
     volume.setAttribute('aria-label', `Volumen de ${musicVolumeLabel.toLowerCase()}`);
@@ -1132,6 +1209,7 @@ async function start() {
       sceneIndex = nextScene;
       showingStatic = nextStatic;
       sounds.setScene(nextStatic ? null : manifest.scenes[nextScene].id);
+      sounds.preload();
       currentView = nextView;
       if (nextStatic) staticIndex = nextView;
       pack = nextPack;
@@ -1302,7 +1380,7 @@ async function start() {
       return;
     }
     if (playback && !debugMode) {
-      void show(staticScreens.length, pack);
+      void leavePresentation();
       return;
     }
     if (showingStatic) {
@@ -1385,7 +1463,7 @@ async function start() {
       fps.textContent = `${Math.round((fpsFrames * 1000) / fpsElapsed)} FPS`;
       fpsElapsed = fpsFrames = 0;
     }
-    if (changing || selectingPack) return;
+    if (changing || selectingPack || menuOpen || presentationExit) return;
     if (transition) {
       transition.elapsed += ticker.elapsedMS;
       const progress = Math.min(1, transition.elapsed / transitionDuration);
@@ -1394,9 +1472,9 @@ async function start() {
       return;
     }
     if (startup) {
+      // CORE espera entrada; su fundido comienza solo al confirmar.
+      if (startup.waiting) return;
       startup.elapsed += ticker.elapsedMS;
-      // El menú ya expresa la intención de jugar: abreviamos la espera del logotipo.
-      if (startup.elapsed >= 2500) skipStartup();
       const timing = manifest.startupPlayback,
         tick = (startup.elapsed * timing.referenceHz) / 1000;
       let index = startup.event;
@@ -1407,7 +1485,7 @@ async function start() {
         background.texture = original ? startup.frames[index].texture : startup.visual.texture;
         background.alpha = original ? 1 : timing.events[index].brightness;
       }
-      if (tick >= timing.durationTicks) void finishStartup();
+      if (tick >= timing.durationTicks + coreTitleBlackTicks) void finishStartup();
       return;
     }
     if (menuOpen || originalHud.visible || infoIsOpen()) return;
@@ -1418,7 +1496,7 @@ async function start() {
         (playback.elapsed * manifest.presentationPlayback.referenceHz) / 1000 >=
         manifest.presentationPlayback.durationTicks
       )
-        void show(staticScreens.length, pack);
+        void leavePresentation(true);
       return;
     }
     if (renderCameraX !== cameraX) {
@@ -1504,6 +1582,19 @@ async function start() {
     showMusicSelection();
     app.canvas.focus({ preventScroll: true });
   }
+  async function testScene(direction: number) {
+    if (!gameStarted || menuOpen || startingGame || changing || selectingPack || presentationExit)
+      return;
+    const index = showingStatic
+      ? direction > 0
+        ? 0
+        : manifest.scenes.length - 1
+      : (sceneIndex + direction + manifest.scenes.length) % manifest.scenes.length;
+    startup = null;
+    awaitingTitle = false;
+    await show(staticScreens.length + index, pack);
+    notifyGame(`Escenario ${scene().id} · ${scene().name}`);
+  }
   button('music-mode').addEventListener('click', nextMusic);
   modeButton.addEventListener('click', () => void nextPack());
   nextButton.addEventListener('click', () => void nextScene(1));
@@ -1549,6 +1640,11 @@ async function start() {
       (target.matches('input,select,textarea') || target.isContentEditable)
     )
       return;
+    if (gameStarted && ['F10', 'F11'].includes(event.key)) {
+      event.preventDefault();
+      if (!event.repeat) void testScene(event.key === 'F10' ? -1 : 1);
+      return;
+    }
     if (event.key === 'F4' && gameStarted && !menuOpen) {
       event.preventDefault();
       if (!event.repeat && !showFrame.disabled) {
@@ -1559,7 +1655,10 @@ async function start() {
     }
     if (startup) {
       event.preventDefault();
-      skipStartup();
+      if (event.key === 'Escape') {
+        setMenu(!menuOpen);
+        sync();
+      } else if (!event.repeat && !menuOpen) skipStartup();
       return;
     }
     const hudCommand = hudKeyboardCommand(event.key, originalHud.visible, event.shiftKey);
@@ -1616,7 +1715,7 @@ async function start() {
       (target === document.body || target === app.canvas)
     ) {
       event.preventDefault();
-      void show(staticScreens.length, pack);
+      void leavePresentation();
       return;
     }
     if (event.key === 'Enter' && debugMode && showingStatic && event.target === document.body) {
@@ -1681,7 +1780,7 @@ async function start() {
       background.texture = core.texture;
       background.alpha = 1;
       if (previous.disposable) previous.texture.destroy(true);
-      startup = { elapsed: 0, event: -1, visual: core, frames };
+      startup = { elapsed: 0, waiting: true, event: -1, visual: core, frames };
       app.canvas.focus({ preventScroll: true });
       status.textContent = 'Arranque original.';
       sync();
@@ -1701,11 +1800,30 @@ async function start() {
     setMenu(false);
     sync();
   });
+  button('return-home').addEventListener('click', () => {
+    if (startingGame || changing || selectingPack) return;
+    void (async () => {
+      music.pause();
+      sounds.stop();
+      startup = null;
+      awaitingTitle = false;
+      if (presentationExit) presentationExit.cancelled = true;
+      stopPresentation();
+      finishTransition();
+      gameStarted = false;
+      setDebug(false);
+      await show(0, pack);
+      setMenu(true);
+      selectMusic();
+      if (!document.hidden) music.start(true);
+      sync();
+    })();
+  });
   menuButton.addEventListener('click', () => {
     setMenu(!menuOpen);
     sync();
   });
-  skipButton.addEventListener('click', () => void show(staticScreens.length, pack));
+  skipButton.addEventListener('click', () => void leavePresentation());
   button('toggle-debug').addEventListener('click', () => {
     setDebug(!debugMode);
     sync();
@@ -1771,21 +1889,36 @@ async function start() {
   }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pauseAudio();
-    else if (!gameStarted && !startingGame) music.start();
+    else if (!startingGame && (!gameStarted || !menuOpen)) music.resume();
   });
   window.addEventListener('pagehide', pauseAudio);
-  function unlockMenuAudio(event: Event) {
-    // Reanudar Web Audio en el gesto mismo, antes de fundidos o cargas asíncronas.
-    music.unlock();
+  function unlockAudio(event: Event) {
     // El altavoz resuelve su primer gesto sin invertirlo después en mute.
     if (event.target instanceof Element && event.target.closest('#welcome-audio, #preview-music'))
       return;
-    if (!gameStarted && !startingGame && music.needsGesture && !document.hidden) music.start();
+    if (!startingGame && (!gameStarted || !menuOpen) && music.needsGesture && !document.hidden)
+      music.start();
   }
-  window.addEventListener('pointerdown', unlockMenuAudio, { capture: true });
-  window.addEventListener('keydown', unlockMenuAudio, { capture: true });
+  window.addEventListener('pointerdown', unlockAudio, { capture: true });
+  window.addEventListener('keydown', unlockAudio, { capture: true });
 
   function toggleMusicMute() {
+    if (!gameStarted) {
+      if (music.needsGesture && !menuMusicMuted && Number(volume.value) > 0) {
+        music.start();
+        return;
+      }
+      menuMusicMuted = !menuMusicMuted;
+      if (!menuMusicMuted && Number(volume.value) === 0) {
+        volume.value = '65';
+        document.querySelector<HTMLOutputElement>('#music-volume-value')!.value = '65%';
+      }
+      selectMusic();
+      if (!document.hidden) music.start();
+      savePreferences();
+      sync();
+      return;
+    }
     if (music.needsGesture && musicSelect.value !== 'none' && Number(volume.value) > 0) {
       music.start();
       savePreferences();
