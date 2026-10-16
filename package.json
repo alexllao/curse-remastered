@@ -1,8 +1,9 @@
 {
   "name": "curse-remastered",
+  "description": "An in-progress modern reimplementation and visual remaster of the DOS adventure game Curse of Enchantia.",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@11.28.6",
   "scripts": {
     "dev": "pnpm --filter @curse/game dev",
     "build": "pnpm -r build",

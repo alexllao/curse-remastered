@@ -1,0 +1,27 @@
+* text=auto eol=lf
+
+# Keep original game assets and media byte-for-byte; never normalize them.
+*.png binary -eol
+*.jpg binary -eol
+*.jpeg binary -eol
+*.gif binary -eol
+*.webp binary -eol
+*.ico binary -eol
+*.bin binary -eol
+*.exe binary -eol
+*.dll binary -eol
+*.DAT binary -eol
+*.MAP binary -eol
+*.SPR binary -eol
+*.BRD binary -eol
+*.PAL binary -eol
+*.SFX binary -eol
+*.RS1 binary -eol
+*.RS2 binary -eol
+*.RS3 binary -eol
+*.RS4 binary -eol
+*.RS5 binary -eol
+*.WAV binary -eol
+*.MP3 binary -eol
+*.OGG binary -eol
+*.MID binary -eol
