@@ -59,6 +59,7 @@ try {
     'trace-room-entries',
     'trace-scene-order',
     'trace-presentation',
+    'trace-startup',
     'trace-dungeon',
     'trace-ambient',
   ]) {

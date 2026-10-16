@@ -448,7 +448,7 @@ pnpm dev
 pnpm --filter @curse/engine test
 ```
 
-La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. Abre `http://127.0.0.1:8787/`. En desarrollo, basta crear una carpeta como `mods/remaster2/` y pulsar F2 para detectarla, aunque esté vacía. Cada imagen se busca en **paquete seleccionado → remaster → original**. Véase [carpetas, nombres y proceso gradual](mods/README.md).
+La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. Abre `http://127.0.0.1:8787/`. En desarrollo, basta crear una carpeta como `mods/graficos/remaster2/` y pulsar F2 para detectarla, aunque esté vacía. Cada imagen se busca en **paquete seleccionado → remaster → original**. Véase [carpetas, nombres y proceso gradual](mods/README.md).
 
 Los sprites de Ben permanecen originales sin interpolar. El clic prueba el paseo STD con regiones BOXDET, condiciones de entrada y cámara. En 62 fondos se usa el destino de una entrada STD contrastada con sus canales originales; 15 quedan como secuencias especiales y BASEBAT oculta a Ben. No se coloca un personaje arbitrario en esas pantallas. «Mostrar límites» facilita revisar contactos. Las acciones y salidas se señalan sin ejecutarse. No hay salidas, inventario, interacciones ni scripts de sala implementados. El empaquetado como aplicación nativa de Windows sigue pendiente.
 
@@ -456,7 +456,7 @@ Los fondos remasterizados son propuestas artísticas provisionales: la IA puede 
 
 La prueba de luces y F4 se han retirado. Se reserva una capa de presentación independiente para futuras animaciones, sin implementarlas ahora. Todos los recursos locales de `mods/`, originales y derivados, y las compilaciones que los contienen permanecen fuera de Git.
 
-Los objetos originales del estado inicial y 82 piezas de primer plano ya se preparan para el visor: Ben puede quedar oculto por las piezas que corresponden, con ordenación contrastada frente al ejecutable. Los canales iniciales de las 78 salas están contrastados durante 1.000 ciclos cada una; se reproducen los cambios visuales observados en 32 recursos. DUNGEON muestra a Ben encadenado. Liberarlo, ejecutar los controladores e interacciones y completar los obstáculos dinámicos sigue pendiente; el uso de objetos queda fuera de esta fase. El visor arranca en `TITLE.png` y reproduce la presentación con los intervalos y repeticiones capturados del ejecutable (referencia de 70 Hz; duración física DOS todavía sin medir). F3 y el selector permiten revisar todas sus imágenes y escenarios. Los originales están en `mods/original/presentacion/` y tus remasters se dejan en `mods/remaster/presentacion/` con los mismos nombres. La referencia artística es ×6: 320 × 200 → 1920 × 1200; los panoramas multiplican todo su ancho y alto por seis. La guía completa se genera en `mods/referencias/Guia-remaster-x6.txt`. Véase [el alcance de las pruebas del original](docs/navigation.md).
+Los objetos originales del estado inicial y 82 piezas de primer plano ya se preparan para el visor: Ben puede quedar oculto por las piezas que corresponden, con ordenación contrastada frente al ejecutable. Los canales iniciales de las 78 salas están contrastados durante 1.000 ciclos cada una; se reproducen los cambios visuales observados en 32 recursos. DUNGEON muestra a Ben encadenado. Liberarlo, ejecutar los controladores e interacciones y completar los obstáculos dinámicos sigue pendiente; el uso de objetos queda fuera de esta fase. La web muestra CORE antes de TITLE y reproduce la presentación con los intervalos y repeticiones capturados del ejecutable (referencia de 70 Hz; duración física DOS todavía sin medir). En Depuración, F3 y el selector permiten revisar todas sus imágenes y escenarios. Los originales están en `mods/graficos/original/presentacion/` y tus remasters se dejan en `mods/graficos/remaster/presentacion/` con los mismos nombres. La referencia artística es ×6: 320 × 200 → 1920 × 1200; los panoramas multiplican todo su ancho y alto por seis. La guía completa se genera en `reports/referencias/Guia-remaster-x6.txt`. Véase [el alcance de las pruebas del original](docs/navigation.md).
 
 ## Preparar una copia recién clonada
 
@@ -468,6 +468,32 @@ El repositorio distribuye únicamente código, herramientas y documentación. Lo
 4. Ejecutar `pnpm assets:prepare`.
 5. Ejecutar `pnpm dev`.
 
-La preparación comprueba la revisión del ejecutable, descomprime RNC1/RNC2, extrae imágenes y sprites, ejecuta los contrastes de navegación/presentación y construye los recursos locales de `reports/` y `mods/original/`. Si falta Unicorn 2.1.4, prepara un entorno Python local excluido de Git e instala la dependencia fijada; la primera preparación necesita conexión para esa instalación. Se puede elegir el intérprete con `CURSE_PYTHON`. Una revisión de juego distinta se rechaza hasta investigarla.
+La preparación comprueba la revisión del ejecutable, descomprime RNC1/RNC2, extrae imágenes y sprites, ejecuta los contrastes de navegación/presentación y construye los recursos locales de `reports/` y `mods/graficos/original/`. Si falta Unicorn 2.1.4, prepara un entorno Python local excluido de Git e instala la dependencia fijada; la primera preparación necesita conexión para esa instalación. Se puede elegir el intérprete con `CURSE_PYTHON`. Una revisión de juego distinta se rechaza hasta investigarla.
 
-La preparación no genera ni reemplaza remasters. Sin un paquete gráfico local se ve Original. Los remasters se añaden aparte a `mods/remaster/` conservando las rutas; la referencia habitual es ×6. `pnpm assets:check` y el control previo al commit rechazan recursos o gráficos añadidos al índice, incluso mediante `git add -f`.
+La preparación no genera ni reemplaza remasters. Sin un paquete gráfico local se ve Original. Los remasters se añaden aparte a `mods/graficos/remaster/` conservando las rutas; la referencia habitual es ×6. `pnpm assets:check` y el control previo al commit rechazan recursos o gráficos añadidos al índice, incluso mediante `git add -f`.
+
+## Menú de juego y audio local
+
+La web arranca con CORE antes de TITLE y presenta el menú de partida. Gráficos y música se seleccionan de forma independiente. Las opciones se recuerdan en este navegador; no se guarda todavía la partida. Esc abre o cierra el menú y pausa el avance; F2 mantiene la comparación gráfica. El botón «Depuración» descubre el catálogo y sus atajos F3/flechas. La presentación termina en la entrada encadenada de DUNGEON; liberar a Ben, las interacciones y las salidas siguen pendientes.
+
+Los recursos se organizan en `mods/graficos/`, `mods/musica/` y `mods/sonidos/`. Las referencias permanecen en `reports/referencias/` y el manifiesto local en `reports/playtest/`. Las ROM MT-32 se leen solo desde `original/ROMS/`, fuera de la carpeta servida por la web. Ninguno de estos recursos se incorpora a Git.
+
+Para las escuchas provisionales MT-32, opcionalmente:
+
+```powershell
+pnpm audio:setup
+pnpm audio:prepare
+```
+
+El primer comando necesita Visual Studio 2022 con C++ y Windows SDK; obtiene y compila una revisión fijada de Munt y prepara CMake/Mido en `reports/`. El segundo usa tus ROM y tus MIDI sin sustituirlos y rechaza sobrescribir audios ajenos. Esto no verifica el tempo, los bucles o la inicialización MPU-401 del juego. Los WAV experimentales aportados tampoco se enlazan a eventos por sus índices secuenciales. Véanse [sistema de audio](docs/AUDIO_SYSTEM.md), [sincronización](docs/MUSIC_SYNC.md) y [asociaciones originales](docs/ORIGINAL_MUSIC_MAPPING.md).
+
+`pnpm test` incluye las pruebas del motor, del extractor y del transporte/catálogo de audio.
+
+## Credits & Attribution
+
+- Juego original: **Core Design, 1992** — _Curse of Enchantia_.
+- Web port y remasterización: **Àlex Llaó**.
+- Proyecto de fans no oficial, sin afiliación ni respaldo de los titulares de los derechos originales.
+- Repositorio: [alexllao/curse-remastered](https://github.com/alexllao/curse-remastered).
+
+Los recursos originales pertenecen a sus respectivos titulares. No se incluyen en el repositorio ni se les concede una licencia mediante este proyecto. Estas atribuciones no modifican las condiciones de licencia existentes.

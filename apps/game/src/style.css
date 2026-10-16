@@ -3,23 +3,24 @@
 }
 :root {
   color: #eae0cd;
-  background: #111112;
+  background: #101011;
   font-family: system-ui, sans-serif;
+  color-scheme: dark;
 }
 body {
   margin: 0;
 }
 main {
-  max-width: 1080px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 20px 24px;
 }
 header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 h1 {
   font-family: Georgia, serif;
@@ -27,10 +28,18 @@ h1 {
   font-weight: normal;
   margin: 0;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 h1 span {
   color: #b69a63;
   font-size: 15px;
+}
+h2 {
+  font:
+    normal 22px Georgia,
+    serif;
+  margin: 0 0 16px;
+  color: #f3dfb4;
 }
 p {
   margin: 6px 0;
@@ -42,26 +51,47 @@ p {
   gap: 8px;
   flex-wrap: wrap;
 }
-button {
+button,
+select {
   border: 1px solid #665439;
   color: #f3dfb4;
   background: #29251e;
   border-radius: 4px;
   padding: 9px 13px;
+  font: inherit;
+  font-size: 13px;
+}
+button {
   cursor: pointer;
 }
 button:hover {
   background: #3b3122;
 }
-button:focus-visible {
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
   outline: 2px solid #e9ba6e;
   outline-offset: 3px;
 }
-button:disabled {
+button:disabled,
+select:disabled {
   opacity: 0.6;
-  cursor: wait;
+  cursor: default;
+}
+button.primary {
+  background: #c9a15b;
+  color: #17130e;
+  border-color: #e2be7e;
+  font-weight: 650;
+}
+button.primary:hover {
+  background: #e2be7e;
+}
+.stage {
+  position: relative;
 }
 #viewport {
+  position: relative;
   width: 100%;
   aspect-ratio: 8/5;
   background: #000;
@@ -71,6 +101,98 @@ button:disabled {
 canvas {
   display: block;
   touch-action: none;
+}
+#game-menu {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(660px, calc(100% - 36px));
+  padding: 22px 26px;
+  background: rgb(19 18 17 / 96%);
+  border: 1px solid #7f6842;
+  border-radius: 8px;
+  box-shadow: 0 12px 50px #000b;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.settings-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #c9ba9d;
+}
+.settings-grid select {
+  width: 100%;
+  min-width: 0;
+}
+.menu-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 16px 0 10px;
+  font-size: 12px;
+  color: #c9ba9d;
+}
+.check,
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+input {
+  accent-color: #d9ae64;
+}
+.volume input {
+  width: 100px;
+}
+#music-note {
+  font-size: 12px;
+  min-height: 17px;
+  margin: 8px 0 16px;
+}
+.menu-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.menu-actions button {
+  padding: 11px 20px;
+}
+.debug-only {
+  display: none;
+}
+body.debug .debug-only {
+  display: block;
+}
+.debug-panel {
+  padding: 12px;
+  border: 1px solid #40372b;
+  margin-bottom: 12px;
+  background: #191816;
+}
+.catalog {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+.catalog label {
+  font-size: 13px;
+}
+.catalog select {
+  flex: 1;
+  max-width: 440px;
+}
+.panorama-controls,
+.game-actions {
+  margin-top: 9px;
+  justify-content: flex-end;
 }
 footer {
   display: flex;
@@ -93,23 +215,6 @@ footer {
   height: 100vh;
   border: 0;
 }
-@media (max-width: 640px) {
-  main {
-    padding: 12px;
-  }
-  header,
-  footer {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  h1 {
-    font-size: 23px;
-  }
-}
-
-#viewport {
-  position: relative;
-}
 #fps {
   position: absolute;
   top: 8px;
@@ -122,36 +227,65 @@ footer {
   font: 11px/1.2 monospace;
   opacity: 0.8;
 }
-
-.panorama-controls {
-  margin-top: 9px;
-  justify-content: flex-end;
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 760px) {
+  main {
+    padding: 12px;
+  }
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  #game-menu {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    margin-top: 10px;
+    padding: 18px;
+  }
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #track-setting {
+    grid-column: 1/-1;
+  }
+  footer {
+    flex-direction: column;
+    gap: 0;
+  }
+  .menu-options {
+    flex-wrap: wrap;
+  }
 }
 
-.catalog {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 12px;
+.stage:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
 }
-.catalog label {
-  color: #bdb4a5;
-  font-size: 14px;
+.stage:fullscreen #viewport {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border: 0;
 }
-.catalog select {
-  flex: 1;
-  max-width: 440px;
-  padding: 9px;
+#music-toast {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  max-width: calc(100% - 90px);
+  padding: 10px 14px;
   color: #f3dfb4;
-  background: #29251e;
+  background: rgb(17 17 18 / 90%);
   border: 1px solid #665439;
-  border-radius: 4px;
-}
-
-header > div:first-child {
-  flex-shrink: 0;
-}
-header > .controls {
-  flex: 1;
-  justify-content: flex-end;
+  border-radius: 5px;
+  pointer-events: none;
+  font-size: 13px;
 }

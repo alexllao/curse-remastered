@@ -17,7 +17,10 @@
     "check": "pnpm assets:check && pnpm lint && pnpm format:check && pnpm typecheck && pnpm build",
     "mods:prepare": "pnpm --filter @curse/asset-extractor prepare-playtest",
     "assets:prepare": "node tools/prepare-assets.mjs",
-    "assets:check": "node tools/check-assets.mjs"
+    "assets:check": "node tools/check-assets.mjs",
+    "test": "pnpm -r --if-present test && node --test tools/tests/*.test.mjs",
+    "audio:setup": "powershell -NoProfile -File tools/setup-mt32.ps1",
+    "audio:prepare": "node tools/prepare-audio.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

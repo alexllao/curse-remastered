@@ -26,6 +26,8 @@ import {
   type VisualAsset,
 } from './presentation.js';
 import './style.css';
+import { discoverSounds, SoundPlayer } from './sounds.js';
+import { discoverMusic, MusicPlayer, type MusicCatalog } from './music.js';
 
 interface SceneRecord {
   id: number;
@@ -60,6 +62,13 @@ interface Manifest {
   schemaVersion: number;
   scenes: SceneRecord[];
   title: VisualAsset;
+  core: VisualAsset;
+  startupPlayback: {
+    holdTicks: number;
+    durationTicks: number;
+    referenceHz: number;
+    events: { tick: number; brightness: number; asset: VisualAsset }[];
+  };
   presentation: { name: string; asset: VisualAsset }[];
   player: VisualAsset[];
   presentationPlayback: {
@@ -86,13 +95,15 @@ const modeButton = button('visual-mode'),
   boundaryButton = button('boundaries');
 
 async function start() {
-  const response = await fetch('/manifest.json', { cache: 'no-store' });
+  const response = await fetch('/__mods/game.json', { cache: 'no-store' });
   if (!response.ok || !response.headers.get('content-type')?.includes('application/json'))
     throw new Error('Prepare local assets');
   const manifest: Manifest = await response.json();
   if (
-    manifest.schemaVersion !== 6 ||
+    manifest.schemaVersion !== 7 ||
     !manifest.title ||
+    !manifest.core ||
+    !manifest.startupPlayback?.events.length ||
     !manifest.actorPrograms?.length ||
     manifest.presentation?.length !== 16 ||
     !manifest.presentationPlayback?.events.length ||
@@ -139,9 +150,189 @@ async function start() {
         ),
     ),
   );
+  let preferences: {
+    graphics?: string;
+    music?: string;
+    track?: string;
+    volume?: number;
+    intro?: boolean;
+    sounds?: boolean;
+  } = {};
+  try {
+    preferences = JSON.parse(localStorage.getItem('curse.preferences.v1') ?? '{}') ?? {};
+  } catch {
+    /* Preferencias locales opcionales. */
+  }
   let packs = await discoverPacks(),
-    pack: GraphicsPack = packs.find((p) => p.id === 'original')!;
-  let visual = await loadVisual(manifest.title, pack);
+    pack: GraphicsPack =
+      packs.find((p) => p.id === preferences.graphics) ??
+      packs.find((p) => p.id === 'remaster') ??
+      packs[0];
+  let musicCatalog: MusicCatalog = { schemaVersion: 1, versions: [], contexts: {} };
+  let musicCatalogFailed = false;
+  try {
+    musicCatalog = await discoverMusic();
+  } catch {
+    musicCatalogFailed = true;
+  }
+  const soundCatalog = await discoverSounds(),
+    sounds = new SoundPlayer(soundCatalog);
+  const soundEnabled = document.querySelector<HTMLInputElement>('#sounds-enabled')!;
+  soundEnabled.checked =
+    Object.keys(soundCatalog.events).length > 0 && preferences.sounds !== false;
+  soundEnabled.disabled = !Object.keys(soundCatalog.events).length;
+  sounds.enabled = soundEnabled.checked;
+  const menu = document.querySelector<HTMLElement>('#game-menu')!,
+    graphicsSelect = document.querySelector<HTMLSelectElement>('#graphics-select')!,
+    musicSelect = document.querySelector<HTMLSelectElement>('#music-select')!,
+    trackSelect = document.querySelector<HTMLSelectElement>('#music-track')!,
+    volume = document.querySelector<HTMLInputElement>('#music-volume')!,
+    introEnabled = document.querySelector<HTMLInputElement>('#intro-enabled')!,
+    musicNote = document.querySelector<HTMLParagraphElement>('#music-note')!,
+    startButton = button('start-game'),
+    resumeButton = button('resume-game'),
+    menuButton = button('open-menu'),
+    skipButton = button('skip-intro');
+  let menuOpen = false,
+    gameStarted = false,
+    debugMode = false;
+  const music = new MusicPlayer(musicCatalog, (message) => {
+    musicNote.textContent = message;
+  });
+  const toast = document.querySelector<HTMLElement>('#music-toast')!;
+  let toastTimer: number | undefined;
+  music.onTrackPlaying((label) => {
+    button('preview-music').textContent = 'Pausar música';
+    toast.textContent = `♫ ${label}`;
+    toast.hidden = false;
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => {
+      toast.hidden = true;
+    }, 4500);
+  });
+  graphicsSelect.replaceChildren(...packs.map((p) => new Option(p.label, p.id)));
+  graphicsSelect.value = pack.id;
+  musicSelect.replaceChildren(
+    new Option('Sin música', 'none'),
+    ...musicCatalog.versions.map((v) => new Option(v.label, v.id)),
+  );
+  musicSelect.value = musicCatalog.versions.some((v) => v.id === preferences.music)
+    ? preferences.music!
+    : 'none';
+  volume.value = String(
+    typeof preferences.volume === 'number' ? Math.max(0, Math.min(100, preferences.volume)) : 65,
+  );
+  introEnabled.checked = preferences.intro !== false;
+  function savePreferences() {
+    try {
+      localStorage.setItem(
+        'curse.preferences.v1',
+        JSON.stringify({
+          graphics: pack.id,
+          music: musicSelect.value,
+          track: trackSelect.value,
+          volume: Number(volume.value),
+          intro: introEnabled.checked,
+          sounds: soundEnabled.disabled ? (preferences.sounds ?? true) : soundEnabled.checked,
+        }),
+      );
+    } catch {
+      /* El juego funciona sin almacenamiento. */
+    }
+  }
+  function selectMusic(retain = '') {
+    const version = musicCatalog.versions.find((v) => v.id === musicSelect.value);
+    const originals = musicCatalog.versions.find((v) => v.id === 'original')?.tracks ?? [];
+    const tracks = [
+      ...new Map([...(version?.tracks ?? []), ...originals].map((t) => [t.id, t])).values(),
+    ].sort((a, b) => a.id.localeCompare(b.id, 'es', { numeric: true }));
+    trackSelect.replaceChildren(
+      new Option('Según la escena', ''),
+      ...tracks.map((t) => new Option(t.label, t.id)),
+    );
+    trackSelect.value = tracks.some((t) => t.id === retain) ? retain : '';
+    trackSelect.disabled = !version;
+    button('preview-music').disabled = !version;
+    button('preview-music').textContent = music.playing ? 'Pausar música' : 'Escuchar tema';
+    music.select(musicSelect.value, trackSelect.value);
+    music.setVolume(Number(volume.value) / 100);
+    if (musicCatalogFailed)
+      musicNote.textContent =
+        'No se ha podido leer el catálogo de música. Revisa mods/musica/music.json y recarga.';
+  }
+  async function refreshMusic() {
+    button('refresh-music').disabled = true;
+    try {
+      const selected = musicSelect.value,
+        track = trackSelect.value;
+      musicCatalog = await discoverMusic();
+      musicCatalogFailed = false;
+      music.replaceCatalog(musicCatalog);
+      musicSelect.replaceChildren(
+        new Option('Sin música', 'none'),
+        ...musicCatalog.versions.map((v) => new Option(v.label, v.id)),
+      );
+      musicSelect.value = musicCatalog.versions.some((v) => v.id === selected) ? selected : 'none';
+      selectMusic(track);
+    } catch {
+      musicNote.textContent = 'No se ha podido actualizar la lista de música.';
+    } finally {
+      button('refresh-music').disabled = false;
+    }
+  }
+  selectMusic(preferences.track);
+  function setMenu(open: boolean) {
+    menuOpen = open;
+    menu.hidden = !open;
+    resumeButton.hidden = !gameStarted;
+    document.querySelector('#menu-heading')!.textContent = gameStarted
+      ? 'La aventura te espera'
+      : 'Tu aventura comienza aquí';
+    if (open) {
+      music.pause();
+      button('preview-music').textContent = 'Escuchar tema';
+      sounds.stop();
+      (gameStarted ? resumeButton : startButton).focus();
+    } else if (gameStarted) music.resume();
+  }
+  function setDebug(enabled: boolean) {
+    debugMode = enabled;
+    document.body.classList.toggle('debug', enabled);
+    button('toggle-debug').setAttribute('aria-pressed', String(enabled));
+    if (enabled) setMenu(false);
+    else if (!gameStarted) setMenu(true);
+    resize();
+  }
+
+  let visual = await loadVisual(manifest.core, pack);
+  const coreFrames = await Promise.all(
+    manifest.startupPlayback.events.map((event) => loadVisual(event.asset, pack)),
+  );
+  let startup: {
+    elapsed: number;
+    event: number;
+    visual: typeof visual;
+    frames: typeof coreFrames;
+  } | null = { elapsed: 0, event: -1, visual, frames: coreFrames };
+  const coreSkip = button('skip-core');
+  coreSkip.hidden = false;
+  function skipStartup() {
+    if (startup)
+      startup.elapsed = Math.max(
+        startup.elapsed,
+        (manifest.startupPlayback.holdTicks * 1000) / manifest.startupPlayback.referenceHz,
+      );
+  }
+  async function finishStartup() {
+    startup = null;
+    coreSkip.hidden = true;
+    background.alpha = 1;
+    await show(0, pack);
+    setMenu(true);
+    sync();
+    status.textContent = 'Elige gráficos y música y comienza la partida.';
+  }
+
   const player = await Promise.all(
     manifest.player.map((asset) => loadVisual({ ...asset, remaster: false }, pack)),
   );
@@ -287,8 +478,9 @@ async function start() {
       background.texture = visual.texture;
       playback = { ...assets, elapsed: resume, event: -1 };
       renderPresentationFrame();
-      status.textContent =
-        'Presentación en curso. F2 compara gráficos; F3 permite revisar fotogramas. Puedes omitirla.';
+      status.textContent = debugMode
+        ? 'Presentación en curso. F2 compara gráficos; F3 permite revisar fotogramas.'
+        : 'Presentación en curso. Puedes omitirla.';
     } catch {
       playbackCache.delete(pack.id);
       status.textContent =
@@ -465,6 +657,18 @@ async function start() {
     sceneLabel.textContent = showingStatic
       ? `${currentView} · ${staticScreens[staticIndex].name}`
       : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
+    skipButton.hidden = !playback || menuOpen;
+    button('toggle-debug').disabled = !!startup;
+    startButton.disabled =
+      resumeButton.disabled =
+      graphicsSelect.disabled =
+      menuButton.disabled =
+        changing || selectingPack || !!startup;
+    musicSelect.disabled = false;
+    graphicsSelect.value = pack.id;
+    music.setContext(
+      startup ? 'core' : playback ? 'intro' : showingStatic ? 'title' : `scene:${scene().id}`,
+    );
     sceneSelect.value = String(currentView);
     sceneSelect.disabled = changing || selectingPack;
     introButton.disabled = changing || selectingPack;
@@ -479,7 +683,7 @@ async function start() {
         ? ` · ${visual.usedPack === 'original' ? 'Original' : visual.usedPack} donde falta`
         : '');
     for (const b of [modeButton, nextButton, previousButton, restartButton])
-      b.disabled = changing || selectingPack;
+      b.disabled = changing || selectingPack || !!startup;
     leftButton.disabled = showingStatic || changing || cameraX === 0;
     rightButton.disabled = showingStatic || changing || cameraX >= scene().background.width - 320;
     boundaryButton.disabled = showingStatic || changing;
@@ -539,6 +743,7 @@ async function start() {
       currentView = nextView;
       if (nextStatic) staticIndex = nextView;
       pack = nextPack;
+      savePreferences();
       background.texture = loaded.texture;
       if (nextLayers) installLayers(nextLayers);
       if (moved) {
@@ -564,13 +769,14 @@ async function start() {
     }
   }
   async function nextPack() {
-    if (changing || selectingPack) return;
+    if (startup || changing || selectingPack) return;
     const resume = playback?.elapsed;
     selectingPack = true;
     sync();
     try {
       captureTransition();
       packs = await discoverPacks();
+      graphicsSelect.replaceChildren(...packs.map((p) => new Option(p.label, p.id)));
       const current = packs.findIndex((p) => p.id === pack.id);
       await show(currentView, packs[(current + 1) % packs.length]);
       if (resume !== undefined) await playPresentation(resume);
@@ -584,10 +790,22 @@ async function start() {
       ? Promise.resolve()
       : show((currentView + direction + screenCount) % screenCount, pack);
   world.on('pointertap', (event) => {
-    if (changing || selectingPack || transition || renderCameraX !== cameraX) return;
+    if (startup) {
+      skipStartup();
+      return;
+    }
+    if (menuOpen || changing || selectingPack || transition || renderCameraX !== cameraX) return;
+    if (playback && !debugMode) {
+      void show(staticScreens.length, pack);
+      return;
+    }
     if (showingStatic) {
+      if (!debugMode && !gameStarted) {
+        setMenu(true);
+        return;
+      }
       if (staticIndex === 0) void playPresentation();
-      else void nextScene(1);
+      else if (debugMode) void nextScene(1);
       return;
     }
     const local = world.toLocal(event.global),
@@ -624,6 +842,22 @@ async function start() {
       if (progress === 1) finishTransition();
       return;
     }
+    if (startup) {
+      startup.elapsed += ticker.elapsedMS;
+      const timing = manifest.startupPlayback,
+        tick = (startup.elapsed * timing.referenceHz) / 1000;
+      let index = startup.event;
+      while (index + 1 < timing.events.length && timing.events[index + 1].tick <= tick) index++;
+      if (index >= 0 && index !== startup.event) {
+        startup.event = index;
+        const original = startup.visual.usedPack === 'original';
+        background.texture = original ? startup.frames[index].texture : startup.visual.texture;
+        background.alpha = original ? 1 : timing.events[index].brightness;
+      }
+      if (tick >= timing.durationTicks) void finishStartup();
+      return;
+    }
+    if (menuOpen) return;
     if (playback) {
       playback.elapsed += ticker.elapsedMS;
       renderPresentationFrame();
@@ -652,6 +886,7 @@ async function start() {
       while (animationElapsed >= cycleMs) {
         animationElapsed -= cycleMs;
         tickOriginalActors(animationState);
+        for (const id of animationState.sounds) sounds.play(id);
       }
       sync();
     }
@@ -718,7 +953,21 @@ async function start() {
   });
   window.addEventListener('keydown', (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
-    if (event.key === 'Enter' && showingStatic && event.target === document.body) {
+    if (startup) {
+      event.preventDefault();
+      skipStartup();
+      return;
+    }
+    const target = event.target;
+    if (target instanceof HTMLElement && target.matches('input,select,textarea')) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setMenu(!menuOpen || !gameStarted);
+      sync();
+      return;
+    }
+    if (menuOpen) return;
+    if (event.key === 'Enter' && debugMode && showingStatic && event.target === document.body) {
       event.preventDefault();
       if (staticIndex === 0) void playPresentation();
       else void nextScene(1);
@@ -727,22 +976,96 @@ async function start() {
       event.preventDefault();
       if (!event.repeat) void nextPack();
     }
-    if (event.key === 'F3') {
+    if (event.key === 'F3' && debugMode) {
       event.preventDefault();
       if (!event.repeat) void nextScene(event.shiftKey ? -1 : 1);
     }
-    if (event.key === 'ArrowLeft') {
+    if (event.key === 'ArrowLeft' && debugMode) {
       event.preventDefault();
       pan(-1);
     }
-    if (event.key === 'ArrowRight') {
+    if (event.key === 'ArrowRight' && debugMode) {
       event.preventDefault();
       pan(1);
     }
   });
+  async function beginGame() {
+    if (changing || selectingPack) return;
+    gameStarted = true;
+    setDebug(false);
+    setMenu(false);
+    music.start(true);
+    actors.clear();
+    cameras.clear();
+    animationStates.clear();
+    await show(0, pack);
+    resetActor();
+    if (introEnabled.checked) await playPresentation();
+    else await show(staticScreens.length, pack);
+    sync();
+  }
+  coreSkip.addEventListener('click', skipStartup);
+  startButton.addEventListener('click', () => void beginGame());
+  resumeButton.addEventListener('click', () => {
+    setMenu(false);
+    sync();
+  });
+  menuButton.addEventListener('click', () => {
+    setMenu(!menuOpen);
+    sync();
+  });
+  skipButton.addEventListener('click', () => void show(staticScreens.length, pack));
+  button('toggle-debug').addEventListener('click', () => {
+    setDebug(!debugMode);
+    sync();
+  });
+  graphicsSelect.addEventListener('change', () => {
+    const selected = packs.find((p) => p.id === graphicsSelect.value);
+    if (!selected || changing || selectingPack) return;
+    const resume = playback?.elapsed;
+    void (async () => {
+      selectingPack = true;
+      captureTransition();
+      sync();
+      try {
+        await show(currentView, selected);
+        if (resume !== undefined) await playPresentation(resume);
+      } finally {
+        selectingPack = false;
+        sync();
+      }
+    })();
+  });
+  musicSelect.addEventListener('change', () => {
+    selectMusic(trackSelect.value);
+    savePreferences();
+  });
+  trackSelect.addEventListener('change', () => {
+    music.select(musicSelect.value, trackSelect.value);
+    savePreferences();
+  });
+  volume.addEventListener('input', () => {
+    music.setVolume(Number(volume.value) / 100);
+    savePreferences();
+  });
+  introEnabled.addEventListener('change', savePreferences);
+  soundEnabled.addEventListener('change', () => {
+    sounds.enabled = soundEnabled.checked;
+    if (!sounds.enabled) sounds.stop();
+    savePreferences();
+  });
+  button('refresh-music').addEventListener('click', () => void refreshMusic());
+  button('preview-music').addEventListener('click', () => {
+    if (music.playing) {
+      music.pause();
+      button('preview-music').textContent = 'Escuchar tema';
+    } else music.start();
+  });
   button('fullscreen').addEventListener('click', () => {
     void (
-      document.fullscreenElement ? document.exitFullscreen() : viewport.requestFullscreen()
+      document.fullscreenElement
+        ? document.exitFullscreen()
+        : document.querySelector<HTMLElement>('.stage')!.requestFullscreen()
     ).catch(() => {
       status.textContent = 'La pantalla completa no está disponible en esta ventana.';
     });
@@ -751,6 +1074,8 @@ async function start() {
   drawLimits();
   sync();
   describe();
+  menu.hidden = true;
+  status.textContent = 'Pulsa una tecla o haz clic para continuar.';
 }
 void start().catch((error) => {
   console.error('Unable to start local walking viewer', error);

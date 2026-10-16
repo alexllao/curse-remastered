@@ -3,49 +3,105 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>CURSE Remastered · Prueba de recorridos</title>
+    <title>CURSE Remastered</title>
   </head>
   <body>
     <main>
       <header>
         <div>
           <h1>CURSE <span>REMASTERED</span></h1>
-          <p id="scene-name">0 · TITLE — Bienvenida</p>
+          <p id="scene-name" class="debug-only">Bienvenida</p>
         </div>
+        <div class="controls">
+          <button id="open-menu" disabled>Menú</button>
+          <button id="visual-mode" disabled>F2 · Original</button>
+          <button id="fullscreen">Pantalla completa</button>
+          <button id="toggle-debug" aria-pressed="false">Depuración</button>
+        </div>
+      </header>
+      <section class="debug-only debug-panel" aria-label="Herramientas de depuración">
         <div class="controls">
           <button id="welcome">Portada</button>
           <button id="play-intro" disabled>Reproducir presentación</button>
-          <button id="visual-mode" disabled>F2 · Original</button>
           <button id="previous-scene" disabled>‹ Anterior</button>
           <button id="next-scene" disabled>F3 · Siguiente ›</button>
-          <button id="restart" disabled>Reiniciar</button
-          ><button id="fullscreen">Pantalla completa</button>
+          <button id="restart" disabled>Reiniciar</button>
         </div>
-      </header>
-      <div class="catalog">
-        <label for="scene-select">Pantalla</label>
-        <select id="scene-select" disabled>
-          <option>0 · TITLE — Bienvenida</option>
-        </select>
+        <div class="catalog">
+          <label for="scene-select">Pantalla</label
+          ><select id="scene-select" disabled>
+            <option>Bienvenida</option>
+          </select>
+        </div>
+        <p id="asset-info"></p>
+      </section>
+      <div class="stage">
+        <div id="music-toast" role="status" hidden></div>
+        <div id="viewport"><p id="loading">Cargando CURSE…</p></div>
+        <section id="game-menu" aria-label="Menú del juego" hidden>
+          <h2 id="menu-heading">Tu aventura comienza aquí</h2>
+          <div class="settings-grid">
+            <label
+              >Gráficos<select id="graphics-select" disabled>
+                <option>Original</option>
+              </select></label
+            >
+            <label
+              >Música<select id="music-select" disabled>
+                <option value="none">Sin música</option>
+              </select></label
+            >
+            <label id="track-setting"
+              >Tema<select id="music-track" disabled>
+                <option value="">Según la escena</option>
+              </select></label
+            >
+          </div>
+          <div class="menu-options">
+            <label class="check"
+              ><input id="sounds-enabled" type="checkbox" checked /> Sonidos</label
+            >
+            <label class="check"
+              ><input id="intro-enabled" type="checkbox" checked /> Ver presentación</label
+            >
+            <label class="volume"
+              >Volumen
+              <input
+                id="music-volume"
+                aria-label="Volumen de música"
+                type="range"
+                min="0"
+                max="100"
+                value="65"
+            /></label>
+          </div>
+          <p id="music-note" role="status">Buscando versiones de música…</p>
+          <div class="menu-actions">
+            <button id="preview-music" disabled>Escuchar tema</button>
+            <button id="refresh-music">Actualizar música</button>
+            <button id="start-game" class="primary" disabled>Comenzar partida</button
+            ><button id="resume-game" hidden>Continuar partida</button>
+          </div>
+        </section>
       </div>
-      <p id="asset-info"></p>
-      <div id="viewport"><p id="loading">Cargando escenarios…</p></div>
-      <div class="controls panorama-controls">
-        <button id="boundaries" aria-pressed="false">Mostrar límites</button>
-        <button id="pan-left" disabled>← Panorama</button
-        ><button id="pan-right" disabled>Panorama →</button>
+      <div class="controls game-actions">
+        <button id="skip-core" hidden>Continuar</button>
+        <button id="skip-intro" hidden>Omitir presentación</button>
+      </div>
+      <div class="debug-only">
+        <div class="controls panorama-controls">
+          <button id="boundaries" aria-pressed="false">Mostrar límites</button
+          ><button id="pan-left" disabled>← Panorama</button
+          ><button id="pan-right" disabled>Panorama →</button>
+        </div>
+        <p>F3 / Mayús+F3: pantallas · Flechas: panoramas · Clic: caminar.</p>
       </div>
       <footer>
-        <p id="status" role="status" aria-live="polite">
-          Haz clic en el suelo para probar el recorrido de Ben.
-        </p>
+        <p id="status" role="status" aria-live="polite">Preparando la aventura…</p>
         <p id="mode">Original</p>
       </footer>
-      <p>
-        F3 / Mayús+F3: pantallas · F2: paquete gráfico · Flechas: panoramas. Clic: caminar. Las
-        acciones y salidas se señalan sin ejecutarlas.
-      </p>
     </main>
     <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/credits.ts"></script>
   </body>
 </html>

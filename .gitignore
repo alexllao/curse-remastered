@@ -6,6 +6,6 @@ original/
 .DS_Store
 __pycache__/
 
-# Todos los paquetes gráficos locales, independientemente de su nombre.
+# Todos los recursos locales, originales y derivados.
 mods/*
 !mods/README.md

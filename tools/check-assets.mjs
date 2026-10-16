@@ -9,7 +9,7 @@ const forbidden = files.filter(
   (file) =>
     !permitted.has(file) &&
     (/^(original|reports|mods)\//i.test(file) ||
-      /\.(png|jpe?g|gif|webp|avif|bmp|pcx|exe|com|dat|map|spr|brd|pal|sfx|rs[1-5]|wav|ogg|mp3|flac|rgba|bin)$/i.test(
+      /\.(png|jpe?g|gif|webp|avif|bmp|pcx|exe|com|dat|map|spr|brd|pal|sfx|rs[1-5]|wav|ogg|mp3|flac|m4a|aac|opus|mid|midi|sf2|sf3|dls|syx|rom|dll|rgba|bin)$/i.test(
         file,
       )),
 );

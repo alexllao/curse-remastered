@@ -26,7 +26,7 @@ function pngDimensions(data: Buffer) {
 async function prepare(source: string, file: string, remaster = false) {
   const bytes = await readFile(join(root, source)),
     { width, height } = pngDimensions(bytes);
-  const output = join(mods, 'original', file);
+  const output = join(mods, 'graficos/original', file);
   await mkdir(join(output, '..'), { recursive: true });
   let existing: Buffer | undefined;
   try {
@@ -264,19 +264,23 @@ for (const name of presentationTrace.uniqueImageOrder) {
     asset: await prepare(`reports/images/DATA/${png}`, `presentacion/${png}`, true),
   });
 }
-await prepare('reports/images/DATA/CORE.png', 'interfaz/CORE.png', true);
-await mkdir(join(mods, 'remaster/presentacion'), { recursive: true });
+const core = await prepare('reports/images/DATA/CORE.png', 'interfaz/CORE.png', true);
+await mkdir(join(mods, 'graficos/remaster/presentacion'), { recursive: true });
 const paletteNames: Record<string, string> = {
+  CORE: 'CORE',
   TITLE: 'TITLE',
   CAULDRN: 'CAULDRN',
   BALCONY: 'BALCONY',
   BASEBAL: 'BASEBALL',
   BASEBAT: 'BASEBALL',
 };
+const startupTrace = JSON.parse(
+  await readFile(join(root, 'reports/navigation/startup.json'), 'utf8'),
+);
 const frames = new Map<string, { pixels: Buffer; palette: Buffer }>();
-for (const name of ['TITLE.DAT', ...presentationTrace.uniqueImageOrder]) {
+for (const name of ['CORE.DAT', 'TITLE.DAT', ...presentationTrace.uniqueImageOrder]) {
   const source = await readFile(join(root, 'original/DATA', name));
-  if (sha256(source) !== presentationTrace.sourceSha256[name])
+  if (sha256(source) !== (presentationTrace.sourceSha256[name] ?? startupTrace.sourceSha256[name]))
     throw new Error('Presentation source differs');
   const family = name.replace(/\d*\.DAT$/, '');
   const palette = await readFile(join(root, 'original/DATA', paletteNames[family] + '.PAL'));
@@ -315,6 +319,44 @@ for (const event of presentationTrace.timeline) {
     brightness: Math.max(...event.rgb6) / Math.max(...frame.palette),
   });
 }
+
+if (
+  startupTrace.executableSha256 !== exeHash ||
+  startupTrace.holdTicks !== 2100 ||
+  startupTrace.durationTicks !== 2132 ||
+  startupTrace.events.length !== 33
+)
+  throw new Error('Repeat CORE startup trace');
+for (const [name, hash] of Object.entries(startupTrace.sourceSha256))
+  if (sha256(await readFile(join(root, 'original/DATA', name))) !== hash)
+    throw new Error('Startup resource differs');
+const coreFrame = frames.get('CORE.DAT')!,
+  startupEvents = [];
+for (const event of startupTrace.events) {
+  const rgba = Buffer.alloc(64000 * 4);
+  for (let index = 0; index < 64000; index++) {
+    for (let channel = 0; channel < 3; channel++)
+      rgba[index * 4 + channel] = Math.round(
+        (event.rgb6[coreFrame.pixels[index] * 3 + channel] * 255) / 63,
+      );
+    rgba[index * 4 + 3] = 255;
+  }
+  const key = sha256(Buffer.from(event.rgb6));
+  const file = `reports/presentation/core-${key}.png`;
+  await writeFile(join(root, file), png(320, 200, rgba));
+  startupEvents.push({
+    tick: event.tick,
+    brightness: Math.max(...event.rgb6) / 63,
+    asset: await prepare(file, `arranque/core-${key}.png`, false),
+  });
+}
+const startupPlayback = {
+  holdTicks: 2100,
+  durationTicks: 2132,
+  referenceHz: 70,
+  physicalTimingVerified: false,
+  events: startupEvents,
+};
 const presentationPlayback = {
   referenceHz: 70,
   physicalTimingVerified: false,
@@ -332,21 +374,24 @@ for (let index = 0; index < 27; index++)
     ),
   );
 const title = await prepare('reports/TITLE.png', 'interfaz/TITLE.png', true);
-await mkdir(join(mods, 'remaster/interfaz'), { recursive: true });
-await mkdir(join(mods, 'remaster/fondos'), { recursive: true });
-await mkdir(join(mods, 'remaster/ben'), { recursive: true });
-await mkdir(join(mods, 'referencias'), { recursive: true });
+await mkdir(join(mods, 'graficos/remaster/interfaz'), { recursive: true });
+await mkdir(join(mods, 'graficos/remaster/fondos'), { recursive: true });
+await mkdir(join(mods, 'graficos/remaster/ben'), { recursive: true });
+await mkdir(join(root, 'reports/referencias'), { recursive: true });
+await mkdir(join(root, 'reports/playtest'), { recursive: true });
 await writeFile(
-  join(mods, 'manifest.json'),
+  join(root, 'reports/playtest/manifest.json'),
   JSON.stringify(
     {
-      schemaVersion: 6,
+      schemaVersion: 7,
       logicalWidth: 320,
       logicalHeight: 200,
       scene: 'TITLE',
       scope: 'STD walking and BOXDET test viewer; no room scripts, object use or action execution',
       background,
       title,
+      core,
+      startupPlayback,
       presentation,
       presentationPlayback,
       actorPrograms: dungeon.programs,
@@ -379,10 +424,10 @@ const guideRows = [
   })),
 ];
 await writeFile(
-  join(mods, 'referencias/Guia-remaster-x6.txt'),
+  join(root, 'reports/referencias/Guia-remaster-x6.txt'),
   [
     'CURSE REMASTERED — TAMAÑOS ×6',
-    'Originales: mods/original/. Guardar en mods/remaster/ con la misma ruta y nombre.',
+    'Originales: mods/graficos/original/. Guardar en mods/graficos/remaster/ con la misma ruta y nombre.',
     'Conservar proporción y encuadre. En presentación mantener continuidad entre fotogramas.',
     'Más resolución solo se considera una mejora si aporta detalle real y mantiene la geometría.',
     'Los archivos presentacion/fundidos/ son derivados automáticos; no se remasterizan individualmente.',

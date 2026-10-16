@@ -55,7 +55,7 @@ export async function loadVisual(asset: VisualAsset, pack: GraphicsPack) {
   for (const candidate of candidates) {
     let bitmap: ImageBitmap | undefined;
     try {
-      const path = `/${encodeURIComponent(candidate)}/${asset.file.split('/').map(encodeURIComponent).join('/')}`;
+      const path = `/graficos/${encodeURIComponent(candidate)}/${asset.file.split('/').map(encodeURIComponent).join('/')}`;
       const response = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
       if (!response.ok || !response.headers.get('content-type')?.includes('image/png')) continue;
       bitmap = await createImageBitmap(await response.blob());
@@ -95,7 +95,7 @@ export async function loadVisual(asset: VisualAsset, pack: GraphicsPack) {
       bitmap?.close();
     }
   }
-  const texture = await Assets.load<Texture>(`/original/${asset.file}`);
+  const texture = await Assets.load<Texture>(`/graficos/original/${asset.file}`);
   texture.source.scaleMode = 'nearest';
   return { texture, usedPack: 'original', fallback: pack.id !== 'original', disposable: false };
 }
