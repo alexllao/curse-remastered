@@ -1,0 +1,61 @@
+#resource-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #eae0cd;
+  background: #101011;
+  font-family: system-ui, sans-serif;
+}
+
+#resource-loading[hidden] {
+  display: none;
+}
+
+.loading-card {
+  text-align: center;
+}
+
+.loading-title {
+  margin: 0 0 24px;
+  color: #f3dfb4;
+  font:
+    normal 28px Georgia,
+    serif;
+  letter-spacing: 0.04em;
+}
+
+.loading-title span {
+  color: #b69a63;
+  font-size: 15px;
+}
+
+#loading-message {
+  margin: 18px 0 0;
+  color: #bdb4a5;
+  font-size: 14px;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #40372b;
+  border-top-color: #e5c283;
+  border-radius: 50%;
+  animation: loading-turn 0.9s linear infinite;
+}
+
+@keyframes loading-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
+  }
+}

@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { musicCatalog } from '../music-catalog.mjs';
-import { soundsCatalog } from '../sounds-catalog.mjs';
+import { soundsCatalog, soundPacksCatalog } from '../sounds-catalog.mjs';
 async function fixture(run) {
   const prefix = join(tmpdir(), 'curse-audio-test-'),
     root = await mkdtemp(prefix);
@@ -51,4 +51,18 @@ test('sonidos ausentes son opcionales; los eventos solo enlazan archivos existen
     assert.equal(result.events['7'], '/sonidos/original/puerta.ogg');
     assert.equal(result.events['8'], undefined);
     assert.equal(result.events['9'], undefined);
+  }));
+
+test('detecta paquetes de efectos y mantiene separados sus eventos', () =>
+  fixture(async (root) => {
+    await mkdir(join(root, 'original'));
+    await mkdir(join(root, 'restaurados'));
+    await writeFile(join(root, 'original', '42.wav'), 'fixture');
+    await writeFile(join(root, 'restaurados', '42.ogg'), 'fixture');
+    const result = await soundPacksCatalog(root);
+    assert.equal(result.events['42'], '/sonidos/original/42.wav');
+    assert.equal(
+      result.versions.find((v) => v.id === 'restaurados').events['42'],
+      '/sonidos/restaurados/42.ogg',
+    );
   }));

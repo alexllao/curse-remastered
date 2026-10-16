@@ -38,3 +38,49 @@ export async function soundsCatalog(root) {
     ),
   };
 }
+
+async function containsAudio(root) {
+  for (const entry of await readdir(root, { withFileTypes: true })) {
+    if (entry.isFile() && /\.(ogg|opus|mp3|m4a|wav|flac|aac)$/i.test(entry.name)) return true;
+    if (entry.isDirectory() && (await containsAudio(join(root, entry.name)))) return true;
+  }
+  return false;
+}
+/** Cada carpeta es un paquete; solo se usan asociaciones de eventos explícitas. */
+export async function soundPacksCatalog(root) {
+  let folders;
+  try {
+    folders = await readdir(root, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return { schemaVersion: 1, events: {}, versions: [] };
+    throw error;
+  }
+  const versions = [];
+  for (const folder of folders) {
+    if (!folder.isDirectory() || folder.name.startsWith('.')) continue;
+    if (folder.name !== 'original' && !(await containsAudio(join(root, folder.name)))) continue;
+    const pack = await soundsCatalog(join(root, folder.name));
+    const prefix = `/sonidos/${encodeURIComponent(folder.name)}/`;
+    versions.push({
+      id: folder.name,
+      label:
+        { original: 'Original', restored: 'Restaurados', remastered: 'Remasterizados' }[
+          folder.name
+        ] ?? folder.name,
+      events: Object.fromEntries(
+        Object.entries(pack.events).map(([id, file]) => [
+          id,
+          file.replace('/sonidos/original/', prefix),
+        ]),
+      ),
+    });
+  }
+  versions.sort((a, b) =>
+    a.id === 'original' ? -1 : b.id === 'original' ? 1 : a.label.localeCompare(b.label),
+  );
+  return {
+    schemaVersion: 1,
+    events: versions.find((v) => v.id === 'original')?.events ?? {},
+    versions,
+  };
+}

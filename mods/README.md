@@ -21,7 +21,7 @@ mods/
 
 Las referencias, los prompts y los descartes están en `reports/referencias/`. El manifiesto del juego se genera en `reports/playtest/manifest.json`. La copia del juego DOS se conserva en `graficos/original/`, en la raíz del repositorio.
 
-La web muestra CORE, con espera interrumpible y fundido contrastados, y después TITLE con el menú. Permite elegir gráficos, versión musical, tema manual, volumen y presentación. «Comenzar partida» reproduce la presentación si está seleccionada y entra en DUNGEON. La liberación de Ben y las interacciones siguen pendientes. «Depuración» muestra el catálogo de pantallas, límites y panoramas; F3 y las flechas de panorama solo actúan en ese modo.
+La web carga los recursos necesarios y abre TITLE con el menú. Permite elegir gráficos, música y efectos. RS5 suena en bucle a volumen reducido en el menú; si el navegador bloquea el audio basta un primer clic o tecla. «Comenzar partida» desvanece la música y arranca CORE → TITLE → presentación → DUNGEON, con las esperas e intervalos contrastados; TITLE espera la entrada del jugador sin botones web de continuar. La liberación de Ben y las interacciones siguen pendientes. «Depuración» muestra el catálogo de pantallas, límites y panoramas; F3 y las flechas solo actúan en ese modo.
 
 La música se detecta al cargar y con «Actualizar música». Las carpetas vacías no aparecen como versiones disponibles. El audio generado con los MIDI actuales se identifica como **Original · MT-32 provisional**. Véanse `docs/AUDIO_SYSTEM.md`, `docs/MUSIC_SYNC.md` y `docs/ORIGINAL_MUSIC_MAPPING.md`.
 

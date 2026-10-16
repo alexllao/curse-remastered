@@ -31,6 +31,9 @@ export class MusicPlayer {
   private context = 'title';
   private current: MusicTrack | null = null;
   private request = 0;
+  private fade = 0;
+  needsGesture = false;
+  private volume = 0.65;
   get playing() {
     return !!this.current && !this.audio.paused;
   }
@@ -53,6 +56,7 @@ export class MusicPlayer {
     audio.preload = 'metadata';
     audio.loop = true;
     audio.addEventListener('playing', () => {
+      this.needsGesture = false;
       if (this.current && !this.paused) this.onPlaying(this.playingLabel);
     });
     audio.addEventListener('error', () => {
@@ -64,7 +68,9 @@ export class MusicPlayer {
     this.update();
   }
   setVolume(volume: number) {
-    this.audio.volume = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0));
+    this.fade++;
+    this.volume = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : 0));
+    this.audio.volume = this.volume;
   }
   select(version: string, track = '') {
     this.version = version;
@@ -77,14 +83,29 @@ export class MusicPlayer {
     this.update();
   }
   start(reset = false) {
+    this.fade++;
     if (reset) this.current = null;
     this.enabled = true;
     this.paused = false;
     this.update();
   }
   pause() {
+    this.needsGesture = false;
+    this.fade++;
     this.paused = true;
     this.audio.pause();
+  }
+  async fadeOut(duration = 450) {
+    const token = ++this.fade;
+    const initial = this.audio.volume;
+    const start = performance.now();
+    while (token === this.fade && !this.audio.paused && performance.now() - start < duration) {
+      this.audio.volume = initial * Math.max(0, 1 - (performance.now() - start) / duration);
+      await new Promise((resolve) => setTimeout(resolve, 16));
+    }
+    if (token !== this.fade) return;
+    this.pause();
+    this.audio.volume = this.volume;
   }
   resume() {
     this.paused = false;
@@ -92,8 +113,17 @@ export class MusicPlayer {
   }
   private play(request: number) {
     if (!this.enabled || this.paused || !this.current) return;
-    void this.audio.play().catch(() => {
-      if (request === this.request) this.notify('Pulsa Continuar partida para activar la música.');
+    void this.audio.play().catch((error: unknown) => {
+      if (request !== this.request || this.paused || !this.enabled) return;
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        error.name === 'NotAllowedError'
+      ) {
+        this.needsGesture = true;
+        this.notify('Haz clic o pulsa una tecla para activar la música de la presentación.');
+      } else this.notify('No se ha podido iniciar la música seleccionada.');
     });
   }
   private update() {
@@ -123,7 +153,7 @@ export class MusicPlayer {
             ? 'Este tema está en MIDI. Añade su versión de audio (por ejemplo, RS1.ogg) para reproducirlo en la web.'
             : id
               ? 'Este tema no está disponible en la versión seleccionada ni en Original.'
-              : 'Elige un tema; sus asociaciones con escenas aún no están configuradas.',
+              : 'Esta escena todavía no tiene música asignada.',
       );
       return;
     }

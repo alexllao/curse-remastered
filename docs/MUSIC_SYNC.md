@@ -7,7 +7,7 @@
 - Un tema diferente comienza desde cero; una nueva partida reinicia la selección musical.
 - Si la posición supera la duración de la nueva versión, se usa su módulo para el bucle de revisión.
 - Los archivos se repiten completos. Los puntos de bucle nativos de los RS no están implementados.
-- Abrir el menú pausa la música y el avance visual. La escucha previa es una acción explícita.
+- La presentación propia de la web reproduce RS5 en bucle a volumen reducido; abrir o cerrar el menú no modifica su música. Al empezar la partida se aplica un fundido musical de 450 ms. Es una decisión del menú web, independiente de las asociaciones musicales originales.
 - El aviso con el título aparece cuando el navegador confirma la reproducción.
 
 Conservar segundos no demuestra sincronía musical entre arreglos. Las versiones remasterizadas pueden cambiar introducción, tempo, silencios y duración. No se estima BPM ni se retocan archivos para aparentar coincidencia. Las futuras marcas de compás deberán registrarse expresamente y verificarse.
@@ -22,4 +22,4 @@ La web usa la misma referencia de 70 Hz que la presentación: máximo de 30 segu
 
 La presentación mantiene los 80 cambios de página, 206 eventos imagen/DAC y 1.005 esperas contrastados previamente. Su audio no se declara sincronizado con los cinco MIDI provisionales: faltan la captura de salida MIDI del motor original y la comparación de tiempos, eventos, bucles e inicialización de instrumentos.
 
-No hay una asociación automática inventada entre RS1–RS5 y CORE, TITLE o escenarios. La selección manual permite revisar material hasta disponer de evidencia. La configuración explícita de asociaciones se mantiene separada de las tablas verificadas del motor gráfico.
+No hay una asociación automática inventada entre RS1–RS5 y CORE, TITLE o escenarios. RS5 está fijada únicamente para el menú web por decisión del usuario; no se interpreta como prueba de una asociación original. La configuración explícita de asociaciones se mantiene separada de las tablas verificadas del motor gráfico.

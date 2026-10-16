@@ -1,13 +1,21 @@
 export interface SoundCatalog {
   schemaVersion: number;
   events: Record<string, string>;
+  versions?: { id: string; label: string; events: Record<string, string> }[];
 }
 export class SoundPlayer {
   private active = new Set<HTMLAudioElement>();
   enabled = true;
+  private version = 'original';
   constructor(private catalog: SoundCatalog) {}
+  select(version: string) {
+    this.stop();
+    this.version = version;
+    this.enabled = version !== 'none';
+  }
   play(id: number) {
-    const file = this.catalog.events[String(id)];
+    const selected = this.catalog.versions?.find((v) => v.id === this.version);
+    const file = selected?.events[String(id)] ?? this.catalog.events[String(id)];
     if (!this.enabled || !file) return;
     if (this.active.size >= 8) {
       const oldest = this.active.values().next().value!;

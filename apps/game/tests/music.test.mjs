@@ -72,7 +72,7 @@ test('un tema ausente vuelve a Original y una escena sin asociación no inventa 
   assert.match(audio.src, /original/);
   player.setContext('scene:70');
   assert.equal(audio.src, '');
-  assert.match(messages.at(-1), /Elige un tema/);
+  assert.match(messages.at(-1), /no tiene música asignada/);
 });
 test('un MIDI sin sintetizador queda en silencio con un aviso explícito', () => {
   const audio = new AudioFixture(),
@@ -84,4 +84,69 @@ test('un MIDI sin sintetizador queda en silencio con un aviso explícito', () =>
   player.start();
   assert.equal(audio.plays, 0);
   assert.match(messages.at(-1), /MIDI/);
+});
+
+test('cambiar opciones o actualizar el catálogo mientras está pausado no reanuda la música', () => {
+  const audio = new AudioFixture(),
+    player = new MusicPlayer(catalog, () => {}, audio);
+  player.select('original');
+  player.start();
+  player.pause();
+  const plays = audio.plays;
+  player.select('medieval');
+  player.replaceCatalog(globalThis.structuredClone(catalog));
+  player.setContext('core');
+  player.select('original', 'CURSE.RS1');
+  assert.equal(audio.plays, plays);
+  assert.equal(audio.paused, true);
+});
+
+test('el fundido detiene la pista del menú y restaura el volumen para la siguiente reproducción', async () => {
+  const audio = new AudioFixture(),
+    player = new MusicPlayer(catalog, () => {}, audio);
+  player.select('original');
+  player.setVolume(0.2);
+  player.start();
+  await player.fadeOut(32);
+  assert.equal(audio.paused, true);
+  assert.equal(audio.volume, 0.2);
+  player.select('medieval');
+  assert.equal(audio.paused, true);
+});
+
+test('el bloqueo inicial permite reintentar con el primer gesto y mantiene el bucle', async () => {
+  const audio = new AudioFixture();
+  let blocked = true;
+  audio.play = () =>
+    blocked
+      ? Promise.reject(new globalThis.DOMException('Gesto requerido', 'NotAllowedError'))
+      : AudioFixture.prototype.play.call(audio);
+  const player = new MusicPlayer(catalog, () => {}, audio);
+  player.select('original');
+  player.start();
+  await Promise.resolve();
+  assert.equal(player.needsGesture, true);
+  assert.equal(audio.loop, true);
+  blocked = false;
+  player.start();
+  audio.dispatchEvent(new globalThis.Event('playing'));
+  assert.equal(player.playing, true);
+  assert.equal(player.needsGesture, false);
+});
+
+test('cancelar una reproducción pendiente no la vuelve a solicitar con el siguiente clic', async () => {
+  const audio = new AudioFixture();
+  let rejectPlay;
+  audio.play = () =>
+    new Promise((resolve, reject) => {
+      rejectPlay = reject;
+    });
+  const player = new MusicPlayer(catalog, () => {}, audio);
+  player.select('original');
+  player.start();
+  player.pause();
+  rejectPlay(new globalThis.DOMException('Pausado', 'AbortError'));
+  await Promise.resolve();
+  assert.equal(player.needsGesture, false);
+  assert.equal(audio.paused, true);
 });

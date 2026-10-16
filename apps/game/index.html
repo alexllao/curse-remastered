@@ -4,9 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>CURSE Remastered</title>
+    <link rel="stylesheet" href="/src/loading.css" />
   </head>
   <body>
-    <main>
+    <div id="resource-loading" role="status" aria-live="polite">
+      <div class="loading-card">
+        <p class="loading-title">CURSE <span>REMASTERED</span></p>
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p id="loading-message">Preparando la aventura…</p>
+      </div>
+    </div>
+    <main hidden>
       <header>
         <div>
           <h1>CURSE <span>REMASTERED</span></h1>
@@ -51,16 +59,13 @@
                 <option value="none">Sin música</option>
               </select></label
             >
-            <label id="track-setting"
-              >Tema<select id="music-track" disabled>
-                <option value="">Según la escena</option>
+            <label
+              >Efectos de sonido<select id="sounds-select">
+                <option value="none">Sin efectos</option>
               </select></label
             >
           </div>
           <div class="menu-options">
-            <label class="check"
-              ><input id="sounds-enabled" type="checkbox" checked /> Sonidos</label
-            >
             <label class="check"
               ><input id="intro-enabled" type="checkbox" checked /> Ver presentación</label
             >
@@ -75,9 +80,10 @@
                 value="65"
             /></label>
           </div>
+          <p id="sound-note"></p>
           <p id="music-note" role="status">Buscando versiones de música…</p>
           <div class="menu-actions">
-            <button id="preview-music" disabled>Escuchar tema</button>
+            <button id="preview-music" disabled>Activar música</button>
             <button id="refresh-music">Actualizar música</button>
             <button id="start-game" class="primary" disabled>Comenzar partida</button
             ><button id="resume-game" hidden>Continuar partida</button>
@@ -85,7 +91,6 @@
         </section>
       </div>
       <div class="controls game-actions">
-        <button id="skip-core" hidden>Continuar</button>
         <button id="skip-intro" hidden>Omitir presentación</button>
       </div>
       <div class="debug-only">

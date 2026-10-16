@@ -1,5 +1,5 @@
 import { defineConfig, type Plugin } from 'vite';
-import { soundsCatalog } from '../../tools/sounds-catalog.mjs';
+import { soundPacksCatalog } from '../../tools/sounds-catalog.mjs';
 import { musicCatalog } from '../../tools/music-catalog.mjs';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -45,7 +45,7 @@ function localPacks(): Plugin {
           });
       });
       server.middlewares.use('/__mods/sounds.json', (_req, res) => {
-        void soundsCatalog(fileURLToPath(new URL('../../mods/sonidos/original', import.meta.url)))
+        void soundPacksCatalog(fileURLToPath(new URL('../../mods/sonidos', import.meta.url)))
           .then((result) => {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Cache-Control', 'no-store');
@@ -94,9 +94,7 @@ function localPacks(): Plugin {
         type: 'asset',
         fileName: '__mods/sounds.json',
         source: JSON.stringify(
-          await soundsCatalog(
-            fileURLToPath(new URL('../../mods/sonidos/original', import.meta.url)),
-          ),
+          await soundPacksCatalog(fileURLToPath(new URL('../../mods/sonidos', import.meta.url))),
         ),
       });
       this.emitFile({

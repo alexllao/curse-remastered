@@ -289,3 +289,13 @@ footer {
   pointer-events: none;
   font-size: 13px;
 }
+
+body.playing header,
+body.playing footer,
+body.playing .game-actions {
+  display: none;
+}
+
+body.playing canvas {
+  outline: none;
+}

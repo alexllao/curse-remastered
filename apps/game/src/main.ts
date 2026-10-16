@@ -80,6 +80,16 @@ interface Manifest {
   navigationProfile: WalkProfile;
   actorPrograms: number[];
 }
+const resourceLoading = document.querySelector<HTMLDivElement>('#resource-loading')!;
+function setResourceLoading(message: string | null) {
+  if (message) document.querySelector('#loading-message')!.textContent = message;
+  resourceLoading.hidden = message === null;
+  document.querySelector('main')!.setAttribute('aria-busy', String(message !== null));
+}
+function revealGame() {
+  document.querySelector('main')!.hidden = false;
+  setResourceLoading(null);
+}
 const viewport = document.querySelector<HTMLDivElement>('#viewport')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;
 const modeLabel = document.querySelector<HTMLParagraphElement>('#mode')!;
@@ -153,7 +163,7 @@ async function start() {
   let preferences: {
     graphics?: string;
     music?: string;
-    track?: string;
+    effects?: string;
     volume?: number;
     intro?: boolean;
     sounds?: boolean;
@@ -177,15 +187,31 @@ async function start() {
   }
   const soundCatalog = await discoverSounds(),
     sounds = new SoundPlayer(soundCatalog);
-  const soundEnabled = document.querySelector<HTMLInputElement>('#sounds-enabled')!;
-  soundEnabled.checked =
-    Object.keys(soundCatalog.events).length > 0 && preferences.sounds !== false;
-  soundEnabled.disabled = !Object.keys(soundCatalog.events).length;
-  sounds.enabled = soundEnabled.checked;
+  const soundSelect = document.querySelector<HTMLSelectElement>('#sounds-select')!;
+  const soundVersions = soundCatalog.versions ?? [];
+  soundSelect.replaceChildren(
+    new Option('Sin efectos', 'none'),
+    ...soundVersions.map((v) => new Option(v.label, v.id)),
+  );
+  soundSelect.value = soundVersions.some((v) => v.id === preferences.effects)
+    ? preferences.effects!
+    : preferences.sounds === false
+      ? 'none'
+      : soundVersions.some((v) => v.id === 'original')
+        ? 'original'
+        : 'none';
+  function selectSounds() {
+    sounds.select(soundSelect.value);
+    const selected = soundVersions.find((v) => v.id === soundSelect.value);
+    document.querySelector('#sound-note')!.textContent =
+      selected && !Object.keys(selected.events).length
+        ? 'Los efectos de este paquete aún no están vinculados al juego.'
+        : '';
+  }
+  selectSounds();
   const menu = document.querySelector<HTMLElement>('#game-menu')!,
     graphicsSelect = document.querySelector<HTMLSelectElement>('#graphics-select')!,
     musicSelect = document.querySelector<HTMLSelectElement>('#music-select')!,
-    trackSelect = document.querySelector<HTMLSelectElement>('#music-track')!,
     volume = document.querySelector<HTMLInputElement>('#music-volume')!,
     introEnabled = document.querySelector<HTMLInputElement>('#intro-enabled')!,
     musicNote = document.querySelector<HTMLParagraphElement>('#music-note')!,
@@ -195,10 +221,19 @@ async function start() {
     skipButton = button('skip-intro');
   let menuOpen = false,
     gameStarted = false,
+    startingGame = false,
     debugMode = false;
-  const music = new MusicPlayer(musicCatalog, (message) => {
-    musicNote.textContent = message;
-  });
+  const musicAudio = document.createElement('audio');
+  musicAudio.id = 'music-output';
+  musicAudio.hidden = true;
+  document.body.append(musicAudio);
+  const music = new MusicPlayer(
+    musicCatalog,
+    (message) => {
+      musicNote.textContent = message;
+    },
+    musicAudio,
+  );
   const toast = document.querySelector<HTMLElement>('#music-toast')!;
   let toastTimer: number | undefined;
   music.onTrackPlaying((label) => {
@@ -230,41 +265,27 @@ async function start() {
         JSON.stringify({
           graphics: pack.id,
           music: musicSelect.value,
-          track: trackSelect.value,
           volume: Number(volume.value),
           intro: introEnabled.checked,
-          sounds: soundEnabled.disabled ? (preferences.sounds ?? true) : soundEnabled.checked,
+          effects: soundSelect.value,
         }),
       );
     } catch {
       /* El juego funciona sin almacenamiento. */
     }
   }
-  function selectMusic(retain = '') {
+  function selectMusic() {
     const version = musicCatalog.versions.find((v) => v.id === musicSelect.value);
-    const originals = musicCatalog.versions.find((v) => v.id === 'original')?.tracks ?? [];
-    const tracks = [
-      ...new Map([...(version?.tracks ?? []), ...originals].map((t) => [t.id, t])).values(),
-    ].sort((a, b) => a.id.localeCompare(b.id, 'es', { numeric: true }));
-    trackSelect.replaceChildren(
-      new Option('Según la escena', ''),
-      ...tracks.map((t) => new Option(t.label, t.id)),
-    );
-    trackSelect.value = tracks.some((t) => t.id === retain) ? retain : '';
-    trackSelect.disabled = !version;
     button('preview-music').disabled = !version;
-    button('preview-music').textContent = music.playing ? 'Pausar música' : 'Escuchar tema';
-    music.select(musicSelect.value, trackSelect.value);
-    music.setVolume(Number(volume.value) / 100);
-    if (musicCatalogFailed)
-      musicNote.textContent =
-        'No se ha podido leer el catálogo de música. Revisa mods/musica/music.json y recarga.';
+    music.select(musicSelect.value, !gameStarted ? 'CURSE.RS5' : '');
+    music.setVolume((Number(volume.value) / 100) * (!gameStarted ? 0.3 : 1));
+    button('preview-music').textContent = music.playing ? 'Pausar música' : 'Activar música';
+    if (musicCatalogFailed) musicNote.textContent = 'No se ha podido leer el catálogo de música.';
   }
   async function refreshMusic() {
     button('refresh-music').disabled = true;
     try {
-      const selected = musicSelect.value,
-        track = trackSelect.value;
+      const selected = musicSelect.value;
       musicCatalog = await discoverMusic();
       musicCatalogFailed = false;
       music.replaceCatalog(musicCatalog);
@@ -273,14 +294,14 @@ async function start() {
         ...musicCatalog.versions.map((v) => new Option(v.label, v.id)),
       );
       musicSelect.value = musicCatalog.versions.some((v) => v.id === selected) ? selected : 'none';
-      selectMusic(track);
+      selectMusic();
     } catch {
       musicNote.textContent = 'No se ha podido actualizar la lista de música.';
     } finally {
       button('refresh-music').disabled = false;
     }
   }
-  selectMusic(preferences.track);
+  selectMusic();
   function setMenu(open: boolean) {
     menuOpen = open;
     menu.hidden = !open;
@@ -289,33 +310,30 @@ async function start() {
       ? 'La aventura te espera'
       : 'Tu aventura comienza aquí';
     if (open) {
-      music.pause();
-      button('preview-music').textContent = 'Escuchar tema';
       sounds.stop();
       (gameStarted ? resumeButton : startButton).focus();
-    } else if (gameStarted) music.resume();
+    }
   }
   function setDebug(enabled: boolean) {
     debugMode = enabled;
     document.body.classList.toggle('debug', enabled);
     button('toggle-debug').setAttribute('aria-pressed', String(enabled));
-    if (enabled) setMenu(false);
-    else if (!gameStarted) setMenu(true);
+    if (enabled) {
+      awaitingTitle = false;
+      setMenu(false);
+    } else if (!gameStarted) setMenu(true);
     resize();
   }
 
-  let visual = await loadVisual(manifest.core, pack);
-  const coreFrames = await Promise.all(
-    manifest.startupPlayback.events.map((event) => loadVisual(event.asset, pack)),
-  );
+  setResourceLoading('Cargando gráficos y personajes…');
+  let visual = await loadVisual(manifest.title, pack);
+  let awaitingTitle = false;
   let startup: {
     elapsed: number;
     event: number;
     visual: typeof visual;
-    frames: typeof coreFrames;
-  } | null = { elapsed: 0, event: -1, visual, frames: coreFrames };
-  const coreSkip = button('skip-core');
-  coreSkip.hidden = false;
+    frames: Awaited<ReturnType<typeof loadVisual>>[];
+  } | null = null;
   function skipStartup() {
     if (startup)
       startup.elapsed = Math.max(
@@ -325,12 +343,12 @@ async function start() {
   }
   async function finishStartup() {
     startup = null;
-    coreSkip.hidden = true;
+    awaitingTitle = true;
     background.alpha = 1;
     await show(0, pack);
-    setMenu(true);
     sync();
-    status.textContent = 'Elige gráficos y música y comienza la partida.';
+    app.canvas.focus({ preventScroll: true });
+    status.textContent = 'Portada original.';
   }
 
   const player = await Promise.all(
@@ -358,6 +376,8 @@ async function start() {
   world.cursor = 'pointer';
   app.stage.addChild(world);
   const fps = document.createElement('span');
+  app.canvas.tabIndex = 0;
+  app.canvas.setAttribute('aria-label', 'Pantalla del juego');
   fps.id = 'fps';
   fps.setAttribute('aria-hidden', 'true');
   fps.textContent = '— FPS';
@@ -460,6 +480,7 @@ async function start() {
     await show(0, pack);
     changing = true;
     status.textContent = 'Preparando la presentación…';
+    setResourceLoading('Cargando la presentación…');
     sync();
     try {
       let pending = playbackCache.get(pack.id);
@@ -488,6 +509,7 @@ async function start() {
     } finally {
       changing = false;
       sync();
+      setResourceLoading(null);
     }
   }
   function renderPresentationFrame() {
@@ -657,13 +679,14 @@ async function start() {
     sceneLabel.textContent = showingStatic
       ? `${currentView} · ${staticScreens[staticIndex].name}`
       : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
-    skipButton.hidden = !playback || menuOpen;
+    skipButton.hidden = !debugMode || !playback || menuOpen;
+    document.body.classList.toggle('playing', gameStarted && !menuOpen && !debugMode);
     button('toggle-debug').disabled = !!startup;
     startButton.disabled =
       resumeButton.disabled =
       graphicsSelect.disabled =
       menuButton.disabled =
-        changing || selectingPack || !!startup;
+        changing || startingGame || selectingPack || !!startup;
     musicSelect.disabled = false;
     graphicsSelect.value = pack.id;
     music.setContext(
@@ -683,7 +706,7 @@ async function start() {
         ? ` · ${visual.usedPack === 'original' ? 'Original' : visual.usedPack} donde falta`
         : '');
     for (const b of [modeButton, nextButton, previousButton, restartButton])
-      b.disabled = changing || selectingPack || !!startup;
+      b.disabled = changing || startingGame || selectingPack || !!startup;
     leftButton.disabled = showingStatic || changing || cameraX === 0;
     rightButton.disabled = showingStatic || changing || cameraX >= scene().background.width - 320;
     boundaryButton.disabled = showingStatic || changing;
@@ -795,6 +818,10 @@ async function start() {
       return;
     }
     if (menuOpen || changing || selectingPack || transition || renderCameraX !== cameraX) return;
+    if (awaitingTitle) {
+      void continueFromTitle();
+      return;
+    }
     if (playback && !debugMode) {
       void show(staticScreens.length, pack);
       return;
@@ -952,7 +979,7 @@ async function start() {
     }
   });
   window.addEventListener('keydown', (event) => {
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.altKey || event.ctrlKey || event.metaKey || !resourceLoading.hidden) return;
     if (startup) {
       event.preventDefault();
       skipStartup();
@@ -967,6 +994,30 @@ async function start() {
       return;
     }
     if (menuOpen) return;
+    if (
+      awaitingTitle &&
+      event.key !== 'Escape' &&
+      event.key !== 'F2' &&
+      !['Shift', 'Control', 'Alt', 'Meta'].includes(event.key) &&
+      (target === document.body || target === app.canvas)
+    ) {
+      event.preventDefault();
+      if (!event.repeat) void continueFromTitle();
+      return;
+    }
+    if (
+      playback &&
+      !debugMode &&
+      !event.repeat &&
+      event.key !== 'Escape' &&
+      event.key !== 'F2' &&
+      !['Shift', 'Control', 'Alt', 'Meta'].includes(event.key) &&
+      (target === document.body || target === app.canvas)
+    ) {
+      event.preventDefault();
+      void show(staticScreens.length, pack);
+      return;
+    }
     if (event.key === 'Enter' && debugMode && showingStatic && event.target === document.body) {
       event.preventDefault();
       if (staticIndex === 0) void playPresentation();
@@ -989,22 +1040,56 @@ async function start() {
       pan(1);
     }
   });
-  async function beginGame() {
-    if (changing || selectingPack) return;
-    gameStarted = true;
-    setDebug(false);
-    setMenu(false);
-    music.start(true);
-    actors.clear();
-    cameras.clear();
-    animationStates.clear();
-    await show(0, pack);
-    resetActor();
+  async function continueFromTitle() {
+    if (!awaitingTitle || changing || selectingPack || menuOpen) return;
+    awaitingTitle = false;
     if (introEnabled.checked) await playPresentation();
     else await show(staticScreens.length, pack);
     sync();
   }
-  coreSkip.addEventListener('click', skipStartup);
+  async function beginGame() {
+    if (startup || startingGame || changing || selectingPack) return;
+    startingGame = true;
+    sync();
+    await music.fadeOut(450);
+    gameStarted = true;
+    awaitingTitle = false;
+    setDebug(false);
+    setMenu(false);
+    selectMusic();
+    await show(0, pack);
+    actors.clear();
+    cameras.clear();
+    animationStates.clear();
+    resetActor();
+    changing = true;
+    setResourceLoading('Cargando el arranque original…');
+    sync();
+    try {
+      const [core, frames] = await Promise.all([
+        loadVisual(manifest.core, pack),
+        Promise.all(manifest.startupPlayback.events.map((event) => loadVisual(event.asset, pack))),
+      ]);
+      const previous = visual;
+      visual = core;
+      background.texture = core.texture;
+      background.alpha = 1;
+      if (previous.disposable) previous.texture.destroy(true);
+      startup = { elapsed: 0, event: -1, visual: core, frames };
+      app.canvas.focus({ preventScroll: true });
+      status.textContent = 'Arranque original.';
+      sync();
+      if (!document.hidden) music.start(true);
+    } catch {
+      setMenu(true);
+      status.textContent = 'No se ha podido cargar el arranque. Puedes volver a intentarlo.';
+    } finally {
+      changing = false;
+      startingGame = false;
+      sync();
+      setResourceLoading(null);
+    }
+  }
   startButton.addEventListener('click', () => void beginGame());
   resumeButton.addEventListener('click', () => {
     setMenu(false);
@@ -1037,28 +1122,40 @@ async function start() {
     })();
   });
   musicSelect.addEventListener('change', () => {
-    selectMusic(trackSelect.value);
-    savePreferences();
-  });
-  trackSelect.addEventListener('change', () => {
-    music.select(musicSelect.value, trackSelect.value);
+    selectMusic();
+    if (!gameStarted && !document.hidden) music.start();
     savePreferences();
   });
   volume.addEventListener('input', () => {
-    music.setVolume(Number(volume.value) / 100);
+    music.setVolume((Number(volume.value) / 100) * (!gameStarted ? 0.3 : 1));
     savePreferences();
   });
   introEnabled.addEventListener('change', savePreferences);
-  soundEnabled.addEventListener('change', () => {
-    sounds.enabled = soundEnabled.checked;
-    if (!sounds.enabled) sounds.stop();
+  soundSelect.addEventListener('change', () => {
+    selectSounds();
     savePreferences();
   });
   button('refresh-music').addEventListener('click', () => void refreshMusic());
+  function pauseAudio() {
+    music.pause();
+    sounds.stop();
+    button('preview-music').textContent = 'Activar música';
+    toast.hidden = true;
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pauseAudio();
+  });
+  window.addEventListener('pagehide', pauseAudio);
+  function unlockMenuAudio() {
+    if (!gameStarted && !startingGame && music.needsGesture && !document.hidden) music.start();
+  }
+  window.addEventListener('pointerdown', unlockMenuAudio, { capture: true });
+  window.addEventListener('keydown', unlockMenuAudio, { capture: true });
+
   button('preview-music').addEventListener('click', () => {
     if (music.playing) {
       music.pause();
-      button('preview-music').textContent = 'Escuchar tema';
+      button('preview-music').textContent = 'Activar música';
     } else music.start();
   });
   button('fullscreen').addEventListener('click', () => {
@@ -1074,11 +1171,18 @@ async function start() {
   drawLimits();
   sync();
   describe();
-  menu.hidden = true;
-  status.textContent = 'Pulsa una tecla o haz clic para continuar.';
+  setMenu(true);
+  selectMusic();
+  sync();
+  status.textContent = 'Elige gráficos y música y comienza la partida.';
+  revealGame();
+  resize();
+  app.render();
+  if (!document.hidden) music.start();
 }
 void start().catch((error) => {
   console.error('Unable to start local walking viewer', error);
+  revealGame();
   viewport.innerHTML =
     '<p id="loading">Prepara los datos de navegación y los recursos locales con las instrucciones de mods/README.md y vuelve a cargar.</p>';
   status.textContent = 'La prueba todavía no ha podido iniciarse.';

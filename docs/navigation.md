@@ -155,3 +155,7 @@ pnpm mods:prepare
 ```
 
 Los informes `ambient-audit.json` y `ambient-verification.json` son locales y están excluidos de Git. El manifiesto comparte una sola copia de los programas. La captura usa la semilla inicial del ejecutable, no una partida viva: no demuestra que todos los recorridos aleatorios, las variantes de entrada o las reacciones de enemigos estén completos. Las otras 46 salas no mostraron cambios visuales en esta prueba; esto no significa que carezcan de animaciones activadas mediante acciones. Los canales auditados no necesitaron F8. Los eventos de sonido y cambio de sala se registran, pero todavía no se ejecutan.
+
+### Entrada de la portada original
+
+El tramo `0x812–0x871` de CURSE.EXE reinicia el último código de teclado y espera entrada: consulta los botones del dispositivo en `0x822–0x84A` y el código de teclado en `0x84C–0x862`. El botón principal o una tecla distinta de Escape conducen a la llamada de presentación de `0x871`; el botón secundario o Escape pasan por la rutina de opciones `0x864`. La web conserva la espera de TITLE mediante clic o teclado, sin añadir un botón «Continuar». Escape abre el menú de la adaptación; no se afirma haber reconstruido esa rutina DOS de opciones. El menú web aparece antes del arranque y «Comenzar partida» inicia CORE. Los botones de depuración no forman parte de la reproducción normal.
