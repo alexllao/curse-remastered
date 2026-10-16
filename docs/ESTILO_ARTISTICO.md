@@ -14,6 +14,12 @@ Ben es un joven de pelo medio rojizo/cobrizo con flequillo visible. No lleva gor
 
 Àlex ha autorizado el remaster de sus sprites de juego y aprobado el diseño de referencia; el lote y sus límites se documentan en `prompts-ben-remaster.md`. El guardia de la mazmorra es otro personaje: conservar el casco metálico que sí tiene en el original. No confundirlo con Ben ni trasladar su casco al protagonista.
 
+### Expresiones y actuación
+
+Conservar también la emoción del original en cada animación. En el ahogo, Ben
+debe mostrar miedo y falta de aire: ojos abiertos, cejas preocupadas y boca
+abierta buscando aire. No sustituir ese gesto por una cara tranquila o sonriente.
+
 ## Geometría y capas
 
 - Fondo de pantalla normal: 320 × 200 lógico, entrega **1920 × 1200**. Cada sprite conserva su lienzo original multiplicado por seis; no todos los sprites tienen el mismo tamaño.

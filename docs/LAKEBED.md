@@ -55,3 +55,11 @@ El HUD admite ratón y teclado.
 Las vistas y animaciones compuestas para revisión son composiciones técnicas,
 no capturas de Firefox. Quedan para validación interactiva el recorrido completo,
 los apoyos visuales en movimiento y la escucha del conjunto.
+
+## Revisión del gesto de ahogo
+
+Por petición de Àlex se corrigen las expresiones de PLUNGE: se revisan sus21
+fotogramas y se actualizan20 caras visibles con miedo y boca abierta buscando
+aire, conservando el cambio a azul. La pose sin cara visible se mantiene.
+No cambian los otros bancos de animación ni los gráficos Original.
+Másteres anteriores y comparativa en reports/remaster/lakebed/revision-ahogo/.
