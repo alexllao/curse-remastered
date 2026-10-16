@@ -1137,7 +1137,6 @@ async function start() {
       `F5 · ${musicCatalog.versions.find((v) => v.id === musicSelect.value)?.label ?? 'Sin música'}`;
     button('music-mode').disabled =
       changing || startingGame || selectingPack || !!startup || debugMode;
-    document.querySelector('#title-prompt')!.toggleAttribute('hidden', !awaitingTitle || menuOpen);
     document
       .querySelector('#original-hud-note')!
       .toggleAttribute(
