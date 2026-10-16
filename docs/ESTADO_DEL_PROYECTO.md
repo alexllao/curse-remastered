@@ -139,3 +139,9 @@ Se inspecciona una composición antes/después y se prepara una secuencia de pas
 ### Corrección del zócalo que ocultaba la pierna
 
 La captura de Àlex demuestra que el primer ajuste del contorno sigue mal: incorpora la cuña clara del zócalo detrás de Ben y corta su pierna antes de llegar a la cara oscura del primer plano. Se retira esa cuña de la máscara y se desplaza la diagonal hasta el borde del elemento oscuro. Se añaden puntos de regresión sobre la zona clara y la oscura. No se considera aceptado el resultado anterior; la revisión en partida del nuevo contorno sigue pendiente. Los PNG permanecen intactos.
+
+### Segundo ajuste pendiente del borde: medición de la captura
+
+Las dos capturas siguientes del usuario muestran que todavía no queda bien: la recta aproximada corta dentro de la cara oscura, en lugar de coincidir con su borde. La captura se localiza sobre el fondo a escala 3 píxeles por unidad lógica, con origen lógico 258⅓,159⅔. Se mide la transición del suelo a la piedra sobre el maestro 1920×1200, con muestras por fila y contraste perpendicular al borde; la polilínea resultante sustituye la diagonal aproximada. Incluye la irregularidad visible en las juntas y actualiza los límites de activación.
+
+Se añaden puntos de regresión a ambos lados del borde cerca de los pies: 286,180 debe quedar oculto; 284,180 debe permanecer delante. Se inspecciona el contorno superpuesto al fondo. No se alteran imágenes ni navegación. La aceptación visual en partida sigue pendiente; los tests geométricos no la sustituyen.

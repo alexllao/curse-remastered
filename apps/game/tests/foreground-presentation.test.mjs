@@ -36,8 +36,12 @@ test('la cuña clara queda detrás de Ben y solo la cara oscura oculta su pierna
   }
   // Puntos del zócalo claro que el contorno anterior tapaba por error.
   assert.equal(contains(288, 174), false);
-  assert.equal(contains(280, 185), false);
+  assert.equal(contains(278, 185), false);
   assert.equal(contains(265, 198), false);
+  // Regresión de la segunda captura: el borde oscuro debe ocultar aquí,
+  // sin dejar la pierna dibujada dentro de la cara de primer plano.
+  assert.equal(contains(286, 180), true);
+  assert.equal(contains(284, 180), false);
   assert.equal(contains(296, 180), true);
   assert.equal(contains(283, 195), true);
 });
