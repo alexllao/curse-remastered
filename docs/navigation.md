@@ -132,7 +132,7 @@ El inicio lógico -1 de DUNGEON usa MANA.BRD, fotograma 0 (16 × 57), en X=125, 
 
 `trace-dungeon.py` ejecuta la carga original y 1.000 ciclos aislados de `0x85DE–0x8A21`. `verify-dungeon.mts` compara byte a byte los 69 registros de actores con el intérprete TypeScript, además de 32 casos del generador aleatorio y cinco casos del umbral de temporizador. Las ranuras 8 y 9 cambian visualmente en esa captura. El visor reproduce sus canales de fotograma, posición y visibilidad y aplica la ordenación y los primeros planos ya contrastados. No reproduce una grabación finita: ejecuta los programas locales.
 
-La espera principal exige al menos cinco pulsos. DUNGEON usa una referencia de 70 Hz dividida entre esos cinco pulsos; falta medir la cadencia física en DOS. El paseo STD de las otras salas mantiene su cadencia provisional de diez ciclos por segundo. La comparación aislada no demuestra todavía el comportamiento de los controladores de sala, las acciones, el audio o los obstáculos dinámicos. El cambio de banco F8 permanece rechazado hasta contrastarlo; este perfil no lo necesita. La ampliación ambiental descrita a continuación conserva separado el paseo STD de las otras salas.
+La espera principal exige al menos cinco pulsos. DUNGEON usa una referencia de 70 Hz dividida entre esos cinco pulsos; falta medir la cadencia física en DOS. El paseo STD de las otras salas comparte ahora la cadencia de referencia de cinco pulsos descrita en el contraste del reloj; se ha retirado el antiguo intervalo provisional de 100 ms. La comparación aislada no demuestra todavía el comportamiento de los controladores de sala, las acciones, el audio o los obstáculos dinámicos. El cambio de banco F8 permanece rechazado hasta contrastarlo; este perfil no lo necesita. La ampliación ambiental descrita a continuación conserva separado el paseo STD de las otras salas.
 
 ```powershell
 python tools/reverse-engineering/trace-dungeon.py
@@ -159,3 +159,11 @@ Los informes `ambient-audit.json` y `ambient-verification.json` son locales y es
 ### Entrada de la portada original
 
 El tramo `0x812–0x871` de CURSE.EXE reinicia el último código de teclado y espera entrada: consulta los botones del dispositivo en `0x822–0x84A` y el código de teclado en `0x84C–0x862`. El botón principal o una tecla distinta de Escape conducen a la llamada de presentación de `0x871`; el botón secundario o Escape pasan por la rutina de opciones `0x864`. La web conserva la espera de TITLE mediante clic o teclado, sin añadir un botón «Continuar». Escape abre el menú de la adaptación; no se afirma haber reconstruido esa rutina DOS de opciones. El menú web aparece antes del arranque y «Comenzar partida» inicia CORE. Los botones de depuración no forman parte de la reproducción normal.
+
+### Reloj compartido del paseo y los actores
+
+`trace-game-clock.py` verifica el incremento de pulsos de IRQ en `0x455`, el divisor PIT `0x4250`, la llamada de presentación de fotograma `0x8E5→0xECD5`, el umbral de cinco pulsos de `0xED33–0xED3B` y su reinicio en `0xEDAB`. Ocho ensayos aislados inyectan contadores de 0 a 7 y solo alcanzan el siguiente tramo con cinco o más. Tras la espera, el bucle principal procesa el paseo en `0xB6D` y llama al intérprete de actores en `0xC59→0x85DE`: no hay un reloj de paseo separado a 10 Hz.
+
+La web utiliza por ello la misma cadencia de referencia para Ben y los actores ambientales: cinco pulsos a la referencia de 70 Hz ya usada por los perfiles. Se retira el intervalo provisional independiente de 100 ms del paseo. Las posiciones, canales, colisiones y decodificación de sprites no cambian. Esto verifica el reloj compartido y el umbral; no demuestra una frecuencia física DOS exacta: siguen pendientes la captura del reloj real, el coste de dibujado, los controladores y los retrazados adicionales.
+
+El informe reproducible queda en `reports/navigation/game-clock.json`, fuera de Git. El diagnóstico requiere los mismos recursos e intérprete Python/Unicorn que las demás trazas; solo la herramienta y esta explicación se versionan.

@@ -125,6 +125,10 @@ async function start() {
     )
   )
     throw new Error('Repeat local navigation preparation');
+  const gameClock = manifest.scenes.find((scene) => scene.id === 0)?.animation;
+  if (!gameClock || gameClock.cyclePulses !== 5 || gameClock.referenceHz <= 0)
+    throw new Error('Missing verified game clock');
+  const gameCycleMs = (gameClock.cyclePulses * 1000) / gameClock.referenceHz;
   const app = new Application();
   await app.init({
     width: 320,
@@ -923,10 +927,8 @@ async function start() {
     scrollElapsed = 0;
     if (animationState) {
       animationElapsed += Math.min(ticker.deltaMS, 100);
-      const cadence = scene().animation!;
-      const cycleMs = (cadence.cyclePulses * 1000) / cadence.referenceHz;
-      while (animationElapsed >= cycleMs) {
-        animationElapsed -= cycleMs;
+      while (animationElapsed >= gameCycleMs) {
+        animationElapsed -= gameCycleMs;
         tickOriginalActors(animationState);
         for (const id of animationState.sounds) sounds.play(id);
       }
@@ -934,8 +936,8 @@ async function start() {
     }
     if (!actor) return;
     elapsed += Math.min(ticker.deltaMS, 100);
-    while (elapsed >= 100) {
-      elapsed -= 100;
+    while (elapsed >= gameCycleMs) {
+      elapsed -= gameCycleMs;
       if (!actor.remaining && !actor.channels.length) break;
       const previous = { x: actor.x, y: actor.y },
         wasWalking = !!actor.remaining;

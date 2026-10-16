@@ -61,6 +61,7 @@ try {
     'trace-presentation',
     'trace-startup',
     'trace-dungeon',
+    'trace-game-clock',
     'trace-ambient',
   ]) {
     console.log(`\nContrastando instrucciones originales: ${name}`);
