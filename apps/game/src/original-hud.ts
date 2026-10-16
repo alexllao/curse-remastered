@@ -1,3 +1,4 @@
+import { nextHudSelection } from './hud-keyboard.js';
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { loadVisual, type VisualAsset, type GraphicsPack } from './presentation.js';
 import type { ActionCell } from '@curse/engine';
@@ -73,6 +74,8 @@ export async function createOriginalHud(
   }
   function setEntries(entries: ActionCell[]) {
     cells = entries.slice(0, 10);
+    // Los submenús pueden tener una sola entrada: no dejar el foco en una columna vacía.
+    if (!cells[selected] || cells[selected].blocked) move(nextHudSelection(-1, 1, cells) * 32);
     icons.forEach((s, i) => {
       s.texture = visuals[(cells[i]?.icon ?? -1) + 1]?.texture ?? Texture.EMPTY;
       const asset = assets.icons[cells[i]?.icon ?? -1];
@@ -129,8 +132,14 @@ export async function createOriginalHud(
     },
     move,
     setEntries,
+    get selected() {
+      return selected;
+    },
     step(direction: number) {
-      move((selected + direction) * 32);
+      move(nextHudSelection(selected, direction, cells) * 32);
+    },
+    edge(last: boolean) {
+      move(nextHudSelection(last ? 0 : -1, last ? -1 : 1, cells) * 32);
     },
     select(): number | null {
       return cells[selected] && !cells[selected].blocked ? selected : null;

@@ -32,3 +32,9 @@ La espera del título continúa siendo original; se añade solamente un aviso de
 ## Comprobación de acciones
 
 `trace-dungeon-actions.py` recorre la secuencia original y exporta un informe local. `verify-dungeon-actions.mts` reproduce las mismas entradas en el motor del port y contrasta 577 ciclos, inventario, bancos, puntuación y 135 consultas de objetos. Las trazas son aisladas: no verifican por sí mismas el aspecto visual ni los tiempos físicos de DOSBox. La preparación utiliza los informes de navegación directamente, sin necesitar un manifiesto de partida generado previamente.
+
+## Adaptación del teclado web
+
+Durante la partida, Espacio o Intro abre la barra. Flechas o Tab recorren las entradas disponibles, Shift+Tab retrocede, Inicio/Fin van a los extremos e Intro o Espacio confirma. Escape o Retroceso vuelve al submenú anterior; desde la barra principal la cierra. No se afirma que todos esos atajos sean los de DOS: es la adaptación de teclado del port solicitada por Àlex.
+
+Al cambiar de submenú se corrige el foco si queda sobre una casilla vacía o bloqueada. La selección por teclado recorre solo las entradas disponibles; no obliga a atravesar diez columnas cuando hay un único objeto. La mano acompaña a la selección hasta que se mueve el ratón. Se ignora la repetición de Intro/Espacio/Escape para no encadenar confirmaciones involuntarias y se respetan los campos de formulario y el menú web.

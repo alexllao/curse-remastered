@@ -18,18 +18,17 @@ export interface ActionCell {
   value: number;
   blocked?: boolean;
 }
+type MenuMode =
+  'main' | 'inventory' | 'take' | 'look' | 'talk' | 'verbs' | 'targets' | 'fight' | 'jump' | 'disk';
+interface MenuState {
+  mode: MenuMode;
+  verb: number;
+  first: number | undefined;
+  choosingInventory: boolean;
+}
 export class OriginalActionMenu {
-  private mode:
-    | 'main'
-    | 'inventory'
-    | 'take'
-    | 'look'
-    | 'talk'
-    | 'verbs'
-    | 'targets'
-    | 'fight'
-    | 'jump'
-    | 'disk' = 'main';
+  private mode: MenuMode = 'main';
+  private history: MenuState[] = [];
   private verb = 0;
   private first: number | undefined;
   private choosingInventory = false;
@@ -38,6 +37,7 @@ export class OriginalActionMenu {
     this.source = source;
   }
   reset() {
+    this.history = [];
     this.mode = 'main';
     this.first = undefined;
     this.choosingInventory = false;
@@ -79,7 +79,35 @@ export class OriginalActionMenu {
     }
   }
   /** true: la acción termina el selector; false: se dibuja el submenú resultante. */
+  /** Retrocede un submenú; false indica que ya está en la barra principal. */
+  back(): boolean {
+    const previous = this.history.pop();
+    if (!previous) return false;
+    this.mode = previous.mode;
+    this.verb = previous.verb;
+    this.first = previous.first;
+    this.choosingInventory = previous.choosingInventory;
+    return true;
+  }
   select(index: number): boolean {
+    const previous: MenuState = {
+      mode: this.mode,
+      verb: this.verb,
+      first: this.first,
+      choosingInventory: this.choosingInventory,
+    };
+    const finished = this.choose(index);
+    if (
+      !finished &&
+      this.mode !== 'main' &&
+      (previous.mode !== this.mode ||
+        previous.first !== this.first ||
+        previous.choosingInventory !== this.choosingInventory)
+    )
+      this.history.push(previous);
+    return finished;
+  }
+  private choose(index: number): boolean {
     const cell = this.cells()[index];
     if (!cell || cell.blocked) return false;
     const value = cell.value;

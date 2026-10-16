@@ -1,17 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dungeonPresentationOrder, visibleDungeonPickup } from '../src/dungeon-visuals.ts';
+import {
+  dungeonPresentationOrder,
+  visibleDungeonPickup,
+  preserveDungeonGlint,
+} from '../src/dungeon-visuals.ts';
 import {
   originalActorOrder,
   originalForegroundOverlaps,
 } from '../../../packages/engine/src/scene-order.ts';
 
-test('moneda y clip conservan sus condiciones y usan el arte del paquete activo', () => {
+test('la moneda conserva sus condiciones y el clip no se sustituye por un icono permanente', () => {
   for (const pack of ['original', 'remaster']) {
     assert.equal(visibleDungeonPickup(0, 6, 7, pack)?.icon, 31);
     assert.equal(visibleDungeonPickup(0, 6, 0, pack), null);
     assert.equal(visibleDungeonPickup(0, 9, 3, pack), null);
-    assert.equal(visibleDungeonPickup(0, 9, 1, pack)?.icon, 29);
+    assert.equal(visibleDungeonPickup(0, 9, 1, pack), null);
     assert.equal(visibleDungeonPickup(0, 9, 0, pack), null);
     assert.equal(visibleDungeonPickup(1, 6, 7, pack), null);
     assert.equal(visibleDungeonPickup(0, 11, 1, pack), null);
@@ -60,4 +64,12 @@ test('la moneda activa el primer plano y queda detrás de la pared, sin alterar 
   assert.equal(actors[0].flags, 7);
   actors[0].flags = 0;
   assert.equal(originalForegroundOverlaps(wall, dungeonPresentationOrder(0, actors)), false);
+});
+
+test('se mantienen los cinco fotogramas del destello original en ambos modos gráficos', () => {
+  for (let frame = 42; frame <= 46; frame++)
+    assert.equal(preserveDungeonGlint(0, 24576, frame), true);
+  assert.equal(preserveDungeonGlint(0, 24576, 41), false);
+  assert.equal(preserveDungeonGlint(0, 20480, 43), false);
+  assert.equal(preserveDungeonGlint(1, 24576, 43), false);
 });

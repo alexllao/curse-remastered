@@ -1,3 +1,4 @@
+import { OriginalActionMenu } from '../../packages/engine/src/original-action-menu.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -54,6 +55,7 @@ const state = createDungeon(animation, report),
   },
   regions = boxdet.resources.find((resource) => resource.resourceId === 0).records;
 let freeState: typeof state | undefined;
+let clipState: typeof state | undefined;
 let cycle = 0;
 function compare(expected, label) {
   const differences = animation.actors.flatMap((a, i) =>
@@ -82,6 +84,7 @@ compare(report.initial, 'initial');
 for (const event of report.events) {
   if (event.kind === 'action') {
     if (event.name === 'take-coin') freeState = structuredClone(state);
+    if (event.name === 'take-clip') clipState = structuredClone(state);
     performDungeonAction(state, event.name as DungeonAction, profile);
     compare(event.expected, event.name + ' setup');
   } else if (event.kind === 'walk') {
@@ -145,3 +148,75 @@ for (const probe of boundaries) {
 console.log(
   `${boundaryCycles} ciclos de Ben hacia cinco bordes contrastados; sin deriva tras chocar.`,
 );
+
+// Regresión de accesibilidad: caminar y recoger por el controlador real del HUD.
+assert.ok(clipState);
+const routes = [
+  {
+    label: 'moneda',
+    initial: freeState,
+    point: { x: 295, y: 196 },
+    item: 5,
+    action: 'take-coin' as const,
+    slot: 6,
+  },
+  {
+    label: 'clip',
+    initial: clipState,
+    point: { x: 210, y: 155 },
+    item: 3,
+    action: 'take-clip' as const,
+    slot: 9,
+  },
+];
+for (const route of routes) {
+  const branch = structuredClone(route.initial);
+  walkDungeon(branch, route.point, profile);
+  for (let i = 0; i < 500 && branch.walk; i++) tickDungeon(branch, profile, regions);
+  assert.equal(branch.walk, null, `${route.label}: terminar el paseo`);
+  assert.ok(
+    dungeonNearby(branch, 2).includes(route.item),
+    `${route.label}: accesible al detenerse`,
+  );
+  const menu = new OriginalActionMenu({
+    inventory: () =>
+      Array.from({ length: 10 }, (_, i) => dungeonWord(branch, 0x5225 + i * 2)).filter(
+        (id) => id !== 65535,
+      ),
+    nearby: (mask) => dungeonNearby(branch, mask),
+    vocabulary: () => [],
+    icon: (id) => branch.memory[0x524e + id * 2],
+    blocked: () => !!(branch.animation.actors[0][16] || branch.animation.actors[0][17]),
+    execute: (command) => {
+      assert.deepEqual(command, { kind: 'take', item: route.item });
+      performDungeonAction(branch, route.action, profile);
+    },
+  });
+  assert.equal(menu.cells()[1].blocked, false, `${route.label}: Coger habilitado`);
+  assert.equal(menu.select(1), false);
+  const cell = menu.cells().findIndex((entry) => entry.value === route.item);
+  assert.ok(cell >= 0, `${route.label}: presente en el submenú`);
+  const before = dungeonWord(branch, 0x35c7);
+  assert.equal(menu.select(cell), true);
+  for (let i = 0; i < 300; i++) {
+    tickDungeon(branch, profile, regions);
+    if (
+      !branch.walk &&
+      branch.animation.controls.every(Boolean) &&
+      !branch.animation.actors[0][16] &&
+      !branch.animation.actors[0][17]
+    )
+      break;
+  }
+  assert.equal(
+    branch.animation.actors[route.slot - 1][0],
+    0,
+    `${route.label}: retirado de la sala`,
+  );
+  if (route.item === 5) assert.equal(dungeonWord(branch, 0x35c7), before + 1);
+  else
+    assert.ok(
+      Array.from({ length: 10 }, (_, i) => dungeonWord(branch, 0x5225 + i * 2)).includes(3),
+    );
+}
+console.log('Moneda y clip: paseo, Coger, selección y recogida completa verificados.');

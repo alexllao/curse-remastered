@@ -1,11 +1,8 @@
 import type { OrderedActor } from '../../../packages/engine/src/scene-order.js';
 
-export const dungeonPickupArt = [
-  { slot: 6, icon: 31, width: 6, height: 4, dx: -1, dy: -1.5 },
-  { slot: 9, icon: 29, width: 6, height: 3, dx: -1, dy: -2 },
-];
+export const dungeonPickupArt = [{ slot: 6, icon: 31, width: 6, height: 4, dx: -1, dy: -1.5 }];
 
-/** Dibujo independiente del fotograma vacío y del destello VGA de tres píxeles. */
+/** Representación de la moneda; el clip conserva sus fotogramas de destello. */
 export function visibleDungeonPickup(
   sceneId: number,
   slot: number,
@@ -14,7 +11,7 @@ export function visibleDungeonPickup(
 ) {
   if (sceneId !== 0 || (usedPack !== 'remaster' && usedPack !== 'original') || !flags) return null;
   const art = dungeonPickupArt.find((entry) => entry.slot === slot);
-  if (!art || (slot === 9 && flags & 2)) return null;
+  if (!art) return null;
   return art;
 }
 
@@ -30,4 +27,9 @@ export function dungeonPresentationOrder(sceneId: number, actors: OrderedActor[]
     if (actor.slot === 6 && actor.flags) return { ...actor, flags: 1 };
     return actor;
   });
+}
+
+/** Mantener el destello original, también en Remaster, sin sustituirlo por el icono del clip. */
+export function preserveDungeonGlint(sceneId: number, bank: number, frame: number) {
+  return sceneId === 0 && bank === 24576 && frame >= 42 && frame <= 46;
 }

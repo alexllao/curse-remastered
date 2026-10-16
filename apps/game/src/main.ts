@@ -1,9 +1,11 @@
 import { chooseFrame } from './frame-layout.js';
 import { hudCursorPosition } from './hud-cursor.js';
+import { hudKeyboardCommand } from './hud-keyboard.js';
 import { needsSceneLayers } from './scene-layer-selection.js';
 import { foregroundPresentation } from './foreground-presentation.js';
 import {
   dungeonPickupArt,
+  preserveDungeonGlint,
   visibleDungeonPickup,
   dungeonPresentationOrder,
 } from './dungeon-visuals.js';
@@ -497,7 +499,9 @@ async function start() {
   gameCursor.visible = false;
   let pointerOnGame = false;
   const pointerPosition = { x: 0, y: 0 };
+  let hudUsingKeyboard = false;
   world.on('pointermove', (event) => {
+    hudUsingKeyboard = false;
     pointerOnGame = true;
     pointerPosition.x = event.global.x;
     pointerPosition.y = event.global.y;
@@ -508,7 +512,10 @@ async function start() {
   app.stage.addChild(world, decorativeFrames.layer, gameCursor);
   const fps = document.createElement('span');
   app.canvas.tabIndex = 0;
-  app.canvas.setAttribute('aria-label', 'Pantalla del juego');
+  app.canvas.setAttribute(
+    'aria-label',
+    'Pantalla del juego. Espacio o Intro abre la barra de acciones. Flechas para elegir, Intro para confirmar y Escape para volver.',
+  );
   fps.id = 'fps';
   fps.setAttribute('aria-hidden', 'true');
   fps.textContent = '— FPS';
@@ -575,7 +582,13 @@ async function start() {
     const assets = await Promise.all(
       sourceAssets.map(async (asset) => ({
         asset,
-        visual: await loadVisual({ ...asset, remaster: record.id === 0 }, targetPack),
+        visual: await loadVisual(
+          {
+            ...asset,
+            remaster: record.id === 0 && !preserveDungeonGlint(record.id, asset.bank, asset.frame),
+          },
+          targetPack,
+        ),
       })),
     );
     const pickupArt =
@@ -876,9 +889,8 @@ async function start() {
           target.height = pickup.height;
           target.scale.x = Math.abs(target.scale.x);
           target.position.set(view.x + pickup.dx, view.y + pickup.dy);
-          // El clip conserva un brillo leve, pero nunca desaparece entre destellos.
           target.alpha = 1;
-          target.tint = view.slot === 9 && view.frame === 42 ? 0x9aabba : 0xffffff;
+          target.tint = 0xffffff;
           continue;
         }
         sprite.alpha = 1;
@@ -1109,12 +1121,14 @@ async function start() {
     selectingPack
       ? Promise.resolve()
       : show((currentView + direction + screenCount) % screenCount, pack);
-  function openOriginalHud(x: number, y: number) {
+  function openOriginalHud(x: number, y: number, keyboard = false) {
     if (menuOpen || changing || selectingPack || transition || showingStatic || scene().id !== 0)
       return;
     if (!animationState?.controls[1]) return;
     actionMenu.reset();
+    hudUsingKeyboard = keyboard;
     originalHud.open(x, y, actionMenu.cells());
+    if (keyboard) originalHud.edge(false);
     sync();
     elapsed = animationElapsed = 0;
     app.canvas.focus({ preventScroll: true });
@@ -1240,15 +1254,23 @@ async function start() {
     const cursorIndex =
       dungeonState?.cursor === 'success' ? 1 : dungeonState?.cursor === 'failure' ? 2 : 0;
     const cursorVisual = cursorVisuals[cursorIndex];
-    gameCursor.visible = customCursor && pointerOnGame && !!cursorVisual;
+    gameCursor.visible =
+      customCursor &&
+      (pointerOnGame || (originalHud.visible && hudUsingKeyboard)) &&
+      !!cursorVisual;
     world.cursor = customCursor && cursorVisual ? 'none' : 'pointer';
     if (gameCursor.visible) {
       gameCursor.texture = cursorVisual.texture;
       const asset = manifest.originalHud.cursors![cursorIndex];
       gameCursor.width = asset.width * world.scale.x;
       gameCursor.height = asset.height * world.scale.y;
+      const rawPointer =
+        originalHud.visible && hudUsingKeyboard
+          ? { x: originalHud.selected * 32 + 12, y: originalHud.layer.y + 8 }
+          : world.toLocal(pointerPosition);
+      if (originalHud.visible && hudUsingKeyboard) gameCursor.visible = true;
       const position = hudCursorPosition(
-        world.toLocal(pointerPosition),
+        rawPointer,
         originalHud.visible ? { x: 0, y: originalHud.layer.y, width: 320, height: 32 } : null,
         asset,
       );
@@ -1311,9 +1333,12 @@ async function start() {
       animationElapsed += Math.min(ticker.deltaMS, 100);
       while (animationElapsed >= gameCycleMs) {
         animationElapsed -= gameCycleMs;
-        if (scene().id === 0 && dungeonState)
+        if (scene().id === 0 && dungeonState) {
+          const coinWasPresent = !!dungeonState.animation.actors[5][0];
           tickDungeon(dungeonState, manifest.navigationProfile, scene().navigation.regions);
-        else tickOriginalActors(animationState);
+          if (coinWasPresent && !dungeonState.animation.actors[5][0])
+            notifyGame('Moneda recogida · +1 punto.');
+        } else tickOriginalActors(animationState);
         for (const id of animationState.sounds) sounds.play(id);
       }
       if (scene().id === 0 && dungeonState) {
@@ -1407,16 +1432,35 @@ async function start() {
       return;
     }
     const target = event.target;
-    if (originalHud.visible && ['Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    if (
+      target instanceof HTMLElement &&
+      (target.matches('input,select,textarea') || target.isContentEditable)
+    )
+      return;
+    const hudCommand = hudKeyboardCommand(event.key, originalHud.visible, event.shiftKey);
+    const canUseHud =
+      !menuOpen &&
+      !showingStatic &&
+      !changing &&
+      !selectingPack &&
+      scene().id === 0 &&
+      (originalHud.visible || target === document.body || target === app.canvas);
+    if (hudCommand && canUseHud) {
       event.preventDefault();
-      if (event.key === 'Escape') {
-        originalHud.close();
+      if (event.repeat && ['open', 'select', 'back'].includes(hudCommand)) return;
+      hudUsingKeyboard = true;
+      if (hudCommand === 'open') openOriginalHud(16, 168, true);
+      else if (hudCommand === 'back') {
+        if (actionMenu.back()) originalHud.setEntries(actionMenu.cells());
+        else originalHud.close();
         sync();
-      } else if (event.key === 'Enter') selectOriginalHud();
-      else originalHud.step(event.key === 'ArrowLeft' ? -1 : 1);
+      } else if (hudCommand === 'select') selectOriginalHud();
+      else if (hudCommand === 'first' || hudCommand === 'last')
+        originalHud.edge(hudCommand === 'last');
+      else originalHud.step(hudCommand === 'previous' ? -1 : 1);
       return;
     }
-    if (target instanceof HTMLElement && target.matches('input,select,textarea')) return;
+
     if (event.key === 'Escape') {
       event.preventDefault();
       setMenu(!menuOpen || !gameStarted);

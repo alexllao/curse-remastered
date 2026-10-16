@@ -4,7 +4,7 @@ Actualizado: 16 de octubre de 2026. Rama de trabajo: `development`.
 
 ## Prioridad y criterio de cierre
 
-Completar la primera mazmorra con el comportamiento original antes de ampliar otras salas. Las demás salas y los marcos quedan aparcados. Àlex ha solicitado ahora el remaster coherente del fondo, las piezas, el HUD y los cursores de esta primera sala; Ben se conserva original. Probar siempre en silencio. Una comparación de rutinas no equivale a una captura visual ni verifica la velocidad física del juego DOS.
+Completar la primera mazmorra con el comportamiento original antes de ampliar otras salas. Las demás salas y los marcos quedan aparcados. Àlex ha solicitado ahora el remaster coherente del fondo, las piezas, el HUD y los cursores de esta primera sala; El aspecto y las animaciones remasterizadas de Ben ya han sido aceptados por Àlex. Probar siempre en silencio. Una comparación de rutinas no equivale a una captura visual ni verifica la velocidad física del juego DOS.
 
 ## Primera mazmorra
 
@@ -161,3 +161,13 @@ La mano del cursor queda limitada a la barra de acciones mientras está abierta,
 El usuario recuerda el resplandor periódico del clip en DOSBox. Se conserva su señal original: el fotograma42 muestra la base plateada tenue y los43–46 recuperan todo su brillo. No se añade un temporizador paralelo ni se cambia el programa del actor. La base permanece opaca para poder localizar el clip entre destellos.
 
 La captura del usuario detecta una excepción incorrecta de la implementación provisional: la moneda se había colocado por encima del primer plano. Se elimina esa capa especial. La moneda vuelve a quedar debajo de la pared; además su representación visible activa la oclusión aunque su registro lógico mantenga los flags de objeto oculto. Una prueba cubre ese caso sin Ben próximo y la desaparición tras recogerla. No se garantiza visibilidad de un objeto físicamente escondido detrás de la pared.
+
+### Destello nativo del clip, recorrido de moneda y teclado completo del HUD
+
+Àlex precisa que en DOSBox el clip no tiene una representación permanente visible, pero sí un destello periódico. Se retira por completo el icono de clip añadido al escenario y se vuelven a usar los fotogramas42–46 originales, con sus pausas y condiciones, también en Remaster. El icono del inventario sigue siendo el de su paquete. Esta revisión sustituye la base opaca y el pulso de tinte descritos antes.
+
+Se reproduce la recogida de la moneda desde la posición libre inicial mediante paseo hasta el punto lógico295,196, espera hasta detenerse, apertura de Coger y selección del objeto5 por el controlador real del HUD. La moneda desaparece y la puntuación aumenta en uno. También se comprueba el clip con paseo hasta210,155 tras romper el muro, selección del objeto3 y entrada en inventario. Estos ensayos no son clics del navegador: verifican el recorrido y el controlador en la simulación. La moneda no aparece con los pies a192; sí desde193 en ese recorrido. La franja de proximidad original es estrecha. El clip se recoge al lado del hueco, una vez acabada la rotura.
+
+El HUD ya se puede abrir, recorrer, confirmar y cerrar con teclado según `original-hud.md`. Se corrige un problema concreto del foco: entrar en Coger podía dejar seleccionada una columna vacía si el submenú solo contenía un objeto. Las pruebas cubren esa secuencia completa, el salto de opciones bloqueadas y el regreso por submenús de uso de objetos. La mano sigue la casilla elegida y vuelve al ratón cuando este se mueve. Pendiente aceptación visual y de entrada real en el navegador.
+
+Al completarse la recogida de la moneda aparece «Moneda recogida · +1 punto»: no ocupa inventario en el original, por lo que esa ausencia no significa que haya fallado. El aviso se dispara al retirarse el actor, sin alterar la acción ni su puntuación. Mirar objetos sigue sin una reconstrucción completa; la comprobación de este lote cubre Coger, no todas las respuestas de Mirar.
