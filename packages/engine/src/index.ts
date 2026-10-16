@@ -34,3 +34,5 @@ export * from './actor-program.js';
 
 export * from './dungeon.js';
 export * from './original-action-menu.js';
+
+export * from './native-scene.js';

@@ -1,3 +1,4 @@
+import { prepareNativeCorridor } from './native-corridor.js';
 import { prepareOriginalMusic } from './original-music.js';
 import { prepareOriginalInfo } from './original-info.js';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -264,6 +265,7 @@ for (const profile of ambient.profiles) {
     },
   });
 }
+const nativeScenes = await prepareNativeCorridor(root, scenes, prepare);
 const presentationTrace = JSON.parse(
   await readFile(join(root, 'reports/navigation/presentation.json'), 'utf8'),
 );
@@ -415,6 +417,7 @@ await writeFile(
       presentationPlayback,
       actorPrograms: dungeon.programs,
       dungeon: { memory: dungeonActions.memory, banks: dungeonActions.banks },
+      nativeScenes,
       scenes,
       player,
       originalHud,

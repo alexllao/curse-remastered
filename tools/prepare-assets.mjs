@@ -31,11 +31,18 @@ try {
     );
   let python = process.env.CURSE_PYTHON || 'python';
   const probe = () =>
-    spawnSync(python, ['-c', "import unicorn; assert unicorn.__version__ == '2.1.4'"], {
-      cwd: root,
-      env: process.env,
-      stdio: 'ignore',
-    });
+    spawnSync(
+      python,
+      [
+        '-c',
+        "import unicorn, capstone; assert unicorn.__version__ == '2.1.4'; assert capstone.__version__ == '5.0.9'",
+      ],
+      {
+        cwd: root,
+        env: process.env,
+        stdio: 'ignore',
+      },
+    );
   if (probe().status !== 0) {
     const folder = join(root, 'reports/tool-venv');
     mkdirSync(join(root, 'reports'), { recursive: true });
@@ -96,6 +103,11 @@ try {
     '../../tools/reverse-engineering/verify-dungeon-actions.mts',
   ]);
   run(python, ['tools/extract-dungeon-sounds.py']);
+  run(python, ['tools/reverse-engineering/trace-corridor.py']);
+  run(process.execPath, [
+    '--experimental-strip-types',
+    'tools/reverse-engineering/verify-corridor.mjs',
+  ]);
   for (const name of ['scene-layers', 'navigation-verify', 'prepare-playtest']) packageStep(name);
   console.log('\nRecursos locales preparados. Ejecuta pnpm dev. Tus remasters se han conservado.');
 } catch (error) {

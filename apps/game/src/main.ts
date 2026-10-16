@@ -17,6 +17,8 @@ import {
 } from './dungeon-visuals.js';
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
+  OriginalSceneMachine,
+  type NativeSceneProfile,
   createDungeon,
   performDungeonAction,
   tickDungeon,
@@ -116,6 +118,7 @@ interface Manifest {
   navigationProfile: WalkProfile;
   actorPrograms: number[];
   dungeon: DungeonProfile;
+  nativeScenes?: Record<string, string>;
   originalHud: OriginalHudAssets;
   originalInfo: OriginalInfoProfile;
 }
@@ -170,6 +173,12 @@ async function start() {
     )
   )
     throw new Error('Repeat local navigation preparation');
+  let corridorProfile: NativeSceneProfile | null = null;
+  if (manifest.nativeScenes?.['1']) {
+    const nativeResponse = await fetch(manifest.nativeScenes['1'], { cache: 'no-store' });
+    if (!nativeResponse.ok) throw new Error('Prepare CORRIDOR native profile');
+    corridorProfile = await nativeResponse.json();
+  }
   const gameClock = manifest.scenes.find((scene) => scene.id === 0)?.animation;
   if (!gameClock || gameClock.cyclePulses !== 5 || gameClock.referenceHz <= 0)
     throw new Error('Missing verified game clock');
@@ -686,7 +695,9 @@ async function start() {
         visual: await loadVisual(
           {
             ...asset,
-            remaster: record.id === 0 && !preserveDungeonGlint(record.id, asset.bank, asset.frame),
+            remaster:
+              [0, 1].includes(record.id) &&
+              !preserveDungeonGlint(record.id, asset.bank, asset.frame),
           },
           targetPack,
         ),
@@ -715,15 +726,22 @@ async function start() {
       ? record.animation.actors.slice(1).map((raw, index) => originalActorView(raw, index + 2))
       : record.layers.actors;
     const objects = initialActors
-      .filter((a) => a.flags !== 0 && (record.animation || !(a.flags & 2)) && a.frame !== 255)
+      .filter(
+        (a) =>
+          record.id === 1 ||
+          (a.flags !== 0 && (record.animation || !(a.flags & 2)) && a.frame !== 255),
+      )
       .map((a) => {
-        const sprite = new Sprite(texture(a.frame & 127, a.bank ?? 24576));
+        const active = a.flags !== 0 && a.frame !== 255;
+        const sprite = new Sprite(
+          texture(active ? a.frame & 127 : 0, active ? a.bank || 24576 : 24576),
+        );
         sprite.width = a.width;
         sprite.height = a.height;
         sprite.scale.x = Math.abs(sprite.scale.x) * (a.frame & 128 ? -1 : 1);
         sprite.position.set(a.x + (a.frame & 128 ? a.width : 0), a.y);
         sprite.eventMode = 'none';
-        sprite.visible = !(a.flags & 2);
+        sprite.visible = active && !(a.flags & 2);
         return { slot: a.slot, sprite };
       });
     const foreground = record.layers.foreground.map((piece) => {
@@ -780,6 +798,26 @@ async function start() {
   let animationState: ActorPrograms | null = null,
     animationElapsed = 0;
   let dungeonState: DungeonState | null = null;
+  const nativeMachines = new Map<number, OriginalSceneMachine>();
+  function nativeScene() {
+    return !showingStatic ? nativeMachines.get(scene().id) : undefined;
+  }
+  function interactiveScene() {
+    return !showingStatic && ((scene().id === 0 && !!dungeonState) || !!nativeScene());
+  }
+  function syncNativeScene(machine: OriginalSceneMachine) {
+    if (!animationState) return;
+    animationState.actors = machine.actors();
+    animationState.controls = [0, 1, 2].map((i) => machine.byte(0x3594 + i));
+    animationState.bank = machine.byte(0x358c);
+    animationState.sounds = machine.sounds;
+  }
+  function nativeNearby(machine: OriginalSceneMachine, mask: number) {
+    machine.call(0x8b1e, { cx: 10, dx: mask, di: 0xb660 });
+    return Array.from({ length: 10 }, (_, i) => machine.word(0xb660 + i * 2))
+      .filter((v) => v !== 65535)
+      .map((v) => v - 26);
+  }
   let actor: WalkActor | null = null,
     cameraX = 0,
     renderCameraX = 0,
@@ -945,11 +983,26 @@ async function start() {
       animationState.programs = manifest.actorPrograms;
     if (animationState && scene().id === 0)
       dungeonState = createDungeon(animationState, manifest.dungeon);
+    if (!showingStatic && scene().id === 1 && corridorProfile) {
+      let machine = nativeMachines.get(1);
+      if (!machine) {
+        machine = new OriginalSceneMachine(corridorProfile);
+        if (dungeonState) {
+          // Inventario, vocabulario y flags de objetos conservados al salir de la celda.
+          for (let at = 0x5225; at < 0x52d0; at++)
+            machine.setByte(at, dungeonByte(dungeonState, at));
+          machine.setWord(0x35c7, dungeonWord(dungeonState, 0x35c7));
+        }
+        nativeMachines.set(1, machine);
+      }
+      syncNativeScene(machine);
+    }
     animationElapsed = 0;
     const spawn =
       showingStatic || scene().animation?.includePlayer ? null : scene().navigation.spawn;
     actor = spawn ? createWalkActor(spawn.x + spawn.cameraX, spawn.y, spawn.frame) : null;
     cameraX = spawn ? Math.max(0, Math.min(scene().background.width - 320, spawn.cameraX)) : 0;
+    if (nativeScene()) cameraX = cameras.get(scene().id) ?? 896;
     renderCameraX = cameraX;
     scrollElapsed = 0;
     elapsed = 0;
@@ -1141,9 +1194,9 @@ async function start() {
       .querySelector('#original-hud-note')!
       .toggleAttribute(
         'hidden',
-        showingStatic || menuOpen || originalHud.visible || infoIsOpen() || scene().id !== 0,
+        showingStatic || menuOpen || originalHud.visible || infoIsOpen() || !interactiveScene(),
       );
-    if (showingStatic || menuOpen || infoIsOpen() || scene().id !== 0) originalHud.close();
+    if (showingStatic || menuOpen || infoIsOpen() || !interactiveScene()) originalHud.close();
     modeLabel.textContent =
       pack.label +
       (visual.fallback
@@ -1231,6 +1284,7 @@ async function start() {
         if (!showingStatic && actors.has(scene().id)) {
           actor = actors.get(scene().id)!;
           animationState = animationStates.get(scene().id) ?? null;
+          if (nativeScene()) syncNativeScene(nativeScene()!);
           animationElapsed = 0;
           cameraX = cameras.get(scene().id) ?? 0;
           renderCameraX = cameraX;
@@ -1280,7 +1334,7 @@ async function start() {
       selectingPack ||
       transition ||
       showingStatic ||
-      scene().id !== 0
+      !interactiveScene()
     )
       return;
     if (!animationState?.controls[1]) return;
@@ -1293,21 +1347,60 @@ async function start() {
     app.canvas.focus({ preventScroll: true });
   }
   const actionMenu = new OriginalActionMenu({
-    inventory: () => (dungeonState ? dungeonInventory(dungeonState) : []),
-    nearby: (mask) => (dungeonState ? dungeonNearby(dungeonState, mask) : []),
+    inventory: () =>
+      nativeScene()
+        ? Array.from({ length: 10 }, (_, i) => nativeScene()!.word(0x5225 + i * 2)).filter(
+            (v) => v !== 65535,
+          )
+        : dungeonState
+          ? dungeonInventory(dungeonState)
+          : [],
+    nearby: (mask) =>
+      nativeScene()
+        ? nativeNearby(nativeScene()!, mask)
+        : dungeonState
+          ? dungeonNearby(dungeonState, mask)
+          : [],
     vocabulary: () =>
-      dungeonState
-        ? Array.from({ length: 10 }, (_, i) => dungeonWord(dungeonState!, 0x5239 + i * 2)).filter(
+      nativeScene()
+        ? Array.from({ length: 10 }, (_, i) => nativeScene()!.word(0x5239 + i * 2)).filter(
             (n) => n !== 65535,
           )
-        : [],
-    icon: (item) => (dungeonState ? dungeonByte(dungeonState, 0x524e + item * 2) : 0),
+        : dungeonState
+          ? Array.from({ length: 10 }, (_, i) => dungeonWord(dungeonState!, 0x5239 + i * 2)).filter(
+              (n) => n !== 65535,
+            )
+          : [],
+    icon: (item) =>
+      nativeScene()
+        ? nativeScene()!.byte(0x524e + item * 2)
+        : dungeonState
+          ? dungeonByte(dungeonState, 0x524e + item * 2)
+          : 0,
     blocked: () =>
       !!animationState &&
       (animationState.actors[0][16] !== 0 || animationState.actors[0][17] !== 0),
     execute: executeOriginalAction,
   });
   function executeOriginalAction(command: ActionCommand) {
+    const machine = nativeScene();
+    if (machine) {
+      if (command.kind === 'info') {
+        if (pack.id === 'original') {
+          originalHud.close();
+          sounds.stop();
+          originalInfo.show(machine.word(0x35c7));
+        } else projectInfo.show({ score: machine.word(0x35c7), graphics: pack.label });
+      } else if (command.kind === 'disk')
+        notifyGame('Guardar y cargar todavía no están implementados.');
+      else {
+        machine.action(command);
+        syncNativeScene(machine);
+        for (const id of machine.sounds) sounds.play(id);
+      }
+      sync();
+      return;
+    }
     if (!dungeonState) return;
     const { item, other, verb } = command;
     let action: Parameters<typeof performDungeonAction>[1] | undefined;
@@ -1405,6 +1498,12 @@ async function start() {
     const local = world.toLocal(event.global),
       point = { x: Math.trunc(local.x + renderCameraX), y: Math.trunc(local.y) };
     if (point.x < 0 || point.x >= scene().background.width || point.y < 0 || point.y >= 200) return;
+    if (nativeScene()) {
+      nativeScene()!.walk(point.x, point.y);
+      syncNativeScene(nativeScene()!);
+      animationElapsed = 0;
+      return;
+    }
     if (scene().id === 0 && dungeonState) {
       walkDungeon(dungeonState, point, manifest.navigationProfile);
       animationElapsed = 0;
@@ -1429,14 +1528,13 @@ async function start() {
   app.ticker.add((ticker) => {
     decorativeFrames.tick(ticker.elapsedMS);
     originalHud.tick(ticker.elapsedMS);
-    const customCursor =
-      !menuOpen && !projectInfo.open && !showingStatic && scene().id === 0 && !!dungeonState;
+    const customCursor = !menuOpen && !projectInfo.open && !showingStatic && interactiveScene();
     const cursorIndex =
       originalHud.visible || originalInfo.visible
         ? 0
-        : dungeonState?.cursor === 'success'
+        : (nativeScene()?.cursor ?? dungeonState?.cursor) === 'success'
           ? 1
-          : dungeonState?.cursor === 'failure'
+          : (nativeScene()?.cursor ?? dungeonState?.cursor) === 'failure'
             ? 2
             : 0;
     const cursorVisual = cursorVisuals[cursorIndex];
@@ -1536,6 +1634,12 @@ async function start() {
           tickDungeon(dungeonState, manifest.navigationProfile, scene().navigation.regions);
           if (coinWasPresent && !dungeonState.animation.actors[5][0])
             notifyGame('Moneda recogida · +1 punto.');
+        } else if (nativeScene()) {
+          const machine = nativeScene()!;
+          machine.tick();
+          syncNativeScene(machine);
+          cameraX = followOriginalCamera(machine.word(0x2c2d), cameraX, scene().background.width);
+          cameras.set(scene().id, cameraX);
         } else tickOriginalActors(animationState);
         for (const id of animationState.sounds) sounds.play(id);
       }
@@ -1544,6 +1648,12 @@ async function start() {
           const corridor = manifest.scenes.findIndex((s) => s.id === 1);
           if (corridor >= 0) void show(staticScreens.length + corridor, pack);
         }
+      }
+      const machine = nativeScene();
+      if (machine?.pendingRoom !== null && machine?.pendingRoom !== undefined) {
+        const resource = machine.word(0x7482 + machine.pendingRoom * 2);
+        const next = manifest.scenes.findIndex((record) => record.id === resource);
+        if (next >= 0) void show(staticScreens.length + next, pack);
       }
       sync();
     }
@@ -1684,7 +1794,7 @@ async function start() {
       !showingStatic &&
       !changing &&
       !selectingPack &&
-      scene().id === 0 &&
+      interactiveScene() &&
       (originalHud.visible || target === document.body || target === app.canvas);
     if (hudCommand && canUseHud) {
       event.preventDefault();
@@ -1782,6 +1892,7 @@ async function start() {
     selectMusic();
     await show(0, pack);
     actors.clear();
+    nativeMachines.clear();
     cameras.clear();
     animationStates.clear();
     resetActor();
