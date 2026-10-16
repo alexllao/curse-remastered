@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hudCursorPosition } from '../src/hud-cursor.ts';
+import { hudCursorPosition, hudKeyboardCursorPosition } from '../src/hud-cursor.ts';
 
 test('el HUD superior e inferior limitan la mano completa y al cerrar liberan el cursor', () => {
   const cursor = { width: 16, height: 18 };
@@ -12,4 +12,21 @@ test('el HUD superior e inferior limitan la mano completa y al cerrar liberan el
   }
   const free = { x: 40, y: 110 };
   assert.equal(hudCursorPosition(free, null, cursor), free);
+});
+
+test('la punta del índice coincide con el centro incluso en las casillas extremas y ambas barras', () => {
+  const selection = { xInset: 3, yInset: 3, width: 26, height: 26 };
+  for (const pack of ['original', 'remaster'])
+    for (const hudY of [0, 168])
+      for (const selected of [0, 4, 9]) {
+        const raw = hudKeyboardCursorPosition(selected, hudY, selection, pack);
+        const drawn = hudCursorPosition(
+          raw,
+          { x: 0, y: hudY, width: 320, height: 32 },
+          { width: 16, height: 16 },
+        );
+        const fingertip = pack === 'original' ? 1 : 0.5;
+        assert.equal(drawn.x + fingertip, selected * 32 + 16);
+        assert.equal(drawn.y + fingertip, hudY + 16);
+      }
 });

@@ -1,5 +1,5 @@
 import { chooseFrame } from './frame-layout.js';
-import { hudCursorPosition } from './hud-cursor.js';
+import { hudCursorPosition, hudKeyboardCursorPosition } from './hud-cursor.js';
 import { hudKeyboardCommand } from './hud-keyboard.js';
 import { needsSceneLayers } from './scene-layer-selection.js';
 import { foregroundPresentation } from './foreground-presentation.js';
@@ -1251,8 +1251,13 @@ async function start() {
     decorativeFrames.tick(ticker.elapsedMS);
     originalHud.tick(ticker.elapsedMS);
     const customCursor = !menuOpen && !showingStatic && scene().id === 0 && !!dungeonState;
-    const cursorIndex =
-      dungeonState?.cursor === 'success' ? 1 : dungeonState?.cursor === 'failure' ? 2 : 0;
+    const cursorIndex = originalHud.visible
+      ? 0
+      : dungeonState?.cursor === 'success'
+        ? 1
+        : dungeonState?.cursor === 'failure'
+          ? 2
+          : 0;
     const cursorVisual = cursorVisuals[cursorIndex];
     gameCursor.visible =
       customCursor &&
@@ -1266,7 +1271,12 @@ async function start() {
       gameCursor.height = asset.height * world.scale.y;
       const rawPointer =
         originalHud.visible && hudUsingKeyboard
-          ? { x: originalHud.selected * 32 + 12, y: originalHud.layer.y + 8 }
+          ? hudKeyboardCursorPosition(
+              originalHud.selected,
+              originalHud.layer.y,
+              manifest.originalHud.selection,
+              cursorVisual.usedPack,
+            )
           : world.toLocal(pointerPosition);
       if (originalHud.visible && hudUsingKeyboard) gameCursor.visible = true;
       const position = hudCursorPosition(

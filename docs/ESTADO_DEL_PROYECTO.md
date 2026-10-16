@@ -171,3 +171,7 @@ Se reproduce la recogida de la moneda desde la posición libre inicial mediante 
 El HUD ya se puede abrir, recorrer, confirmar y cerrar con teclado según `original-hud.md`. Se corrige un problema concreto del foco: entrar en Coger podía dejar seleccionada una columna vacía si el submenú solo contenía un objeto. Las pruebas cubren esa secuencia completa, el salto de opciones bloqueadas y el regreso por submenús de uso de objetos. La mano sigue la casilla elegida y vuelve al ratón cuando este se mueve. Pendiente aceptación visual y de entrada real en el navegador.
 
 Al completarse la recogida de la moneda aparece «Moneda recogida · +1 punto»: no ocupa inventario en el original, por lo que esa ausencia no significa que haya fallado. El aviso se dispara al retirarse el actor, sin alterar la acción ni su puntuación. Mirar objetos sigue sin una reconstrucción completa; la comprobación de este lote cubre Coger, no todas las respuestas de Mirar.
+
+### Punta del cursor centrada al navegar con teclado
+
+Se sustituye el desplazamiento aproximado de la esquina del PNG por el centro geométrico del cuadrado de selección menos la posición de la punta del índice. Se comprueban primera, intermedia y última casilla, ambas posiciones del HUD y los cursores Original/Remaster. En la barra se utiliza siempre la mano de señalar; las manos de acierto/error quedan para la escena. No se editan imágenes ni zonas de selección. Pendiente de aceptación visual.

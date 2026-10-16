@@ -10,3 +10,17 @@ export function hudCursorPosition(
     y: Math.max(hud.y, Math.min(hud.y + Math.max(0, hud.height - cursor.height), pointer.y)),
   };
 }
+
+/** Coloca la punta del índice, no la esquina del PNG, en el centro de la selección. */
+export function hudKeyboardCursorPosition(
+  selected: number,
+  hudY: number,
+  selection: { xInset: number; yInset: number; width: number; height: number },
+  usedPack: string,
+) {
+  const fingertip = usedPack === 'original' ? 1 : 0.5;
+  return {
+    x: selected * 32 + selection.xInset + selection.width / 2 - fingertip,
+    y: hudY + selection.yInset + selection.height / 2 - fingertip,
+  };
+}
