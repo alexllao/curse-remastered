@@ -1,3 +1,4 @@
+import { menuWallpaperCandidates } from './menu-wallpapers.js';
 import { interfaceFontsReady } from './interface-fonts.js';
 import type { SoundCatalog } from './sounds.js';
 
@@ -106,6 +107,46 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
     settings.close();
     document.querySelector<HTMLButtonElement>('#toggle-debug')!.click();
   });
+  let wallpaperGeneration = 0;
+  async function prepareWallpaper() {
+    const generation = ++wallpaperGeneration;
+    const paths = [
+      ...menuWallpaperCandidates(window.innerWidth, window.innerHeight),
+      '/menu/graficos/WALLPAPER.png',
+      '/remaster/graficos/interfaz/TITLE.png',
+      '/original/graficos/interfaz/TITLE.png',
+    ];
+    if (image.getAttribute('src') === paths[0]) return;
+    for (const path of paths) {
+      try {
+        // Decodificar aparte conserva el fondo visible mientras cambia el formato.
+        const candidate = new Image();
+        candidate.src = path;
+        await candidate.decode();
+        if (generation !== wallpaperGeneration) return;
+        image.src = path;
+        image.hidden = false;
+        document.body.classList.add('has-wallpaper');
+        return;
+      } catch {
+        // Una variante ausente vuelve al siguiente encuadre disponible.
+      }
+    }
+    if (generation === wallpaperGeneration && !image.getAttribute('src')) image.hidden = true;
+  }
+  let wallpaperTimer: number | undefined;
+  const resizeWallpaper = () => {
+    if (
+      !document.body.classList.contains('welcome') ||
+      !document.body.classList.contains('has-wallpaper')
+    )
+      return;
+    window.clearTimeout(wallpaperTimer);
+    wallpaperTimer = window.setTimeout(() => void prepareWallpaper(), 120);
+  };
+  window.addEventListener('resize', resizeWallpaper);
+  document.addEventListener('fullscreenchange', resizeWallpaper);
+  document.addEventListener('webkitfullscreenchange', resizeWallpaper);
   let noticeTimer: number | undefined;
   return {
     showNotice(message: string) {
@@ -127,27 +168,12 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
     },
     async prepare() {
       await interfaceFontsReady;
-      // La imagen se decodifica bajo el loading; una ausencia conserva TITLE.
-      for (const path of [
-        '/menu/graficos/WALLPAPER.png',
-        '/remaster/graficos/interfaz/TITLE.png',
-        '/original/graficos/interfaz/TITLE.png',
-      ]) {
-        try {
-          image.src = path;
-          await image.decode();
-          image.hidden = false;
-          document.body.classList.add('has-wallpaper');
-          return;
-        } catch {
-          /* Paquete incompleto: probar el respaldo. */
-        }
-      }
-      image.hidden = true;
+      await prepareWallpaper();
     },
     sync(welcome: boolean, open: boolean) {
       document.body.classList.toggle('welcome', welcome);
       if (!welcome) stopFeedback();
+      else if (document.body.classList.contains('has-wallpaper')) resizeWallpaper();
       if (!open && settings.open) settings.close();
       frame.hidden = !showFrame.checked;
       updateStatus();

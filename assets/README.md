@@ -5,7 +5,11 @@ Cada carpeta agrupa una versión, y dentro se separan sus gráficos, música y s
 ```text
 assets/
   menu/
-    graficos/WALLPAPER.png
+    graficos/WALLPAPER.png     # respaldo original, intacto
+    graficos/WALLPAPER-16x10.png
+    graficos/WALLPAPER-16x9.png
+    graficos/WALLPAPER-24x9.png
+    graficos/WALLPAPER-32x9.png
     musica/menu.mp3
   dosbox-mt32/
     musica/                  # capturas RS1–RS5, loops.json y procedencia
@@ -95,3 +99,5 @@ No publiques una compilación que incluya recursos protegidos. La comprobación 
 Guardar la imagen de bienvenida como `assets/remaster/graficos/menu/WALLPAPER.png`. Esta carpeta pertenece a la presentación del port, no al arranque DOS. El título del juego se conserva en `interfaz/TITLE.png`. Para el menú se recomienda una composición 16:9, por ejemplo 1920 × 1080 o 3840 × 2160; no aplicar el lienzo lógico de 320 × 200 a esta imagen.
 
 La bienvenida ya carga este wallpaper antes de retirar el loading y lo adapta a la ventana sin estirarlo; según la proporción puede recortar los márgenes. Si falta, utiliza TITLE remaster y después TITLE original. El menú compacto ofrece Comenzar partida, Opciones y Créditos. Los selectores de gráficos, música, efectos, marcos y volumen se conservan dentro de Opciones. Las futuras capas ambientales podrán acompañar al wallpaper en esta carpeta, conservando una imagen estática de respaldo.
+
+El menú selecciona automáticamente el wallpaper por proporción de ventana, incluida pantalla completa 32:9, y conserva el anterior mientras decodifica el nuevo. Todos los PNG permanecen sin pérdidas. Maestros, encuadres, tamaños nativos y prompts: [MENU_WALLPAPERS.md](../docs/MENU_WALLPAPERS.md).
