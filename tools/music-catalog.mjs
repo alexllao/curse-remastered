@@ -65,7 +65,16 @@ export async function musicCatalog(root) {
   versions.sort((a, b) =>
     a.id === 'original' ? -1 : b.id === 'original' ? 1 : a.label.localeCompare(b.label, 'es'),
   );
+  const native = await metadata(join(root, 'original', 'musica', 'native-contexts.json'));
   const contexts = {};
+  if (native.schemaVersion === 1 && native.contexts && typeof native.contexts === 'object')
+    for (const [context, track] of Object.entries(native.contexts))
+      if (
+        /^scene:\d+$/.test(context) &&
+        typeof track === 'string' &&
+        /^CURSE\.RS[1-5]$/.test(track)
+      )
+        contexts[context] = track;
   if (config.contexts && typeof config.contexts === 'object')
     for (const [context, track] of Object.entries(config.contexts))
       if (typeof track === 'string') contexts[context] = track.toUpperCase();

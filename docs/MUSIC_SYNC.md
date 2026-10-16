@@ -24,4 +24,12 @@ La web abre su propia presentación TITLE antes de comenzar. Tras «Comenzar par
 
 La presentación mantiene los 80 cambios de página, 206 eventos imagen/DAC y 1.005 esperas contrastados previamente. Su audio no se declara sincronizado con los cinco MIDI provisionales: faltan la captura de salida MIDI del motor original y la comparación de tiempos, eventos, bucles e inicialización de instrumentos.
 
-No hay una asociación automática inventada entre RS1–RS5 y CORE, TITLE o escenarios. RS5 está fijada únicamente para el menú web por decisión del usuario; no se interpreta como prueba de una asociación original. La configuración explícita de asociaciones se mantiene separada de las tablas verificadas del motor gráfico.
+CORE, TITLE e intro siguen sin asociación musical automática verificada. Los escenarios usan ahora el selector RS del ejecutable, descrito a continuación. RS5 está fijada únicamente para el menú web por decisión del usuario; no se interpreta como prueba de una asociación original. La configuración explícita de asociaciones se mantiene separada de las tablas verificadas del motor gráfico.
+
+## Selector musical de las salas (RS/MPU)
+
+`prepareOriginalMusic` extrae del ejecutable verificado la tabla de 78 recursos en DS:0x80CD y los cinco registros de DS:0x80B9. La primera mazmorra (recurso 0) carga **CURSE.RS1**. El resultado queda fuera de Git en `assets/original/musica/native-contexts.json`; el catálogo aplica estas asociaciones a todas las versiones musicales y permite sustituirlas mediante `assets/music.json`.
+
+`tools/reverse-engineering/trace-music.py` ejecuta 156 casos del tramo 0x4FD5–0x5017: una carga inicial y una entrada con el mismo tema para cada recurso. Si el índice coincide con DS:0x80B8, salta directamente a 0x5098; conserva la pista. Si cambia, 0x7F5D activa DS:0x9955 y espera a que el controlador termine antes de liberar y cargar el RS. La respuesta sintética F0 en 0x7FF9 emite los bytes 00 FC hacia el puerto MPU 0x330. No aplica una rampa de volumen en esta ruta: el port cambia de tema directamente y conserva su posición cuando sigue el mismo RS. Los fundidos de paleta de 0x79E4 no demuestran un fundido musical.
+
+El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. Se conservan los audios locales y su repetición completa. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.

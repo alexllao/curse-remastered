@@ -93,3 +93,30 @@ test('los mapas explícitos admiten subcarpetas verificadas y mantienen eventos 
     assert.equal(result.scenes['0'].events['15'], '/original/sonidos/verificados/puerta.wav');
     assert.equal(result.versions[0].scenes['0'].priorities['15'], 100);
   }));
+
+test('publica asociaciones nativas y permite sustituirlas mediante configuración explícita', () =>
+  fixture(async (root) => {
+    await mkdir(join(root, 'original', 'musica'), { recursive: true });
+    await writeFile(
+      join(root, 'original', 'musica', 'native-contexts.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        contexts: {
+          'scene:0': 'CURSE.RS1',
+          'scene:1': 'CURSE.RS1',
+          'scene:3': 'CURSE.RS3',
+          title: 'CURSE.RS5',
+          'scene:8': '../invalid',
+        },
+      }),
+    );
+    await writeFile(
+      join(root, 'music.json'),
+      JSON.stringify({ contexts: { 'scene:3': 'CURSE.RS2' } }),
+    );
+    assert.deepEqual((await musicCatalog(root)).contexts, {
+      'scene:0': 'CURSE.RS1',
+      'scene:1': 'CURSE.RS1',
+      'scene:3': 'CURSE.RS2',
+    });
+  }));

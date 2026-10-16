@@ -92,3 +92,11 @@ La RS5 local tenía un nivel medio de −34,1 dBFS frente a −21,9 dBFS del rem
 ### Volúmenes separados
 
 Opciones ofrece Música, Efectos y Ambiente con porcentajes guardados por separado en `localStorage`. El altavoz de bienvenida controla únicamente la música. Efectos regula las acciones y la respuesta del menú; Ambiente regula los eventos 17 y 19 del recurso 0. En una traza de 3000 ciclos sin acciones, estos proceden respectivamente del actor 15 (agua, frame 28) y del actor 8 (frames 54/63). Esta clasificación de mezcla pertenece al port y no añade canales al controlador DOS: sigue habiendo una única voz PCM con sus prioridades originales. El resto de eventos conserva la clasificación de efectos hasta disponer de evidencia por sala. Un bus a cero detiene su voz activa y evita nuevas reproducciones de esa categoría. La música no reduce ahora el volumen de los clics: cada control es independiente.
+
+## Selector musical de las salas (RS/MPU)
+
+`prepareOriginalMusic` extrae del ejecutable verificado la tabla de 78 recursos en DS:0x80CD y los cinco registros de DS:0x80B9. La primera mazmorra (recurso 0) carga **CURSE.RS1**. El resultado queda fuera de Git en `assets/original/musica/native-contexts.json`; el catálogo aplica estas asociaciones a todas las versiones musicales y permite sustituirlas mediante `assets/music.json`.
+
+`tools/reverse-engineering/trace-music.py` ejecuta 156 casos del tramo 0x4FD5–0x5017: una carga inicial y una entrada con el mismo tema para cada recurso. Si el índice coincide con DS:0x80B8, salta directamente a 0x5098; conserva la pista. Si cambia, 0x7F5D activa DS:0x9955 y espera a que el controlador termine antes de liberar y cargar el RS. La respuesta sintética F0 en 0x7FF9 emite los bytes 00 FC hacia el puerto MPU 0x330. No aplica una rampa de volumen en esta ruta: el port cambia de tema directamente y conserva su posición cuando sigue el mismo RS. Los fundidos de paleta de 0x79E4 no demuestran un fundido musical.
+
+El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. Se conservan los audios locales y su repetición completa. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.

@@ -6,6 +6,11 @@ import { musicCatalog } from '../../tools/music-catalog.mjs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
+const packageInfo = JSON.parse(
+  await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
+) as { version: string };
+const buildTimestamp = new Date().toISOString();
+
 const assetsRoot = fileURLToPath(new URL('../../assets', import.meta.url));
 const packs = () => graphicsCatalog(assetsRoot);
 function localPacks(): Plugin {
@@ -109,6 +114,10 @@ function localPacks(): Plugin {
   };
 }
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageInfo.version),
+    __BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp),
+  },
   publicDir: '../../assets',
   plugins: [localPacks()],
   server: { host: '127.0.0.1', port: 8787, allowedHosts: ['8a7f-95-129-254-159.ngrok-free.app'] },

@@ -52,6 +52,34 @@
         <p id="asset-info"></p>
       </section>
       <div class="stage">
+        <p id="welcome-build" class="welcome-only" data-build-label></p>
+        <nav class="play-toolbar" aria-label="Controles de la partida">
+          <button id="play-menu" type="button" aria-label="Abrir menú" title="Menú · Esc">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path
+                d="M4 6h16M4 12h16M4 18h16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              />
+            </svg>
+          </button>
+          <button
+            id="play-fullscreen"
+            type="button"
+            aria-label="Pantalla completa"
+            title="Pantalla completa"
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path
+                d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              />
+            </svg>
+          </button>
+        </nav>
         <p id="title-prompt" class="screen-prompt" hidden>
           Pulsa una tecla o haz clic para continuar
         </p>
@@ -201,7 +229,10 @@
               >
             </div>
             <p class="shortcut-note">
-              Durante la partida: F2 · Gráficos · F3 · Música · Esc · Menú
+              Durante la partida: F2 · Gráficos · F3 · Música · F4 · Marco · Esc · Menú
+            </p>
+            <p class="shortcut-note">
+              Acciones: clic derecho, Espacio o Intro · Elegir: flechas · Confirmar: Intro
             </p>
             <p id="sound-note"></p>
             <p id="music-note" role="status">Buscando versiones de música…</p>
@@ -212,6 +243,78 @@
             </div>
           </dialog>
         </section>
+        <dialog
+          id="project-info"
+          aria-labelledby="project-info-title"
+          aria-describedby="project-info-description"
+        >
+          <header class="project-info-heading">
+            <div>
+              <p class="project-info-eyebrow">Información del proyecto</p>
+              <h2 id="project-info-title">Curse of Enchantia</h2>
+            </div>
+            <form method="dialog">
+              <button aria-label="Cerrar información del proyecto">×</button>
+            </form>
+          </header>
+          <p id="project-info-description">
+            Adaptación web y remaster no oficial de la aventura de Core Design (1992).
+          </p>
+          <p class="project-info-author">Web y remaster · Àlex Llaó</p>
+          <p class="project-info-build" data-build-label></p>
+          <section class="project-info-status" aria-labelledby="project-info-stage">
+            <div>
+              <h3 id="project-info-stage">Primera mazmorra</h3>
+              <span class="project-info-badge">En revisión</span>
+            </div>
+            <p>
+              Estamos completando y comprobando esta sala antes de continuar con las siguientes.
+            </p>
+          </section>
+          <dl class="project-info-session" aria-label="Tu partida">
+            <div>
+              <dt>Puntuación</dt>
+              <dd id="project-info-score">0</dd>
+            </div>
+            <div>
+              <dt>Gráficos</dt>
+              <dd id="project-info-graphics">Original</dd>
+            </div>
+          </dl>
+          <div class="project-info-progress">
+            <section aria-labelledby="project-info-ready">
+              <h3 id="project-info-ready">Avances de esta versión</h3>
+              <ul>
+                <li>Acciones principales de la primera mazmorra, objetos y salida al corredor.</li>
+                <li>Ben remasterizado, fondo, marcos, HUD y cursores.</li>
+                <li>Sonidos de la primera sala y selección de música.</li>
+                <li>Barra de acciones con ratón y teclado.</li>
+                <li>Mejoras de oclusión y profundidad de la gota.</li>
+              </ul>
+            </section>
+            <section aria-labelledby="project-info-pending">
+              <h3 id="project-info-pending">Próximos pasos</h3>
+              <ul>
+                <li>Terminar la revisión de la primera mazmorra y sus respuestas.</li>
+                <li>Extender las acciones a las siguientes salas.</li>
+                <li>Guardar y cargar partidas.</li>
+                <li>Instalación y juego sin conexión.</li>
+              </ul>
+            </section>
+          </div>
+          <p class="project-info-keys">
+            HUD: Espacio o Intro · Elegir: flechas o Tab · Confirmar: Intro · Volver: Escape
+          </p>
+          <footer class="project-info-footer">
+            <a
+              href="https://github.com/alexllao/curse-remastered"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Repositorio del proyecto</a
+            >
+            <form method="dialog"><button class="primary" autofocus>Volver al juego</button></form>
+          </footer>
+        </dialog>
       </div>
       <div class="controls game-actions">
         <button id="skip-intro" hidden>Omitir presentación</button>

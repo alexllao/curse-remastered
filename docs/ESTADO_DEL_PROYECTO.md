@@ -175,3 +175,11 @@ Al completarse la recogida de la moneda aparece «Moneda recogida · +1 punto»:
 ### Punta del cursor centrada al navegar con teclado
 
 Se sustituye el desplazamiento aproximado de la esquina del PNG por el centro geométrico del cuadrado de selección menos la posición de la punta del índice. Se comprueban primera, intermedia y última casilla, ambas posiciones del HUD y los cursores Original/Remaster. En la barra se utiliza siempre la mano de señalar; las manos de acierto/error quedan para la escena. No se editan imágenes ni zonas de selección. Pendiente de aceptación visual.
+
+## Interfaz y música — 16 de octubre de 2026
+
+- El último icono del HUD abre las cuatro páginas de información nativas en Original, con FONT.SPR, rectángulos y campos de puntuación del ejecutable (0xE360 y 0xD823). El porcentaje usa 478 puntos y tres columnas con espacios. Clic avanza; clic derecho cierra. Se adapta el teclado: Intro/Espacio/derecha avanzan y Escape/Retroceso cierran.
+- En Remaster abre una ventana provisional con información del proyecto, avances y puntuación; su diseño sigue pendiente de revisión.
+- La bienvenida muestra arriba a la izquierda la versión raíz (1.0.0) y la fecha de compilación inyectada por Vite, fija durante esa compilación o sesión del servidor de desarrollo.
+- La partida ocupa la ventana disponible, con dos controles discretos para menú y pantalla completa. El marco puede verse también fuera de pantalla completa. F4 lo muestra u oculta durante la partida y guarda la preferencia. Las fuentes del juego se mantienen para una revisión posterior.
+- La música de las salas usa el selector RS verificado; la primera mazmorra reproduce CURSE.RS1. Véase MUSIC_SYNC.md para alcance y pruebas. La vista en un navegador real queda pendiente de comprobación visual.

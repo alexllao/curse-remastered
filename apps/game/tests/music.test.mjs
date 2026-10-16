@@ -200,3 +200,30 @@ test('silenciar un autoplay bloqueado elimina el reintento pendiente', async () 
   assert.equal(audio.src, '');
   assert.equal(audio.paused, true);
 });
+
+test('dos salas con el mismo RS conservan la reproducción; otro RS comienza desde cero', () => {
+  const local = globalThis.structuredClone(catalog);
+  local.contexts = { 'scene:0': 'CURSE.RS1', 'scene:1': 'CURSE.RS1', 'scene:3': 'CURSE.RS3' };
+  local.versions[0].tracks.push({
+    id: 'CURSE.RS3',
+    label: 'CURSE.RS3',
+    file: '/original/RS3.ogg',
+    midi: false,
+  });
+  const audio = new AudioFixture(),
+    player = new MusicPlayer(local, () => {}, audio);
+  player.setContext('scene:0');
+  player.select('original');
+  player.start();
+  audio.currentTime = 47;
+  const loads = audio.loads,
+    plays = audio.plays;
+  player.setContext('scene:1');
+  assert.equal(audio.currentTime, 47);
+  assert.equal(audio.loads, loads);
+  assert.equal(audio.plays, plays);
+  player.setContext('scene:3');
+  audio.onloadedmetadata();
+  assert.equal(audio.src, '/original/RS3.ogg');
+  assert.equal(audio.currentTime, 0);
+});

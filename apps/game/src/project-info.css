@@ -1,0 +1,156 @@
+#project-info {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: clamp(20px, 4vw, 34px);
+  color: #f2e2bf;
+  background: linear-gradient(135deg, #162e40, #091722 80%);
+  border: 4px double #b99a5c;
+  border-radius: 4px;
+  box-shadow:
+    0 15px 65px #000b,
+    inset 0 0 32px #0005;
+  font: 18px / 1.5 var(--interface-font);
+}
+#project-info::backdrop {
+  background: #020811cf;
+}
+#project-info .project-info-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 0 16px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid #b99a5c80;
+}
+#project-info .project-info-eyebrow {
+  margin: 0 0 2px;
+  color: #d6b777;
+  font-size: 16px;
+}
+#project-info h2 {
+  margin: 0;
+  color: #ffe3a4;
+  font: normal clamp(26px, 5vw, 34px) / 1.2 var(--interface-font);
+}
+#project-info h3 {
+  margin: 0 0 10px;
+  color: #f6d594;
+  font: normal 22px / 1.25 var(--interface-font);
+}
+#project-info-description {
+  margin: 0;
+}
+#project-info .project-info-author {
+  margin: 6px 0 20px;
+  color: #cfb681;
+  font-size: 16px;
+}
+#project-info .project-info-heading button {
+  padding: 0 10px;
+  font-size: 26px;
+}
+#project-info .project-info-status {
+  padding: 16px 18px;
+  border: 1px solid #b99a5c60;
+  background: #020e1880;
+}
+#project-info .project-info-status > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+#project-info .project-info-status h3 {
+  margin: 0;
+}
+#project-info .project-info-status p {
+  margin: 8px 0 0;
+}
+#project-info .project-info-badge {
+  padding: 2px 10px;
+  border: 1px solid #c3a15a80;
+  border-radius: 20px;
+  color: #f9d896;
+  font-size: 15px;
+}
+#project-info .project-info-session {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 48px;
+  margin: 18px 0;
+}
+#project-info dt {
+  color: #b4c3cc;
+  font-size: 15px;
+}
+#project-info dd {
+  margin: 0;
+  color: #ffe5ae;
+  font-size: 22px;
+}
+#project-info .project-info-progress {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  border-top: 1px solid #b99a5c60;
+  padding-top: 20px;
+}
+#project-info ul {
+  margin: 0;
+  padding-left: 20px;
+}
+#project-info li {
+  margin-bottom: 8px;
+}
+#project-info li::marker {
+  color: #d1aa59;
+}
+#project-info .project-info-keys {
+  padding-top: 18px;
+  border-top: 1px solid #b99a5c60;
+  color: #c7d0d2;
+  font-size: 15px;
+}
+#project-info .project-info-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 20px 0 0;
+}
+#project-info a {
+  color: #eac783;
+  text-underline-offset: 4px;
+}
+#project-info button {
+  font: inherit;
+}
+#project-info .primary {
+  padding: 8px 20px;
+  border-color: #d2b56f;
+  color: #fff0c9;
+  background: linear-gradient(#8e6a2c, #624719);
+}
+#project-info :focus-visible {
+  outline: 2px solid #ffe0a0;
+  outline-offset: 4px;
+}
+@media (max-width: 560px) {
+  #project-info .project-info-progress {
+    grid-template-columns: 1fr;
+  }
+}
+
+#project-info p {
+  color: inherit;
+  font: inherit;
+}
+#project-info .project-info-build {
+  color: #c5b786;
+  font-size: 14px;
+  margin-bottom: 20px;
+}

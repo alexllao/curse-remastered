@@ -1,5 +1,6 @@
 {
   "name": "curse-remastered",
+  "version": "1.0.0",
   "description": "An in-progress modern reimplementation and visual remaster of the DOS adventure game Curse of Enchantia.",
   "private": true,
   "type": "module",

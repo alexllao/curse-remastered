@@ -1,3 +1,5 @@
+import { prepareOriginalMusic } from './original-music.js';
+import { prepareOriginalInfo } from './original-info.js';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { prepareOriginalHud } from './original-hud.js';
 import { join } from 'node:path';
@@ -13,6 +15,7 @@ import { sha256 } from './scene-palette.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url)),
   assetsRoot = join(root, 'assets');
+await prepareOriginalMusic(root);
 function pngDimensions(data: Buffer) {
   if (
     data.length < 33 ||
@@ -387,6 +390,7 @@ for (let index = 0; index < 27; index++)
     ),
   );
 const originalHud = await prepareOriginalHud(root, prepare);
+const originalInfo = await prepareOriginalInfo(root, prepare);
 const title = await prepare('reports/TITLE.png', 'interfaz/TITLE.png', true);
 await mkdir(join(assetsRoot, 'remaster/graficos/interfaz'), { recursive: true });
 await mkdir(join(assetsRoot, 'remaster/graficos/fondos'), { recursive: true });
@@ -414,6 +418,7 @@ await writeFile(
       scenes,
       player,
       originalHud,
+      originalInfo,
       navigationProfile: {
         programBase: navigation.programBase,
         programs: navigation.programs,

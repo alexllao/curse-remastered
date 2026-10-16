@@ -1,3 +1,8 @@
+import { buildLabel } from './build-label.js';
+import { createOriginalInfo } from './original-info-view.js';
+import type { OriginalInfoProfile } from './original-info-layout.js';
+import { createProjectInfo } from './project-info.js';
+import './project-info.css';
 import { chooseFrame } from './frame-layout.js';
 import { hudCursorPosition, hudKeyboardCursorPosition } from './hud-cursor.js';
 import { hudKeyboardCommand } from './hud-keyboard.js';
@@ -51,6 +56,7 @@ import {
 import { fullscreenElement, toggleFullscreen } from './fullscreen.js';
 import './style.css';
 import './welcome-menu.css';
+import './play-layout.css';
 import { createWelcomeMenu } from './welcome-menu.js';
 import { DecorativeFrames, discoverFrames, frameVariant } from './decorative-frames.js';
 import { createOriginalHud, type OriginalHudAssets } from './original-hud.js';
@@ -109,6 +115,7 @@ interface Manifest {
   actorPrograms: number[];
   dungeon: DungeonProfile;
   originalHud: OriginalHudAssets;
+  originalInfo: OriginalInfoProfile;
 }
 const resourceLoading = document.querySelector<HTMLDivElement>('#resource-loading')!;
 function setResourceLoading(message: string | null) {
@@ -120,6 +127,10 @@ function revealGame() {
   document.querySelector('main')!.hidden = false;
   setResourceLoading(null);
 }
+document.querySelectorAll<HTMLElement>('[data-build-label]').forEach((label) => {
+  label.textContent = buildLabel(__APP_VERSION__, __BUILD_TIMESTAMP__);
+  label.title = __BUILD_TIMESTAMP__;
+});
 const silentPreview = new URLSearchParams(location.search).get('silent') === '1';
 const viewport = document.querySelector<HTMLDivElement>('#viewport')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;
@@ -264,7 +275,7 @@ async function start() {
   selectSounds();
   const frameSelect = document.querySelector<HTMLSelectElement>('#frame-select')!;
   const showFrame = document.querySelector<HTMLInputElement>('#show-frame')!;
-  showFrame.checked = preferences.showFrame === true;
+  showFrame.checked = preferences.showFrame !== false;
   frameSelect.replaceChildren(
     new Option('Automático · según escenario', 'auto'),
     ...frameCatalog.map((frame) => new Option(frame.label, frame.id)),
@@ -284,6 +295,8 @@ async function start() {
     resumeButton = button('resume-game'),
     menuButton = button('open-menu'),
     skipButton = button('skip-intro');
+  button('play-menu').addEventListener('click', () => menuButton.click());
+  button('play-fullscreen').addEventListener('click', () => button('fullscreen').click());
   const welcomeMenu = createWelcomeMenu(soundCatalog, silentPreview);
   let menuOpen = false,
     gameStarted = false,
@@ -402,6 +415,7 @@ async function start() {
       ? 'La aventura te espera'
       : 'Tu aventura comienza aquí';
     if (open) {
+      originalInfo.close();
       originalHud.close();
       sounds.stop();
       (gameStarted ? resumeButton : startButton).focus();
@@ -475,6 +489,30 @@ async function start() {
   world.addChild(sceneContent, clip);
   const originalHud = await createOriginalHud(manifest.originalHud, pack);
   world.addChild(originalHud.layer);
+  const originalInfo = await createOriginalInfo(manifest.originalInfo, () => {
+    elapsed = animationElapsed = 0;
+    app.canvas.focus({ preventScroll: true });
+    sync();
+  });
+  world.addChild(originalInfo.layer);
+  function infoIsOpen() {
+    return projectInfo.open || originalInfo.visible;
+  }
+  const projectInfo = createProjectInfo(
+    document.querySelector<HTMLDialogElement>('#project-info')!,
+    {
+      opened() {
+        originalHud.close();
+        sounds.stop();
+        sync();
+      },
+      closed() {
+        elapsed = animationElapsed = 0;
+        app.canvas.focus({ preventScroll: true });
+        sync();
+      },
+    },
+  );
   world.mask = clip;
   world.eventMode = 'static';
   world.hitArea = new Rectangle(0, 0, 320, 200);
@@ -534,7 +572,7 @@ async function start() {
   let frameTask: Promise<void> = Promise.resolve();
   function updateFrame() {
     frameSelect.disabled = !showFrame.checked || !frameCatalog.length;
-    const active = showFrame.checked && !!fullscreenElement();
+    const active = showFrame.checked && (gameStarted || !!fullscreenElement());
     const context = startup
       ? 'core'
       : playback
@@ -994,9 +1032,9 @@ async function start() {
       .querySelector('#original-hud-note')!
       .toggleAttribute(
         'hidden',
-        showingStatic || menuOpen || originalHud.visible || scene().id !== 0,
+        showingStatic || menuOpen || originalHud.visible || infoIsOpen() || scene().id !== 0,
       );
-    if (showingStatic || menuOpen || scene().id !== 0) originalHud.close();
+    if (showingStatic || menuOpen || infoIsOpen() || scene().id !== 0) originalHud.close();
     modeLabel.textContent =
       pack.label +
       (visual.fallback
@@ -1122,7 +1160,15 @@ async function start() {
       ? Promise.resolve()
       : show((currentView + direction + screenCount) % screenCount, pack);
   function openOriginalHud(x: number, y: number, keyboard = false) {
-    if (menuOpen || changing || selectingPack || transition || showingStatic || scene().id !== 0)
+    if (
+      menuOpen ||
+      infoIsOpen() ||
+      changing ||
+      selectingPack ||
+      transition ||
+      showingStatic ||
+      scene().id !== 0
+    )
       return;
     if (!animationState?.controls[1]) return;
     actionMenu.reset();
@@ -1169,9 +1215,13 @@ async function start() {
       dungeonState.animation.sounds = [];
     } else if (command.kind === 'disk')
       notifyGame('Guardar y cargar todavía no están implementados.');
-    else if (command.kind === 'info')
-      notifyGame(`Puntuación · ${dungeonWord(dungeonState, 0x35c7)}`);
-    else dungeonState.cursor = 'failure';
+    else if (command.kind === 'info') {
+      if (pack.id === 'original') {
+        originalHud.close();
+        sounds.stop();
+        originalInfo.show(dungeonWord(dungeonState, 0x35c7));
+      } else projectInfo.show({ score: dungeonWord(dungeonState, 0x35c7), graphics: pack.label });
+    } else dungeonState.cursor = 'failure';
     sync();
   }
   function selectOriginalHud() {
@@ -1183,6 +1233,10 @@ async function start() {
   }
   app.canvas.addEventListener('contextmenu', (event) => event.preventDefault());
   world.on('rightclick', (event) => {
+    if (originalInfo.visible) {
+      originalInfo.close();
+      return;
+    }
     if (originalHud.visible) {
       originalHud.close();
       sync();
@@ -1196,6 +1250,10 @@ async function start() {
   });
   world.on('pointertap', (event) => {
     if (event.button !== 0) return;
+    if (originalInfo.visible) {
+      originalInfo.advance();
+      return;
+    }
     if (originalHud.visible) {
       originalHud.move(world.toLocal(event.global).x);
       selectOriginalHud();
@@ -1205,7 +1263,15 @@ async function start() {
       skipStartup();
       return;
     }
-    if (menuOpen || changing || selectingPack || transition || renderCameraX !== cameraX) return;
+    if (
+      menuOpen ||
+      infoIsOpen() ||
+      changing ||
+      selectingPack ||
+      transition ||
+      renderCameraX !== cameraX
+    )
+      return;
     if (awaitingTitle) {
       void continueFromTitle();
       return;
@@ -1250,14 +1316,16 @@ async function start() {
   app.ticker.add((ticker) => {
     decorativeFrames.tick(ticker.elapsedMS);
     originalHud.tick(ticker.elapsedMS);
-    const customCursor = !menuOpen && !showingStatic && scene().id === 0 && !!dungeonState;
-    const cursorIndex = originalHud.visible
-      ? 0
-      : dungeonState?.cursor === 'success'
-        ? 1
-        : dungeonState?.cursor === 'failure'
-          ? 2
-          : 0;
+    const customCursor =
+      !menuOpen && !projectInfo.open && !showingStatic && scene().id === 0 && !!dungeonState;
+    const cursorIndex =
+      originalHud.visible || originalInfo.visible
+        ? 0
+        : dungeonState?.cursor === 'success'
+          ? 1
+          : dungeonState?.cursor === 'failure'
+            ? 2
+            : 0;
     const cursorVisual = cursorVisuals[cursorIndex];
     gameCursor.visible =
       customCursor &&
@@ -1317,7 +1385,7 @@ async function start() {
       if (tick >= timing.durationTicks) void finishStartup();
       return;
     }
-    if (menuOpen || originalHud.visible) return;
+    if (menuOpen || originalHud.visible || infoIsOpen()) return;
     if (playback) {
       playback.elapsed += ticker.elapsedMS;
       renderPresentationFrame();
@@ -1435,18 +1503,35 @@ async function start() {
     }
   });
   window.addEventListener('keydown', (event) => {
-    if (event.altKey || event.ctrlKey || event.metaKey || !resourceLoading.hidden) return;
-    if (startup) {
+    if (projectInfo.open) return;
+    if (originalInfo.visible) {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
       event.preventDefault();
-      skipStartup();
+      if (event.repeat) return;
+      if (['Enter', ' ', 'ArrowRight'].includes(event.key)) originalInfo.advance();
+      else if (['Escape', 'Backspace'].includes(event.key)) originalInfo.close();
       return;
     }
+    if (event.altKey || event.ctrlKey || event.metaKey || !resourceLoading.hidden) return;
     const target = event.target;
     if (
       target instanceof HTMLElement &&
       (target.matches('input,select,textarea') || target.isContentEditable)
     )
       return;
+    if (event.key === 'F4' && gameStarted && !menuOpen) {
+      event.preventDefault();
+      if (!event.repeat && !showFrame.disabled) {
+        showFrame.checked = !showFrame.checked;
+        showFrame.dispatchEvent(new Event('change'));
+      }
+      return;
+    }
+    if (startup) {
+      event.preventDefault();
+      skipStartup();
+      return;
+    }
     const hudCommand = hudKeyboardCommand(event.key, originalHud.visible, event.shiftKey);
     const canUseHud =
       !menuOpen &&
