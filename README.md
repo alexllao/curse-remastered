@@ -1,12 +1,12 @@
 # Curse of Enchantia Remastered
 
-Reconstrucción moderna en TypeScript y PixiJS 8 de la aventura gráfica clásica de DOS, orientada a Windows actual.
+Reinterpretación web en curso, desarrollada con TypeScript y PixiJS 8, de la aventura gráfica clásica de DOS _Curse of Enchantia_.
 
 ![Curse of Enchantia Remastered](docs/images/cover.webp)
 
 _Curse of Enchantia_ fue el primer juego de ordenador al que jugué de pequeño, y por eso este proyecto tiene un significado especial para mí. Me ha hecho mucha ilusión volver a él y descubrir sus tripas: desensamblar el ejecutable, entender cómo guarda sus gráficos y recuperar sus recursos originales, con la ayuda de la IA. Todavía conservo el juego original en disquetes de 3½ pulgadas.
 
-Lo desarrollo en mis ratos libres. Mi objetivo es que pueda ejecutarse de forma nativa en un ordenador actual y, poco a poco, intentar hacer un remaster sencillo que conserve el encanto del original. Primero toca comprender y extraer sus recursos con fidelidad; después, reconstruir el juego sobre esa base.
+Lo desarrollo en mis ratos libres. Mi objetivo es reconstruirlo poco a poco como una experiencia web y, más adelante, intentar hacer un remaster sencillo que conserve el encanto del original. Primero toca comprender y extraer sus recursos con fidelidad; después, reconstruir el juego sobre esa base.
 
 > Los archivos originales del juego **no están incluidos**. Debes disponer de una copia obtenida legalmente y colocarla en `original/`. Nunca subas a Git los originales, los recursos extraídos ni los informes.
 
