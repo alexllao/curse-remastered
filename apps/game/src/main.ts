@@ -44,7 +44,7 @@ import { createWelcomeMenu } from './welcome-menu.js';
 import { DecorativeFrames, discoverFrames, frameVariant } from './decorative-frames.js';
 import { createOriginalHud, type OriginalHudAssets } from './original-hud.js';
 import { discoverSounds, SoundPlayer } from './sounds.js';
-import { discoverMusic, MusicPlayer, type MusicCatalog } from './music.js';
+import { discoverMusic, initialMusicVersion, MusicPlayer, type MusicCatalog } from './music.js';
 
 interface SceneRecord {
   id: number;
@@ -188,6 +188,7 @@ async function start() {
   let preferences: {
     graphics?: string;
     music?: string;
+    musicBeforeMute?: string;
     effects?: string;
     volume?: number;
     intro?: boolean;
@@ -274,6 +275,9 @@ async function start() {
     musicCatalog,
     (message) => {
       musicNote.textContent = message;
+      welcomeMenu.setMusicHint(
+        message.startsWith('Haz clic') ? 'Haz clic para activar la música' : '',
+      );
     },
     musicAudio,
   );
@@ -294,7 +298,7 @@ async function start() {
   const toast = document.querySelector<HTMLElement>('#music-toast')!;
   let toastTimer: number | undefined;
   music.onTrackPlaying((label) => {
-    button('preview-music').textContent = 'Pausar música';
+    welcomeMenu.setMusicHint('');
     toast.textContent = `♫ ${label}`;
     toast.hidden = false;
     window.clearTimeout(toastTimer);
@@ -308,9 +312,9 @@ async function start() {
     new Option('Sin música', 'none'),
     ...musicCatalog.versions.map((v) => new Option(v.label, v.id)),
   );
-  musicSelect.value = musicCatalog.versions.some((v) => v.id === preferences.music)
-    ? preferences.music!
-    : 'none';
+  musicSelect.value = initialMusicVersion(musicCatalog, preferences.music);
+  let lastMusicVersion = initialMusicVersion(musicCatalog, preferences.musicBeforeMute);
+
   volume.value = String(
     typeof preferences.volume === 'number' ? Math.max(0, Math.min(100, preferences.volume)) : 65,
   );
@@ -322,6 +326,7 @@ async function start() {
         JSON.stringify({
           graphics: pack.id,
           music: musicSelect.value,
+          musicBeforeMute: lastMusicVersion,
           volume: Number(volume.value),
           intro: introEnabled.checked,
           effects: soundSelect.value,
@@ -335,10 +340,11 @@ async function start() {
   }
   function selectMusic() {
     const version = musicCatalog.versions.find((v) => v.id === musicSelect.value);
-    button('preview-music').disabled = !version;
+    button('preview-music').disabled = !musicCatalog.versions.length;
+    if (version) lastMusicVersion = version.id;
     music.select(musicSelect.value, !gameStarted ? 'CURSE.RS5' : '');
     music.setVolume((Number(volume.value) / 100) * (!gameStarted ? 0.3 : 1));
-    button('preview-music').textContent = music.playing ? 'Pausar música' : 'Activar música';
+    button('preview-music').textContent = version ? 'Silenciar música' : 'Activar música';
     if (musicCatalogFailed) musicNote.textContent = 'No se ha podido leer el catálogo de música.';
   }
   async function refreshMusic() {
@@ -352,7 +358,7 @@ async function start() {
         new Option('Sin música', 'none'),
         ...musicCatalog.versions.map((v) => new Option(v.label, v.id)),
       );
-      musicSelect.value = musicCatalog.versions.some((v) => v.id === selected) ? selected : 'none';
+      musicSelect.value = initialMusicVersion(musicCatalog, selected);
       selectMusic();
     } catch {
       musicNote.textContent = 'No se ha podido actualizar la lista de música.';
@@ -1436,6 +1442,7 @@ async function start() {
   volume.addEventListener('input', () => {
     music.setVolume((Number(volume.value) / 100) * (!gameStarted ? 0.3 : 1));
     savePreferences();
+    sync();
   });
   introEnabled.addEventListener('change', savePreferences);
   soundSelect.addEventListener('change', () => {
@@ -1446,11 +1453,11 @@ async function start() {
   function pauseAudio() {
     music.pause();
     sounds.stop();
-    button('preview-music').textContent = 'Activar música';
     toast.hidden = true;
   }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pauseAudio();
+    else if (!gameStarted && !startingGame) music.start();
   });
   window.addEventListener('pagehide', pauseAudio);
   function unlockMenuAudio() {
@@ -1459,12 +1466,18 @@ async function start() {
   window.addEventListener('pointerdown', unlockMenuAudio, { capture: true });
   window.addEventListener('keydown', unlockMenuAudio, { capture: true });
 
-  button('preview-music').addEventListener('click', () => {
-    if (music.playing) {
-      music.pause();
-      button('preview-music').textContent = 'Activar música';
-    } else music.start();
-  });
+  function toggleMusicMute() {
+    if (musicSelect.value === 'none' || Number(volume.value) === 0) {
+      if (musicSelect.value === 'none') musicSelect.value = lastMusicVersion;
+      if (Number(volume.value) === 0) volume.value = '65';
+    } else musicSelect.value = 'none';
+    selectMusic();
+    if (!document.hidden) music.start();
+    savePreferences();
+    sync();
+  }
+  button('preview-music').addEventListener('click', toggleMusicMute);
+  button('welcome-audio').addEventListener('click', toggleMusicMute);
   button('fullscreen').addEventListener('click', () => {
     void (
       document.fullscreenElement

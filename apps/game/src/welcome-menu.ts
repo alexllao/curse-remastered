@@ -6,10 +6,23 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
   const options = document.querySelector<HTMLButtonElement>('#open-options')!;
   const image = document.querySelector<HTMLImageElement>('#welcome-wallpaper')!;
   const frame = document.querySelector<HTMLElement>('#welcome-border')!;
-  const graphics = document.querySelector<HTMLSelectElement>('#graphics-select')!;
   const music = document.querySelector<HTMLSelectElement>('#music-select')!;
   const showFrame = document.querySelector<HTMLInputElement>('#show-frame')!;
   const status = document.querySelector<HTMLElement>('#welcome-status')!;
+  const audioButton = document.querySelector<HTMLButtonElement>('#welcome-audio')!;
+  let musicHint = '';
+  function updateStatus() {
+    const musicLabel = music.selectedOptions[0]?.textContent ?? 'Sin música';
+    const mutedMusic =
+      music.value === 'none' ||
+      Number(document.querySelector<HTMLInputElement>('#music-volume')!.value) === 0;
+    audioButton.classList.toggle('is-muted', mutedMusic);
+    audioButton.setAttribute('aria-pressed', String(mutedMusic));
+    audioButton.title = mutedMusic ? 'Activar música' : 'Silenciar música';
+    audioButton.setAttribute('aria-label', audioButton.title);
+    status.textContent = `${musicLabel}${musicHint ? ` · ${musicHint}` : ''}`;
+  }
+
   const effects = document.querySelector<HTMLSelectElement>('#sounds-select')!;
   const volume = document.querySelector<HTMLInputElement>('#music-volume')!;
   // Voz propia de la interfaz: no altera las prioridades PCM del juego DOS.
@@ -39,7 +52,7 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
   function menuButton(target: EventTarget | null) {
     if (!document.body.classList.contains('welcome') || !(target instanceof Element)) return;
     const button = target.closest<HTMLButtonElement>(
-      '#game-menu button, #project-credits button, #welcome-fullscreen',
+      '#game-menu button, #project-credits button, #welcome-fullscreen, #welcome-audio',
     );
     return button && !button.disabled ? button : undefined;
   }
@@ -83,7 +96,12 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
     document.querySelector<HTMLButtonElement>('#toggle-debug')!.click();
   });
   return {
+    setMusicHint(message: string) {
+      musicHint = message;
+      updateStatus();
+    },
     async prepare() {
+      await document.fonts.load('18px "IM Fell English"').catch(() => {});
       // La imagen se decodifica bajo el loading; una ausencia conserva TITLE.
       for (const path of [
         '/remaster/graficos/menu/WALLPAPER.png',
@@ -107,9 +125,7 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
       if (!welcome) stopFeedback();
       if (!open && settings.open) settings.close();
       frame.hidden = !showFrame.checked;
-      const graphicsLabel = graphics.selectedOptions[0]?.textContent ?? 'Original';
-      const musicLabel = music.selectedOptions[0]?.textContent ?? 'Sin música';
-      status.textContent = `${graphicsLabel} · Música: ${musicLabel}`;
+      updateStatus();
     },
   };
 }

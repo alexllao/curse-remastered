@@ -7,6 +7,9 @@ from pathlib import Path
 import subprocess
 import wave
 import mido
+import shutil
+import tempfile
+from mt32_levels import POLICY, measure_gain
 
 
 def sha(path):
@@ -18,6 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--library', type=Path, default=root / 'reports/tools/munt-build/Release/mt32emu-2.dll')
     parser.add_argument('--ffmpeg', default='ffmpeg')
+    parser.add_argument('--rebalance', action='store_true', help='Ajustar renders propios existentes, con copia de seguridad')
     args = parser.parse_args()
     roms = [root / 'reports/audio/roms/MT32_CONTROL.ROM', root / 'reports/audio/roms/MT32_PCM.ROM']
     for path in [args.library, *roms]:
@@ -58,7 +62,31 @@ def main():
             previous['librarySha256'] = previous_library
         if output.exists():
             if previous and all(previous.get(key) == value for key, value in fingerprint.items()) and previous['outputSha256'] == sha(output):
-                print(f'Conservado: {output.name}', flush=True)
+                if args.rebalance and previous.get('level', {}).get('policy') != POLICY:
+                    temporary = report_folder / (path.stem + '-mt32.wav')
+                    if not temporary.is_file():
+                        raise RuntimeError(f'Falta el render PCM para ajustar: {temporary}')
+                    level = measure_gain(temporary)
+                    with tempfile.NamedTemporaryFile(suffix='.ogg', dir=report_folder, delete=False) as pending:
+                        pending_path = Path(pending.name)
+                    try:
+                        subprocess.run([args.ffmpeg, '-hide_banner', '-loglevel', 'error', '-y', '-i', str(temporary), '-af', f"volume={level['gainDb']}dB", '-c:a', 'libvorbis', '-q:a', '5', str(pending_path)], check=True)
+                        backup = report_folder / 'mt32-before-level' / (output.stem + '-' + sha(output) + '.ogg')
+                        backup.parent.mkdir(parents=True, exist_ok=True)
+                        if not backup.exists():
+                            shutil.copy2(output, backup)
+                        if sha(backup) != sha(output):
+                            raise RuntimeError(f'Copia de seguridad incoherente: {backup}')
+                        level['previousOutputSha256'] = sha(output)
+                        level['pcmSha256'] = sha(temporary)
+                        pending_path.replace(output)
+                        previous.update(outputSha256=sha(output), output=str(output.relative_to(root)), level=level)
+                        report_path.write_text(json.dumps(report, indent=2) + '\n')
+                        print(f"Nivel ajustado: {output.name} ({level['gainDb']:+.2f} dB)", flush=True)
+                    finally:
+                        pending_path.unlink(missing_ok=True)
+                else:
+                    print(f'Conservado: {output.name}', flush=True)
                 continue
             raise RuntimeError(f'No se sobrescribe el audio existente: {output}')
         context = create(None, None)
@@ -101,9 +129,11 @@ def main():
                         message_now(context, sum(value << (8 * index) for index, value in enumerate(data)))
                     events += 1
                 advance(sample_rate * 2)
-            subprocess.run([args.ffmpeg, '-hide_banner', '-loglevel', 'error', '-n', '-i', str(temporary), '-c:a', 'libvorbis', '-q:a', '5', str(output)], check=True)
+            level = measure_gain(temporary)
+            level['pcmSha256'] = sha(temporary)
+            subprocess.run([args.ffmpeg, '-hide_banner', '-loglevel', 'error', '-n', '-i', str(temporary), '-af', f"volume={level['gainDb']}dB", '-c:a', 'libvorbis', '-q:a', '5', str(output)], check=True)
             report['files'][path.name] = {**fingerprint, 'outputSha256': sha(output),
-                                        'events': events, 'midiSeconds': elapsed, 'tailSeconds': 2,
+                                        'level': level, 'events': events, 'midiSeconds': elapsed, 'tailSeconds': 2,
                                         'sampleRate': sample_rate, 'output': str(output.relative_to(root))}
             report_path.write_text(json.dumps(report, indent=2) + '\n')
             print(f'Escucha provisional: {output.name}, {elapsed:.3f} segundos MIDI', flush=True)

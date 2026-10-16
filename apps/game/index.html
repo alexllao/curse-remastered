@@ -4,13 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>CURSE Remastered</title>
+    <link
+      rel="preload"
+      href="/src/fonts/im-fell-english/IMFeENrm28P.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
     <link rel="stylesheet" href="/src/loading.css" />
   </head>
   <body>
     <div id="resource-loading" role="status" aria-live="polite">
       <div class="loading-card">
-        <p class="loading-title">CURSE <span>REMASTERED</span></p>
-        <span class="loading-spinner" aria-hidden="true"></span>
+        <p class="loading-title">Curse of Enchantia <span>Remastered</span></p>
+        <span class="loading-progress" role="progressbar" aria-label="Cargando recursos"></span>
         <p id="loading-message">Preparando la aventura…</p>
       </div>
     </div>
@@ -63,7 +70,35 @@
         >
           ⛶
         </button>
-        <p id="welcome-status" class="welcome-only" role="status"></p>
+        <button
+          id="welcome-audio"
+          class="welcome-only"
+          aria-label="Silenciar música"
+          aria-pressed="false"
+          title="Silenciar música"
+        >
+          <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true" focusable="false">
+            <path d="M3 10h5l7-6v20l-7-6H3Z" fill="currentColor" />
+            <g
+              class="speaker-waves"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            >
+              <path d="M19 9q5 5 0 10M22 5q9 9 0 18" />
+            </g>
+            <path
+              class="speaker-muted"
+              d="m19 10 7 8m0-8-7 8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span id="welcome-status" role="status"></span>
+        </button>
         <p class="welcome-only welcome-attribution" lang="en">
           Unofficial fan project · Core Design, 1992 · Web port &amp; remaster: Àlex Llaó
         </p>

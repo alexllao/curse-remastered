@@ -22,6 +22,16 @@ export async function discoverMusic(): Promise<MusicCatalog> {
     throw new Error('Invalid music catalog');
   return data;
 }
+/** Una preferencia explícita de silencio siempre tiene prioridad. */
+export function initialMusicVersion(catalog: MusicCatalog, saved?: string) {
+  if (saved === 'none' || catalog.versions.some((version) => version.id === saved)) return saved!;
+  return (
+    catalog.versions.find((version) => version.id === 'remaster')?.id ??
+    catalog.versions.find((version) => version.id === 'original')?.id ??
+    catalog.versions[0]?.id ??
+    'none'
+  );
+}
 /** Un único transporte de audio, independiente del paquete gráfico. */
 export class MusicPlayer {
   private enabled = false;
@@ -139,6 +149,7 @@ export class MusicPlayer {
       ?.tracks.find((track) => track.id === id);
     const track = chosen ?? (version ? original : undefined);
     if (!track || track.midi) {
+      this.needsGesture = false;
       this.request++;
       this.audio.pause();
       this.current = null;

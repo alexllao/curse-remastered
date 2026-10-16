@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MusicPlayer } from '../src/music.ts';
+import { initialMusicVersion, MusicPlayer } from '../src/music.ts';
 
 class AudioFixture extends globalThis.EventTarget {
   paused = true;
@@ -148,5 +148,55 @@ test('cancelar una reproducción pendiente no la vuelve a solicitar con el sigui
   rejectPlay(new globalThis.DOMException('Pausado', 'AbortError'));
   await Promise.resolve();
   assert.equal(player.needsGesture, false);
+  assert.equal(audio.paused, true);
+});
+
+test('la bienvenida activa música por defecto y conserva el silencio elegido explícitamente', () => {
+  assert.equal(initialMusicVersion(catalog), 'original');
+  const local = globalThis.structuredClone(catalog);
+  local.versions.push({ id: 'remaster', label: 'Remaster', tracks: [] });
+  assert.equal(initialMusicVersion(local), 'remaster');
+  assert.equal(initialMusicVersion(local, 'none'), 'none');
+  assert.equal(initialMusicVersion(local, 'medieval'), 'medieval');
+  assert.equal(initialMusicVersion(local, 'retirada'), 'remaster');
+  assert.equal(initialMusicVersion({ ...local, versions: [] }), 'none');
+});
+
+test('RS5 permanece en bucle durante la bienvenida y continúa tras ocultar la pestaña', () => {
+  const audio = new AudioFixture();
+  const local = globalThis.structuredClone(catalog);
+  local.versions[0].tracks.push({
+    id: 'CURSE.RS5',
+    label: 'CURSE.RS5',
+    file: '/rs5.ogg',
+    midi: false,
+  });
+  const player = new MusicPlayer(local, () => {}, audio);
+  player.select('original', 'CURSE.RS5');
+  player.start();
+  audio.currentTime = 37;
+  player.setContext('core');
+  assert.equal(audio.src, '/rs5.ogg');
+  assert.equal(audio.loop, true);
+  assert.equal(audio.currentTime, 37);
+  player.pause();
+  player.start();
+  assert.equal(audio.currentTime, 37);
+  assert.equal(audio.src, '/rs5.ogg');
+});
+
+test('silenciar un autoplay bloqueado elimina el reintento pendiente', async () => {
+  const audio = new AudioFixture();
+  audio.play = () =>
+    Promise.reject(new globalThis.DOMException('Gesto requerido', 'NotAllowedError'));
+  const player = new MusicPlayer(catalog, () => {}, audio);
+  player.select('original');
+  player.start();
+  await Promise.resolve();
+  assert.equal(player.needsGesture, true);
+  player.select('none');
+  assert.equal(player.needsGesture, false);
+  player.start();
+  assert.equal(audio.src, '');
   assert.equal(audio.paused, true);
 });

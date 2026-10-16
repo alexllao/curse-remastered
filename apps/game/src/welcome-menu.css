@@ -150,7 +150,8 @@ body.welcome .menu-home .project-attribution {
   min-height: 54px;
   padding: 9px 36px;
   font:
-    normal clamp(23px, 1.85vw, 32px) / 1.15 Georgia,
+    normal clamp(23px, 1.85vw, 32px) / 1.15 'IM Fell English',
+    Georgia,
     serif;
   color: #fff0c5;
   border: 0;
@@ -210,7 +211,8 @@ body.welcome .menu-home .project-attribution {
   text-align: center;
   color: #f3dfb4;
   font:
-    15px / 1.4 Georgia,
+    15px / 1.4 'IM Fell English',
+    Georgia,
     serif;
   text-shadow: 0 1px 2px #000;
 }
@@ -256,7 +258,8 @@ body.welcome .menu-home .project-attribution {
   box-shadow: 0 2px 10px #0006;
   color: #fff0ce;
   font:
-    16px / 1.4 Georgia,
+    16px / 1.4 'IM Fell English',
+    Georgia,
     serif;
   pointer-events: none;
 }
@@ -274,7 +277,8 @@ body.welcome .menu-home .project-attribution {
   color: #efdfbb;
   background: #091a29ed;
   font:
-    13px / 1.4 Georgia,
+    13px / 1.4 'IM Fell English',
+    Georgia,
     serif;
   pointer-events: none;
 }
@@ -376,5 +380,164 @@ body.welcome .menu-home .project-attribution {
 @media (prefers-reduced-motion: reduce) {
   .menu-home .menu-actions button::after {
     transition: none;
+  }
+}
+
+.menu-home,
+#menu-settings,
+#menu-settings h2,
+#menu-settings button,
+#menu-settings select,
+#project-credits,
+#project-credits h2,
+#project-credits h3,
+#project-credits button {
+  font-family: 'IM Fell English', Georgia, serif;
+}
+#menu-settings label,
+#menu-settings button,
+#menu-settings select,
+#menu-settings .shortcut-note,
+#menu-settings #sound-note,
+#menu-settings #music-note,
+#project-credits p {
+  font-size: 17px;
+}
+#menu-settings h2 {
+  font-size: 28px;
+}
+#welcome-status {
+  padding: 10px 24px 10px 48px;
+  border: 0;
+  background: linear-gradient(90deg, #08192522, #081925f2 12%, #081925f2 88%, #08192522);
+  box-shadow: none;
+  font-size: 19px;
+}
+#welcome-status::before {
+  content: '♫';
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #e3bb67;
+  font-size: 25px;
+}
+.welcome-attribution {
+  padding: 7px 52px;
+  border-radius: 0;
+  border-bottom: 1px solid #bf9b52;
+  color: #f0dca5;
+  background: linear-gradient(90deg, #08192500, #081925ed 10%, #081925ed 90%, #08192500);
+  font-size: 15px;
+}
+.welcome-attribution::before,
+.welcome-attribution::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 36px;
+  height: 24px;
+  transform: translateY(-50%);
+  background: var(--menu-ornament) center / contain no-repeat;
+}
+.welcome-attribution::before {
+  left: 8px;
+}
+.welcome-attribution::after {
+  right: 8px;
+}
+@media (max-width: 850px) {
+  #welcome-status {
+    font-size: 16px;
+  }
+  .welcome-attribution {
+    font-size: 13px;
+    padding-inline: 38px;
+  }
+}
+
+body.welcome .stage::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: clamp(180px, 30vh, 360px);
+  background: linear-gradient(to top, #071b2ff2, #071b2fa8 28%, #071b2f40 65%, #071b2f00);
+  pointer-events: none;
+  z-index: 1;
+}
+#welcome-border {
+  z-index: 2;
+}
+body.welcome #welcome-audio {
+  display: flex;
+}
+#welcome-audio {
+  position: absolute;
+  right: 30px;
+  bottom: 48px;
+  z-index: 2;
+  align-items: center;
+  gap: 14px;
+  max-width: min(420px, calc(100% - 36px));
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 0;
+  color: #f3dfb4;
+  background: transparent;
+  font:
+    19px / 1.4 'IM Fell English',
+    Georgia,
+    serif;
+  text-shadow: 0 1px 3px #000;
+}
+#welcome-audio svg {
+  flex: 0 0 28px;
+  color: #e3bb67;
+}
+#welcome-audio .speaker-muted,
+#welcome-audio.is-muted .speaker-waves {
+  display: none;
+}
+#welcome-audio.is-muted .speaker-muted {
+  display: block;
+}
+#welcome-audio:hover {
+  color: #fff1c6;
+  background: transparent;
+}
+#welcome-audio:focus-visible {
+  outline: 1px solid #e3bb67;
+  outline-offset: 3px;
+}
+#welcome-status {
+  position: static;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  max-width: none;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+#welcome-status::before {
+  content: none;
+}
+.welcome-attribution {
+  z-index: 2;
+  background: transparent;
+}
+@media (max-width: 850px) {
+  #welcome-audio {
+    right: 18px;
+    bottom: 58px;
+    font-size: 16px;
+  }
+}
+@media (max-height: 520px) and (min-width: 601px) {
+  #welcome-audio {
+    bottom: 50px;
+    max-width: calc(100% - 374px);
   }
 }

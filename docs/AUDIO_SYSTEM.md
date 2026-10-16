@@ -78,3 +78,13 @@ Esto valida datos y solicitudes digitales, no una comparación auditiva con DOSB
 El menú del port reutiliza provisionalmente los eventos globales 7 (señalar, 70 ms) y 4 (clic, 91 ms) de STD.SFX, desde el catálogo de efectos. Es una decisión de interfaz propia, no una asociación comprobada del DOS. Cada paquete puede sustituir esos eventos; si faltan, se utiliza el original disponible. No se duplican ni versionan WAV.
 
 Su voz es independiente del controlador PCM del juego, sin superponer sonidos de interfaz entre sí. Respeta «Sin efectos», el volumen general, la página oculta y `?silent=1`. El hover solo responde al ratón y al foco visible de teclado, con límite entre repeticiones; los bloqueos de reproducción no se reintentan más tarde. El menú se mantiene azul y muestra el dorado al señalar o enfocar cada botón.
+
+### Continuidad de RS5 en la bienvenida
+
+Sin una preferencia previa se elige Remaster, después Original o el primer paquete disponible. Una elección guardada de «Sin música» se respeta. La bienvenida fija CURSE.RS5 en bucle; volver de una pestaña oculta reanuda su posición. El botón de audio silencia mediante «Sin música» y permite recuperar la versión anterior: abrir Opciones o Créditos no pausa la pista. Al comenzar la partida se mantiene el fundido de 450 ms. Si el navegador exige interacción para reproducir, el aviso se muestra junto al estado musical y el primer clic o tecla lo reintenta.
+
+### Nivel de escucha de los renders MT-32
+
+La RS5 local tenía un nivel medio de −34,1 dBFS frente a −21,9 dBFS del remaster. El render provisional aplica ahora ganancia constante por pista hacia −22 dBFS de media RMS, limitada por un pico PCM de −2 dBFS. Se conserva la dinámica; no se comprime, modifica el MIDI ni se presenta este ajuste como volumen de salida original verificado. RS5 recibe +12,12 dB: el OGG final mide −22,0 dBFS de media y −3,4 dBFS de pico de muestra.
+
+`pnpm audio:prepare --rebalance` actualiza únicamente renders propios cuyo hash coincide con `reports/audio/mt32-render.json`, a partir de su WAV intermedio. Guarda el OGG anterior en `reports/audio/mt32-before-level/` y registra ganancia y hashes. No vuelve a ajustar una salida con la misma política ni sobrescribe archivos modificados manualmente. Los renders nuevos aplican el mismo ajuste. Se mantiene la condición provisional de tiempos, bucles e instrumentos.
