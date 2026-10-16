@@ -19,7 +19,7 @@ mods/
   sonidos/original/
 ```
 
-Las referencias, los prompts y los descartes están en `reports/referencias/`. El manifiesto del juego se genera en `reports/playtest/manifest.json`. La copia del juego DOS se conserva en `graficos/original/`, en la raíz del repositorio.
+Las referencias, los prompts y los descartes están en `reports/referencias/`. El manifiesto del juego se genera en `reports/playtest/manifest.json`. La copia DOS de los disquetes se conserva en `original/`, en la raíz del repositorio. Esa carpeta no contiene aportaciones, prototipos ni ROM externas; véase [la guía de originales](../docs/original-files.md).
 
 La web carga los recursos necesarios y abre TITLE con el menú. Permite elegir gráficos, música y efectos. RS5 suena en bucle a volumen reducido en el menú; si el navegador bloquea el audio basta un primer clic o tecla. «Comenzar partida» desvanece la música y arranca CORE → TITLE → presentación → DUNGEON, con las esperas e intervalos contrastados; TITLE espera la entrada del jugador sin botones web de continuar. La liberación de Ben y las interacciones siguen pendientes. «Depuración» muestra el catálogo de pantallas, límites y panoramas; F3 y las flechas solo actúan en ese modo.
 
@@ -117,3 +117,15 @@ La lista completa con tamaños exactos se regenera en `reports/referencias/Guia-
 Más resolución no sustituye el detalle real ni la alineación: ×6 es la referencia habitual, sin obligar al juego a una resolución fija. Los futuros paquetes de mayor resolución se compararán manteniendo la misma geometría y continuidad entre fotogramas.
 
 F2 utiliza un fundido cruzado de 320 ms entre los paquetes, conservando posición y cámara. La presentación se pausa durante ese cambio y continúa desde el mismo instante. Se respeta la preferencia de reducir movimiento del sistema.
+
+## Aportaciones y prototipos pendientes de integrar
+
+Deja los paquetes completos de animación, sus fuentes y sus instrucciones en `reports/referencias/aportaciones/`. Los paquetes recibidos de la portada se conservan como `original-animated-title/` y `remastered-animated-title/`, incluidas sus imágenes y el GIF de referencia. Sus píxeles coinciden con los TITLE ya instalados; no se sustituyen esas imágenes ni se duplican en los paquetes activos. La integración de esas nuevas animaciones queda separada de la reproducción del TITLE DOS posterior a «Comenzar partida».
+
+`mods/` contiene recursos que el juego puede utilizar. Las referencias, los prototipos sin integrar y las ROM MT-32 no se colocan aquí. Las ROM opcionales se leen desde `reports/audio/roms/`, fuera de la carpeta pública de la web.
+
+## Marcos decorativos y colección personal
+
+Las carpetas reservadas para prototipos de marcos son `mods/graficos/original/marcos/` y `mods/graficos/remaster/marcos/`. Usar el mismo nombre en ambas variantes, por ejemplo `castillo.png`. El selector y la opción «Mostrar marco» siguen pendientes: crear un PNG todavía no lo activa en pantalla. Primero se completa la primera mazmorra. Los marcos conservarán toda la imagen y su proporción, ocupando el espacio exterior; habrá variante pixel art y remasterizada.
+
+Los fondos de pantalla y el arte de caja que no utiliza el juego se guardan en `reports/coleccion/fondos-de-pantalla/`, `reports/coleccion/caratulas/original/` y `reports/coleccion/caratulas/remaster/`. Las referencias de trabajo, incluida la portada aportada, permanecen en `reports/referencias/`. Conservar estas carpetas al limpiar informes: son aportaciones personales, no salidas desechables del extractor. Todo ese material queda fuera de Git.

@@ -2,11 +2,26 @@
 
 Reconstrucción moderna en TypeScript y PixiJS 8 de la aventura gráfica clásica de DOS, orientada a Windows actual.
 
-_Curse of Enchantia_ fue el primer juego al que jugué de pequeño, y por eso este proyecto tiene un significado especial para mí. Me ha hecho mucha ilusión volver a él y descubrir sus tripas: desensamblar el ejecutable, entender cómo guarda sus gráficos y recuperar sus recursos originales, con la ayuda de la IA. Todavía conservo el juego original en disquetes de 3½ pulgadas.
+_Curse of Enchantia_ fue el primer juego de ordenador al que jugué de pequeño, y por eso este proyecto tiene un significado especial para mí. Me ha hecho mucha ilusión volver a él y descubrir sus tripas: desensamblar el ejecutable, entender cómo guarda sus gráficos y recuperar sus recursos originales, con la ayuda de la IA. Todavía conservo el juego original en disquetes de 3½ pulgadas.
 
 Lo desarrollo en mis ratos libres. Mi objetivo es que pueda ejecutarse de forma nativa en un ordenador actual y, poco a poco, intentar hacer un remaster sencillo que conserve el encanto del original. Primero toca comprender y extraer sus recursos con fidelidad; después, reconstruir el juego sobre esa base.
 
 > Los archivos originales del juego **no están incluidos**. Debes disponer de una copia obtenida legalmente y colocarla en `original/`. Nunca subas a Git los originales, los recursos extraídos ni los informes.
+
+## Organización de los archivos locales
+
+```text
+original/                         Solo la copia DOS de los disquetes: EXE, CFG y DATA/
+mods/graficos/                    Original preparado y paquetes gráficos
+mods/musica/                      Versiones musicales listas para usar
+mods/sonidos/                     Paquetes de efectos
+reports/referencias/aportaciones/ Paquetes, prototipos e instrucciones aportados
+reports/audio/roms/               ROM MT-32 opcionales para renderizar audio local
+reports/                         Extracciones, manifiestos y contrastes
+docs/                            Documentación del proyecto
+```
+
+La estructura exacta de la copia DOS y su preparación se explica en [Copia original del juego](docs/original-files.md). No pongas aportaciones ni recursos convertidos dentro de `original/`. No borres las aportaciones o ROM opcionales al limpiar informes. Estas carpetas de recursos permanecen fuera de Git.
 
 ## Instalación
 
@@ -476,7 +491,7 @@ La preparación no genera ni reemplaza remasters. Sin un paquete gráfico local 
 
 La web abre directamente con TITLE y el menú de partida. Solo al pulsar «Comenzar partida» se reproduce CORE con su fundido hacia TITLE; esa portada espera la entrada de teclado o clic del jugador antes de la presentación (o de DUNGEON si se desactiva). No hay botones web de continuar u omitir durante el flujo normal; los controles adicionales quedan en el menú y Depuración. Una pantalla de carga cubre la preparación inicial y las secuencias para evitar imágenes a medio preparar. Gráficos y música se seleccionan de forma independiente. Las opciones se recuerdan en este navegador; no se guarda todavía la partida. Esc abre o cierra el menú y pausa el avance; F2 mantiene la comparación gráfica. El botón «Depuración» descubre el catálogo y sus atajos F3/flechas. La presentación termina en la entrada encadenada de DUNGEON; liberar a Ben, las interacciones y las salidas siguen pendientes.
 
-Los recursos se organizan en `mods/graficos/`, `mods/musica/` y `mods/sonidos/`. Las referencias permanecen en `reports/referencias/` y el manifiesto local en `reports/playtest/`. Las ROM MT-32 se leen solo desde `original/ROMS/`, fuera de la carpeta servida por la web. Ninguno de estos recursos se incorpora a Git.
+Los recursos se organizan en `mods/graficos/`, `mods/musica/` y `mods/sonidos/`. Las referencias permanecen en `reports/referencias/` y el manifiesto local en `reports/playtest/`. Las ROM MT-32 se leen solo desde `reports/audio/roms/`, fuera de la carpeta servida por la web. Ninguno de estos recursos se incorpora a Git.
 
 Para las escuchas provisionales MT-32, opcionalmente:
 

@@ -5,8 +5,8 @@
 Los recursos se guardan exclusivamente en carpetas excluidas de Git:
 
 ```text
-original/ROMS/MT32_CONTROL.ROM
-original/ROMS/MT32_PCM.ROM
+reports/audio/roms/MT32_CONTROL.ROM
+reports/audio/roms/MT32_PCM.ROM
 mods/musica/original/CURSE.RS1.mid
 mods/musica/original/CURSE.RS1.ogg
 mods/musica/medieval/CURSE.RS1.mp3

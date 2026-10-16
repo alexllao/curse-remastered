@@ -19,7 +19,7 @@ def main():
     parser.add_argument('--library', type=Path, default=root / 'reports/tools/munt-build/Release/mt32emu-2.dll')
     parser.add_argument('--ffmpeg', default='ffmpeg')
     args = parser.parse_args()
-    roms = [root / 'original/ROMS/MT32_CONTROL.ROM', root / 'original/ROMS/MT32_PCM.ROM']
+    roms = [root / 'reports/audio/roms/MT32_CONTROL.ROM', root / 'reports/audio/roms/MT32_PCM.ROM']
     for path in [args.library, *roms]:
         if not path.is_file():
             raise RuntimeError(f'Falta la dependencia local: {path}')
