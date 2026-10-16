@@ -849,25 +849,31 @@ async function start() {
     playback = null;
     // Conservar el último fotograma hasta que el siguiente fondo esté listo.
   }
+  function preparePresentation(nextPack: GraphicsPack) {
+    let pending = playbackCache.get(nextPack.id);
+    if (!pending) {
+      pending = Promise.all([
+        Promise.all(staticScreens.map((screen) => loadVisual(screen.asset, nextPack))),
+        Promise.all(
+          manifest.presentationPlayback.events.map((event) => loadVisual(event.asset, nextPack)),
+        ),
+      ]).then(([base, original]) => ({ base, original }));
+      playbackCache.set(nextPack.id, pending);
+      void pending.catch(() => {
+        if (playbackCache.get(nextPack.id) === pending) playbackCache.delete(nextPack.id);
+      });
+    }
+    return pending;
+  }
   async function playPresentation(resume = 0) {
     if (changing) return;
     await show(0, pack);
     changing = true;
     status.textContent = 'Preparando la presentación…';
-    setResourceLoading('Cargando la presentación…');
+    if (!playbackCache.has(pack.id)) setResourceLoading('Cargando la presentación…');
     sync();
     try {
-      let pending = playbackCache.get(pack.id);
-      if (!pending) {
-        pending = Promise.all([
-          Promise.all(staticScreens.map((screen) => loadVisual(screen.asset, pack))),
-          Promise.all(
-            manifest.presentationPlayback.events.map((event) => loadVisual(event.asset, pack)),
-          ),
-        ]).then(([base, original]) => ({ base, original }));
-        playbackCache.set(pack.id, pending);
-      }
-      const assets = await pending;
+      const assets = await preparePresentation(pack);
       if (visual.disposable) visual.texture.destroy(true);
       visual = { ...assets.base[0], disposable: false };
       background.texture = visual.texture;
@@ -1781,12 +1787,17 @@ async function start() {
     animationStates.clear();
     resetActor();
     changing = true;
-    setResourceLoading('Cargando el arranque original…');
+    setResourceLoading(
+      introEnabled.checked
+        ? 'Cargando el arranque y la presentación…'
+        : 'Cargando el arranque original…',
+    );
     sync();
     try {
       const [core, frames] = await Promise.all([
         loadVisual(manifest.core, pack),
         Promise.all(manifest.startupPlayback.events.map((event) => loadVisual(event.asset, pack))),
+        introEnabled.checked ? preparePresentation(pack) : Promise.resolve(),
       ]);
       const previous = visual;
       visual = core;

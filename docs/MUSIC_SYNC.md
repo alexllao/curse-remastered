@@ -53,3 +53,7 @@ Los efectos globales y de la sala actual se precargan y reutilizan. Se mantienen
 ## Continuidad del fundido de TITLE
 
 La transición conserva el último fotograma (negro al terminar CORE) durante la carga; no restaura CORE ni la imagen base de la presentación. El brillo vuelve a uno al instalar el siguiente fondo. Por petición de Àlex, TITLE aparece con un fundido de 32 retrazados (~0,46 s), añadido por el port; no se atribuye a la captura DOS original. Sin presentación habilitada, también sale con fundido antes de entrar en la mazmorra. Con presentación se conserva su secuencia de paletas de salida. La entrada de TITLE se pausa con el menú y respeta movimiento reducido.
+
+## Precarga de la secuencia BALCONY
+
+Con «Ver presentación» activado, Comenzar partida espera a preparar tanto CORE como las imágenes base y los 206 eventos de imagen/paleta de la presentación (BALCONY1 y el resto de escenas). La promesa se comparte por paquete gráfico. Al salir de TITLE se reutiliza esa preparación sin abrir el loading de presentación. Si la precarga falla, se permite reintentar; no se conserva una promesa fallida. La preparación inicial puede durar más, pero no se traslada esa carga al paso TITLE → presentación.

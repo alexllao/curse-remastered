@@ -9,7 +9,8 @@ assets/
     graficos/WALLPAPER-16x10.png
     graficos/WALLPAPER-16x9.png
     graficos/WALLPAPER-24x9.png
-    graficos/WALLPAPER-32x9.png
+    graficos/WALLPAPER-32x9-3840.png # activo, 3840 × 1080
+    graficos/WALLPAPER-32x9.png      # fuente sin escalar
     musica/menu.mp3
   dosbox-mt32/
     musica/                  # capturas RS1–RS5, loops.json y procedencia

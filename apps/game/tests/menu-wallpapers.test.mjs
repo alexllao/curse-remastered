@@ -13,7 +13,10 @@ test('elige el wallpaper por proporción, también al cambiar monitor o fullscre
     [3440, 1440, '24x9'],
   ]) {
     const candidates = menuWallpaperCandidates(width, height);
-    assert.equal(candidates[0], `/menu/graficos/WALLPAPER-${expected}.png`);
+    assert.equal(
+      candidates[0],
+      `/menu/graficos/WALLPAPER-${expected}${expected === '32x9' ? '-3840' : ''}.png`,
+    );
     assert.equal(new Set(candidates).size, 4);
   }
 });
