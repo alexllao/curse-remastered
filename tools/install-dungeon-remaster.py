@@ -5,7 +5,7 @@ Los atlas, referencias, copias previas e informes se mantienen fuera de Git.
 """
 from collections import deque
 from pathlib import Path
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageFilter
 import hashlib
 import json
 import shutil
@@ -47,6 +47,33 @@ def fill_transparent_rgb(image):
                 queue.append(neighbor)
     result=Image.new('RGBA',image.size)
     result.putdata(colors)
+    return result
+
+
+def clean_alpha_islands(image):
+    """Retira motas desconectadas del atlas, conservando el borde suavizado."""
+    width,height=image.size
+    alpha=list(image.getchannel('A').getdata())
+    seen=bytearray(width*height)
+    components=[]
+    for start,value in enumerate(alpha):
+        if value<32 or seen[start]:continue
+        queue=deque([start]);seen[start]=1;component=[]
+        while queue:
+            index=queue.popleft();component.append(index);x=index%width
+            for neighbor in (index-1 if x else -1,index+1 if x+1<width else -1,index-width,index+width):
+                if 0<=neighbor<len(alpha) and alpha[neighbor]>=32 and not seen[neighbor]:
+                    seen[neighbor]=1;queue.append(neighbor)
+        components.append(component)
+    if not components:return image
+    threshold=max(32,max(map(len,components))*0.02)
+    keep=bytearray(width*height)
+    for component in components:
+        if len(component)>=threshold:
+            for index in component:keep[index]=255
+    mask=Image.frombytes('L',image.size,bytes(keep)).filter(ImageFilter.MaxFilter(3))
+    result=image.copy()
+    result.putalpha(ImageChops.multiply(image.getchannel('A'),mask))
     return result
 
 
@@ -131,6 +158,7 @@ def main():
                         replacement=corrections[key]
                 natural=group in ('hud','cursores-aspa','cadenas') or (group=='guardia' and 'guardia' in corrections) or replacement is not None or (group=='efectos' and entry['frame']==41) or (group=='rata-cara' and 48<=entry['frame']<=53)
                 if natural:
+                    if group=='rata-cara':cell=clean_alpha_islands(cell)
                     if cell.getchannel('A').getextrema()[0]>=250:
                         raise ValueError(f'El arte independiente requiere alpha real: {entry["file"]}')
                     # Solo los oclusores del fondo conservan el recorte VGA.
