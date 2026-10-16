@@ -29,3 +29,7 @@ Los identificadores `amiga` (etiqueta Amiga) y `adlib` (etiqueta AdLib (OPL2)) q
 El título Amiga importado mide -19.59 LUFS integrados, frente a -19.34 LUFS de RS5 Remaster; pico real -2.26 dBTP. No se han alterado los controles de volumen del juego ni el archivo de referencia.
 
 Procedencia del título Amiga indicada por Àlex: [álbum Curse of Enchantia (Amiga) en KHInsider](https://downloads.khinsider.com/game-soundtracks/album/curse-of-enchantia-amiga-gamerip-1992). El manifiesto local registra esta página y conserva también el enlace directo del FLAC descargado.
+
+## Prioridad: original fiel (16-10-2026)
+
+Antes de continuar remasters se valida Original. Los cinco RS ya se han contrastado con DOSBox-X y exportado con sus tempos y bucles; véase ORIGINAL_MUSIC_VERIFICATION.md. No se invalidan ni borran los arreglos anteriores. RS5 Remaster permanece intacta. Los remasters basados en MIDI provisionales conservaron sus notas, pero su fidelidad temporal debe revisarse individualmente con esta base corregida. Una generación de IA que cambie duración o estructura requiere edición y puntos propios de bucle: no se heredan automáticamente los del original.

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -34,6 +35,7 @@ export async function musicCatalog(root) {
   for (const folder of await entries(root)) {
     if (!folder.isDirectory() || folder.name.startsWith('.')) continue;
     const selected = new Map();
+    const loopInfo = await metadata(join(root, folder.name, 'musica', 'loops.json'));
     for (const file of await entries(join(root, folder.name, 'musica'))) {
       if (!file.isFile() || file.name.startsWith('.')) continue;
       const dot = file.name.lastIndexOf('.'),
@@ -46,6 +48,25 @@ export async function musicCatalog(root) {
         file: `/${encodeURIComponent(folder.name)}/musica/${encodeURIComponent(file.name)}`,
         midi: extension === '.mid' || extension === '.midi',
       };
+      const loop = loopInfo.schemaVersion === 1 ? loopInfo.tracks?.[id] : undefined;
+      if (
+        loop &&
+        Number.isFinite(loop.start) &&
+        Number.isFinite(loop.end) &&
+        loop.start >= 0 &&
+        loop.end > loop.start &&
+        loop.file === file.name &&
+        typeof loop.sha256 === 'string' &&
+        /^[a-f0-9]{64}$/.test(loop.sha256)
+      ) {
+        const hash = createHash('sha256')
+          .update(await readFile(join(root, folder.name, 'musica', file.name)))
+          .digest('hex');
+        if (hash === loop.sha256) {
+          track.loopRegion = { start: loop.start, end: loop.end };
+          track.file += `?v=${hash}`;
+        }
+      }
       const previous = selected.get(id);
       if (!previous || priorities.indexOf(extension) < previous.priority)
         selected.set(id, { track, priority: priorities.indexOf(extension) });

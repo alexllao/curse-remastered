@@ -26,7 +26,7 @@ Gráficos, música y efectos se eligen de forma independiente; no hay selector m
 
 Si falta un tema en una versión, se intenta el mismo identificador en Original. Sin audio disponible se conserva el silencio. Un MIDI por sí solo se muestra como pendiente de renderizado; no se sustituye por una síntesis genérica. La selección automática necesita el mapa explícito descrito en [ORIGINAL_MUSIC_MAPPING.md](ORIGINAL_MUSIC_MAPPING.md). Mientras no esté verificado, las escenas sin asociación permanecen en silencio; RS5 solo se fija para el menú de la adaptación.
 
-## Escucha MT-32 provisional
+## Render MT-32 histórico (sustituido)
 
 [Munt](https://github.com/munt/munt) proporciona la biblioteca de emulación MT-32 utilizada para el renderizado local. Se fija la revisión `6e7c01fba7e1d50c8fa705834889fd0eac136075`; el código externo y la biblioteca compilada se conservan en `reports/tools/`. Las dependencias de preparación son CMake 3.31.6 y Mido 1.3.3.
 
@@ -37,7 +37,7 @@ pnpm audio:prepare
 
 La preparación necesita Windows, Python, Git, FFmpeg y Visual Studio 2022 con C++ y Windows SDK. `CURSE_PYTHON` permite elegir Python y `--library`/`--ffmpeg` permiten indicar dependencias de renderizado alternativas. El render conserva los eventos y tiempos del MIDI suministrado, añade dos segundos de cola y genera OGG local. Registra hashes de entrada, ROM, biblioteca y salida en `reports/audio/mt32-render.json`. No sobrescribe un audio existente si no puede acreditar que es su propia salida anterior sin cambios.
 
-Estos audios se identifican como **Original · MT-32 provisional**. Los MIDI suministrados tienen tempo/marcadores pendientes de contraste. Tampoco se ha capturado todavía la inicialización MPU-401, las asignaciones de canal ni los cambios de timbre específicos del juego. Munt ha notificado notas de percusión sin correspondencia en su configuración inicial; no se han corregido canales de oído. Disponer de las ROM no convierte esta escucha en una reproducción original verificada.
+El lote histórico se identificaba como **Original · MT-32 provisional**. Ha sido sustituido por el lote verificado descrito en ORIGINAL_MUSIC_VERIFICATION.md; las instrucciones de esta sección se conservan como historia del renderizador antiguo. Los MIDI suministrados tienen tempo/marcadores pendientes de contraste. Tampoco se ha capturado todavía la inicialización MPU-401, las asignaciones de canal ni los cambios de timbre específicos del juego. Munt ha notificado notas de percusión sin correspondencia en su configuración inicial; no se han corregido canales de oído. Disponer de las ROM no convierte esta escucha en una reproducción original verificada.
 
 ## Sonidos opcionales
 
@@ -99,10 +99,14 @@ Opciones ofrece Música, Efectos y Ambiente con porcentajes guardados por separa
 
 `tools/reverse-engineering/trace-music.py` ejecuta 156 casos del tramo 0x4FD5–0x5017: una carga inicial y una entrada con el mismo tema para cada recurso. Si el índice coincide con DS:0x80B8, salta directamente a 0x5098; conserva la pista. Si cambia, 0x7F5D activa DS:0x9955 y espera a que el controlador termine antes de liberar y cargar el RS. La respuesta sintética F0 en 0x7FF9 emite los bytes 00 FC hacia el puerto MPU 0x330. No aplica una rampa de volumen en esta ruta: el port cambia de tema directamente y conserva su posición cuando sigue el mismo RS. Los fundidos de paleta de 0x79E4 no demuestran un fundido musical.
 
-El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. Se conservan los audios locales y su repetición completa. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.
+El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. El lote actual de Original usa los bucles nativos verificados; véase ORIGINAL_MUSIC_VERIFICATION.md. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.
 
 La dirección musical permanente y la referencia de sonoridad están en [DIRECCION_MUSICAL.md](DIRECCION_MUSICAL.md). RS5 es la referencia aprobada y se conserva.
 
 Durante la partida, F5 recorre las versiones musicales disponibles y «Sin música». F3 conserva su función previa como atajo compatible (en depuración recorre pantallas). El cambio guarda la preferencia y muestra un aviso azul y dorado durante 3,4 segundos; también aparece al seleccionar silencio. Solo se muestra por un cambio explícito del jugador, nunca al arrancar, reanudar o cambiar automáticamente de sala. Entra y sale mediante fundido suave. El aviso no produce efectos de sonido y respeta movimiento reducido. Silenciar música conserva los niveles de efectos y ambiente.
 
 F2 comparte el mismo aviso y fundido: muestra «Gráficos» y el paquete realmente cargado después de completar el cambio. Si no cambia el paquete por un fallo de carga, no anuncia un destino falso. Las confirmaciones de reproducción musical no abren un aviso nuevo ni sustituyen el de gráficos.
+
+## Original verificado y bucles nativos
+
+Los cinco MIDI/OGG originales han sido sustituidos con copia de seguridad por el lote contrastado con DOSBox-X. Tempos: RS1 140, RS2 135, RS3 140, RS4 125 y RS5 110 BPM. F8 E1 de RS1 son 465 ticks. El render actual usa Munt con ROM locales y ajustes del ensayo DOSBox; el nivel ronda −19,34 LUFS, referencia RS5 Remaster. Web Audio repite el tramo nativo con loopStart/loopEnd, conservando introducción y estado heredado. Los paquetes Remaster y Amiga no se han modificado. Métodos, límites, comandos e informes: [ORIGINAL_MUSIC_VERIFICATION.md](ORIGINAL_MUSIC_VERIFICATION.md).

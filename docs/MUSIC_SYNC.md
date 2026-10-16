@@ -6,7 +6,7 @@
 - Un mismo identificador, como `CURSE.RS1`, conserva su posición en segundos al cambiar de versión.
 - Un tema diferente comienza desde cero; una nueva partida reinicia la selección musical.
 - Si la posición supera la duración de la nueva versión, se usa su módulo para el bucle de revisión.
-- Los archivos se repiten completos. Los puntos de bucle nativos de los RS no están implementados.
+- Original usa los puntos de bucle verificados de los RS mediante Web Audio. Otros paquetes siguen repitiendo su archivo completo hasta disponer de puntos propios verificados. Véase [ORIGINAL_MUSIC_VERIFICATION.md](ORIGINAL_MUSIC_VERIFICATION.md).
 - La presentación propia de la web reproduce RS5 en bucle a volumen reducido; abrir o cerrar el menú no modifica su música. Al empezar la partida se aplica un fundido musical de 450 ms. Es una decisión del menú web, independiente de las asociaciones musicales originales.
 - El aviso con el título aparece cuando el navegador confirma la reproducción.
 
@@ -22,7 +22,7 @@ La web abre su propia presentación TITLE antes de comenzar. Tras «Comenzar par
 
 ## Presentación y música original
 
-La presentación mantiene los 80 cambios de página, 206 eventos imagen/DAC y 1.005 esperas contrastados previamente. Su audio no se declara sincronizado con los cinco MIDI provisionales: faltan la captura de salida MIDI del motor original y la comparación de tiempos, eventos, bucles e inicialización de instrumentos.
+La presentación mantiene los 80 cambios de página, 206 eventos imagen/DAC y 1.005 esperas contrastados previamente. Los cinco MIDI ya tienen tiempos, eventos y repeticiones contrastados con el reproductor nativo. La sincronía audiovisual completa de la presentación sigue sin medirse mediante un recorrido DOS: no se deduce únicamente de validar el MIDI.
 
 CORE, TITLE e intro siguen sin asociación musical automática verificada. Los escenarios usan ahora el selector RS del ejecutable, descrito a continuación. RS5 está fijada únicamente para el menú web por decisión del usuario; no se interpreta como prueba de una asociación original. La configuración explícita de asociaciones se mantiene separada de las tablas verificadas del motor gráfico.
 
@@ -32,4 +32,4 @@ CORE, TITLE e intro siguen sin asociación musical automática verificada. Los e
 
 `tools/reverse-engineering/trace-music.py` ejecuta 156 casos del tramo 0x4FD5–0x5017: una carga inicial y una entrada con el mismo tema para cada recurso. Si el índice coincide con DS:0x80B8, salta directamente a 0x5098; conserva la pista. Si cambia, 0x7F5D activa DS:0x9955 y espera a que el controlador termine antes de liberar y cargar el RS. La respuesta sintética F0 en 0x7FF9 emite los bytes 00 FC hacia el puerto MPU 0x330. No aplica una rampa de volumen en esta ruta: el port cambia de tema directamente y conserva su posición cuando sigue el mismo RS. Los fundidos de paleta de 0x79E4 no demuestran un fundido musical.
 
-El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. Se conservan los audios locales y su repetición completa. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.
+El ensayo cubre el selector **RS/MPU**, sin audio ni tiempos físicos; no certifica los demás controladores, una grabación completa en DOS ni los bucles internos del RS. La captura y verificación posterior de los cinco RS se documenta en ORIGINAL_MUSIC_VERIFICATION.md; Original ya usa sus bucles internos. La pista RS5 y el fundido de 450 ms del menú web siguen siendo decisiones propias de esa pantalla.

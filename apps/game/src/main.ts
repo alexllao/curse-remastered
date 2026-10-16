@@ -1,3 +1,4 @@
+import { NativeMusicAudio } from './music-audio';
 import { createSettingNotice } from './setting-notice.js';
 import { buildLabel } from './build-label.js';
 import { createOriginalInfo } from './original-info-view.js';
@@ -317,7 +318,7 @@ async function start() {
         message.startsWith('Haz clic') ? 'Haz clic para activar la música' : '',
       );
     },
-    musicAudio,
+    new NativeMusicAudio(musicAudio),
   );
   const gameToast = document.querySelector<HTMLElement>('#game-toast')!;
   let gameToastTimer: number | undefined;
@@ -1774,6 +1775,8 @@ async function start() {
   });
   window.addEventListener('pagehide', pauseAudio);
   function unlockMenuAudio(event: Event) {
+    // Reanudar Web Audio en el gesto mismo, antes de fundidos o cargas asíncronas.
+    music.unlock();
     // El altavoz resuelve su primer gesto sin invertirlo después en mute.
     if (event.target instanceof Element && event.target.closest('#welcome-audio, #preview-music'))
       return;

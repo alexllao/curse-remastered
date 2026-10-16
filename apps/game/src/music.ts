@@ -1,8 +1,10 @@
+import { NativeMusicAudio, type MusicAudio, type LoopRegion } from './music-audio.ts';
 export interface MusicTrack {
   id: string;
   label: string;
   file: string;
   midi: boolean;
+  loopRegion?: LoopRegion;
 }
 export interface MusicVersion {
   id: string;
@@ -54,11 +56,11 @@ export class MusicPlayer {
   }
   private catalog: MusicCatalog;
   private notify: (message: string) => void;
-  private audio: HTMLAudioElement;
+  private audio: MusicAudio;
   constructor(
     catalog: MusicCatalog,
     notify: (message: string) => void,
-    audio: HTMLAudioElement = new Audio(),
+    audio: MusicAudio = new NativeMusicAudio(),
   ) {
     this.catalog = catalog;
     this.notify = notify;
@@ -120,6 +122,17 @@ export class MusicPlayer {
   resume() {
     this.paused = false;
     this.update();
+  }
+  unlock() {
+    if (!this.current || !this.enabled) return;
+    void this.audio
+      .unlock?.()
+      .then(() => {
+        if (this.needsGesture && !this.paused) this.play(this.request);
+      })
+      .catch(() => {
+        /* El intento normal de reproducción muestra el aviso. */
+      });
   }
   private play(request: number) {
     if (!this.enabled || this.paused || !this.current) return;
@@ -188,6 +201,7 @@ export class MusicPlayer {
       if (Number.isFinite(this.audio.duration) && this.audio.duration > 0)
         this.audio.currentTime = seconds % this.audio.duration;
     };
+    this.audio.setLoopRegion?.(track.loopRegion);
     this.audio.src = track.file;
     this.play(request);
   }

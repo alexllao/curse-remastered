@@ -1,31 +1,7 @@
 # Asociaciones de música original
 
-## Estado verificado y pendiente
+Las asociaciones de las salas ya se extraen de las tablas RS/MPU del EXE verificado: DS:80CD contiene los 78 recursos y DS:80B9 los cinco registros de tempo/archivo. La primera mazmorra (recurso 0) carga **CURSE.RS1**. trace-music.py contrasta 156 casos de selección y continuidad. El detalle del reproductor y los MIDI corregidos está en [ORIGINAL_MUSIC_VERIFICATION.md](ORIGINAL_MUSIC_VERIFICATION.md).
 
-Se han recibido cinco archivos MIDI reconstruidos de `CURSE.RS1`–`CURSE.RS5`, junto con su auditoría local. El README de esa entrega señala como provisionales el tempo de 120 BPM, PPQN 120 y la interpretación de un marcador especial. Los finales contienen referencias propias de repetición. Esta documentación no sustituye una captura del motor DOS.
+El extractor genera assets/original/musica/native-contexts.json. El catálogo aplica estas asociaciones a todos los paquetes y permite sobrescribirlas mediante **assets/music.json**, clave contexts. Los contextos admitidos son core, title, intro, game y scene:N; game sirve de respaldo. No existe un music.json independiente por paquete.
 
-| Identificador | Archivo aportado | Asociación con pantallas | Estado temporal |
-| ------------- | ---------------- | ------------------------ | --------------- |
-| CURSE.RS1     | CURSE.RS1.mid    | Pendiente                | Provisional     |
-| CURSE.RS2     | CURSE.RS2.mid    | Pendiente                | Provisional     |
-| CURSE.RS3     | CURSE.RS3.mid    | Pendiente                | Provisional     |
-| CURSE.RS4     | CURSE.RS4.mid    | Pendiente                | Provisional     |
-| CURSE.RS5     | CURSE.RS5.mid    | Pendiente                | Provisional     |
-
-Las escuchas MT-32 generadas preservan los tiempos de esos MIDI. No confirman los tiempos del RS original ni la inicialización específica de instrumentos/canales del juego. El código del sintetizador, los archivos generados y sus hashes se mantienen localmente en `reports/` y `assets/`.
-
-## Mapa de configuración local
-
-`assets/<versión>/musica/music.json` puede declarar `contexts`, que asocia un contexto con un identificador de tema. Los contextos reconocidos son `core`, `title`, `intro`, `game` y `scene:N`, con N igual al identificador de recurso 0–77. `game` actúa como respaldo general cuando no hay una asociación concreta. Las extensiones de archivo no forman parte del identificador.
-
-El mapa inicial está vacío hasta verificar las asociaciones. El selector manual permite escuchar los temas sin afirmar que corresponden a una escena. Una configuración del usuario es una elección explícita; para documentarla como original deberá incluirse evidencia del ejecutable o de una captura reproducible.
-
-## Próximo contraste de fidelidad
-
-1. Capturar las órdenes MPU-401 y los mensajes MIDI emitidos por el ejecutable.
-2. Relacionar selección de tema, entrada/salida de escenarios y eventos de presentación.
-3. Comparar cada mensaje y su instante con las conversiones aportadas.
-4. Verificar los marcadores RS y sus puntos de repetición.
-5. Aplicar y contrastar la inicialización MT-32 y los cambios de timbre, manteniendo las ROM en `original/ROMS/`.
-
-Los resultados deberán registrar la revisión del EXE y la procedencia. Los MIDI, SysEx, ROM y tablas derivadas no se incorporarán a Git.
+El menú propio fija RS5 por elección del usuario; no se interpreta como prueba universal de todas las asociaciones CORE/intro del DOS. Si dos escenarios usan el mismo tema, la reproducción continúa. Al cambiar de tema, la ruta RS/MPU del EXE detiene y carga el nuevo sin rampa de volumen. El fundido de 450 ms al empezar desde el menú es una decisión del port.

@@ -120,3 +120,30 @@ test('publica asociaciones nativas y permite sustituirlas mediante configuració
       'scene:3': 'CURSE.RS2',
     });
   }));
+
+test('los bucles se aplican solo al audio verificado de su versión', async () => {
+  const { createHash } = await import('node:crypto');
+  const root = await mkdtemp(join(tmpdir(), 'curse-loop-'));
+  try {
+    const folder = join(root, 'original', 'musica');
+    await mkdir(folder, { recursive: true });
+    await writeFile(join(folder, 'CURSE.RS1.ogg'), 'native');
+    const sha256 = createHash('sha256').update('native').digest('hex');
+    await writeFile(
+      join(folder, 'loops.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        tracks: {
+          'CURSE.RS1': { file: 'CURSE.RS1.ogg', start: 12, end: 40, sha256 },
+        },
+      }),
+    );
+    const track = (await musicCatalog(root)).versions[0].tracks[0];
+    assert.deepEqual(track.loopRegion, { start: 12, end: 40 });
+    assert.match(track.file, /\?v=[a-f0-9]{64}$/);
+    await writeFile(join(folder, 'CURSE.RS1.ogg'), 'replacement');
+    assert.equal((await musicCatalog(root)).versions[0].tracks[0].loopRegion, undefined);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
