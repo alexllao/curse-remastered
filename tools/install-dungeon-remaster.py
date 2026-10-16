@@ -102,6 +102,22 @@ def main():
             mask=original.getchannel('A').resize((original.width*6,original.height*6),Image.Resampling.LANCZOS)
             ob=original.getchannel('A').getbbox()
             frame=Image.new('RGBA',mask.size)
+            if group=='piedra-puerta' and entry['frame'] in (3,4) and 'muro' in corrections:
+                # El objeto cerrado es una continuación de las juntas del muro,
+                # no un bloque independiente con bisel o sombra de contacto.
+                wall=Image.open(corrections['muro']).convert('RGBA').resize((480,360),Image.Resampling.LANCZOS)
+                frame=wall.crop((186,138,426,324))
+                source=corrections['muro']
+                if entry['frame']==4 and 'muro-grietas' in corrections:
+                    source=corrections['muro-grietas']
+                    cracked=Image.open(source).convert('RGBA').resize((480,360),Image.Resampling.LANCZOS)
+                    frame=cracked.crop((186,138,426,324))
+                # El tramado de desaparición VGA no se traslada como agujeros
+                # al arte nuevo: la fase inicial usa grietas pintadas continuas.
+                intact=Image.open(ORIGINAL/'escenario/000/animation-24576-3.png').convert('RGBA')
+                frame.putalpha(intact.getchannel('A').resize(frame.size,Image.Resampling.LANCZOS))
+                save(entry['file'],frame,source,'wall-patch-intact-alpha-x6')
+                continue
             if ob:
                 x,y,cw,ch=entry['cell']
                 cell=sheet.crop((x,y,x+cw,y+ch))
@@ -113,7 +129,7 @@ def main():
                         i=ids.index(index);tw=override.width//cols;th=override.height//((len(ids)+cols-1)//cols)
                         cell=override.crop(((i%cols)*tw,(i//cols)*th,(i%cols+1)*tw,(i//cols+1)*th))
                         replacement=corrections[key]
-                natural=group in ('hud','cursores-aspa','cadenas') or (group=='guardia' and 'guardia' in corrections) or replacement is not None or (group=='efectos' and entry['frame']==41)
+                natural=group in ('hud','cursores-aspa','cadenas') or (group=='guardia' and 'guardia' in corrections) or replacement is not None or (group=='efectos' and entry['frame']==41) or (group=='rata-cara' and 48<=entry['frame']<=53)
                 if natural:
                     if cell.getchannel('A').getextrema()[0]>=250:
                         raise ValueError(f'El arte independiente requiere alpha real: {entry["file"]}')

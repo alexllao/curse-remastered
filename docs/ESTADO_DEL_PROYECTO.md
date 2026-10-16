@@ -91,3 +91,7 @@ Referencias, atlas, PNG activos, copias anteriores y comprobaciones permanecen f
 ### Revisión de recortes del remaster de DUNGEON — 16/10/2026
 
 Se cambia la política de alpha para HUD, manos, cadenas, guardia, piedra, fuego y salpicaduras. Los cuatro bocadillos tienen interior blanco; se recuperan varias calaveras cortadas por el borde inferior izquierdo. Fondo1920×1200 y126 recursos con tamaño nativo ×6 comprobados. Las seis imágenes de la rata conservan sus hashes; Ben sigue original. Se han inspeccionado composiciones de estados originales y recortes del guardia sobre fondo gris; todavía falta aceptación de todas las animaciones en el navegador. No se modifican tiempos, colisiones, sonidos ni lógica.
+
+Revisión posterior solicitada por Àlex: las seis poses de la rata también pasan al alpha del dibujo, conservando lienzos y anclajes. Sustituye la conservación temporal de hashes descrita antes: el usuario detectó bordes defectuosos al mirarlos de cerca.
+
+La piedra cerrada ya no usa una ilustración de bloque independiente: se extrae del muro reconstruido sin la reja, continuando las juntas a las coordenadas originales. El primer fotograma agrietado conserva esa base con grietas pintadas; no se trasladan los agujeros del tramado VGA a la ilustración nueva. Los fragmentos posteriores mantienen los anclajes y ciclos originales; queda revisar visualmente la transición completa.
