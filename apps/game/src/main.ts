@@ -427,18 +427,27 @@ async function start() {
   );
   const clip = new Graphics().rect(0, 0, 320, 200).fill(0xffffff);
   world.addChild(sceneContent, clip);
-  const originalHud = await createOriginalHud(manifest.originalHud);
+  const originalHud = await createOriginalHud(manifest.originalHud, pack);
   world.addChild(originalHud.layer);
   world.mask = clip;
   world.eventMode = 'static';
   world.hitArea = new Rectangle(0, 0, 320, 200);
   world.cursor = 'pointer';
   const decorativeFrames = new DecorativeFrames();
-  const cursorVisuals = await Promise.all(
-    (manifest.originalHud.cursors ?? []).map((asset) =>
-      loadVisual(asset, { id: 'original', label: 'Original' }),
-    ),
-  );
+  const cursorCache = new Map<string, Promise<Awaited<ReturnType<typeof loadVisual>>[]>>();
+  function prepareCursors(nextPack: GraphicsPack) {
+    let pending = cursorCache.get(nextPack.id);
+    if (!pending) {
+      pending = Promise.all(
+        (manifest.originalHud.cursors ?? []).map((asset) =>
+          loadVisual({ ...asset, remaster: true }, nextPack),
+        ),
+      );
+      cursorCache.set(nextPack.id, pending);
+    }
+    return pending;
+  }
+  let cursorVisuals = await prepareCursors(pack);
   const gameCursor = new Sprite();
   gameCursor.eventMode = 'none';
   gameCursor.visible = false;
@@ -507,14 +516,17 @@ async function start() {
   const introButton = button('play-intro');
   const assetInfo = document.querySelector<HTMLParagraphElement>('#asset-info')!;
   const scene = () => manifest.scenes[sceneIndex];
-  async function loadLayers(record: SceneRecord) {
+  async function loadLayers(record: SceneRecord, targetPack = pack) {
+    // Los bancos del protagonista se mantienen originales. Solo se sustituyen piezas de sala.
+    const sourceAssets =
+      record.animation?.assets ?? record.layers.assets.map((asset) => ({ ...asset, bank: 24576 }));
     const assets = await Promise.all(
-      [
-        ...record.layers.assets.map((asset) => ({ ...asset, bank: 24576 })),
-        ...(record.animation?.assets ?? []),
-      ].map(async (asset) => ({
+      sourceAssets.map(async (asset) => ({
         asset,
-        visual: await loadVisual({ ...asset, remaster: false }, pack),
+        visual: await loadVisual(
+          { ...asset, remaster: record.id === 0 && asset.bank === 24576 },
+          targetPack,
+        ),
       })),
     );
     const texture = (frame: number, bank = 24576) => {
@@ -547,13 +559,21 @@ async function start() {
       sprite.eventMode = 'none';
       return { ...piece, sprite };
     });
-    return { objects, foreground, texture };
+    return {
+      objects,
+      foreground,
+      texture,
+      dispose() {
+        for (const entry of assets) if (entry.visual.disposable) entry.visual.texture.destroy(true);
+      },
+    };
   }
   let layerView = await loadLayers(scene());
   let depthOrder = Array.from({ length: 69 }, (_, i) => i + 1);
   function installLayers(next: typeof layerView) {
     for (const child of actorsLayer.removeChildren()) if (child !== ben) child.destroy();
     for (const child of foregroundLayer.removeChildren()) child.destroy();
+    if (layerView !== next) layerView.dispose();
     layerView = next;
     actorsLayer.addChild(ben);
     for (const item of layerView.objects) actorsLayer.addChild(item.sprite);
@@ -882,11 +902,15 @@ async function start() {
     sync();
     try {
       const nextLayers =
-        nextScene === sceneIndex ? null : await loadLayers(manifest.scenes[nextScene]);
+        !nextStatic && (nextScene !== sceneIndex || nextPack.id !== pack.id)
+          ? await loadLayers(manifest.scenes[nextScene], nextPack)
+          : null;
       const loaded = await loadVisual(
         nextStatic ? staticScreens[nextView].asset : manifest.scenes[nextScene].background,
         nextPack,
       );
+      await originalHud.setPack(nextPack);
+      cursorVisuals = await prepareCursors(nextPack);
       const previous = visual,
         moved =
           nextScene !== sceneIndex ||
@@ -1089,7 +1113,9 @@ async function start() {
     world.cursor = customCursor && cursorVisual ? 'none' : 'pointer';
     if (gameCursor.visible) {
       gameCursor.texture = cursorVisual.texture;
-      gameCursor.scale.copyFrom(world.scale);
+      const asset = manifest.originalHud.cursors![cursorIndex];
+      gameCursor.width = asset.width * world.scale.x;
+      gameCursor.height = asset.height * world.scale.y;
     }
     fpsElapsed += ticker.elapsedMS;
     fpsFrames++;

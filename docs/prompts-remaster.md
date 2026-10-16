@@ -1,5 +1,7 @@
 # Prompt para remasterizar escenarios sin cambiar su geometría
 
+Aplicar siempre la [dirección artística del proyecto](ESTILO_ARTISTICO.md), también a sprites, HUD y cursores. Ben tiene pelo rojizo con flequillo y no lleva gorra; sus sprites actuales no se modifican hasta que Àlex lo solicite.
+
 La prioridad actual es terminar la revisión del original. Este prompt queda preparado para rehacer las propuestas artísticas después. Una imagen generada sigue siendo provisional hasta comprobar su encaje; las instrucciones de texto no garantizan alineación exacta.
 
 ## Referencias que se deben adjuntar

@@ -1,5 +1,5 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
-import { loadVisual, type VisualAsset } from './presentation.js';
+import { loadVisual, type VisualAsset, type GraphicsPack } from './presentation.js';
 import type { ActionCell } from '@curse/engine';
 export interface OriginalHudAssets {
   background: VisualAsset;
@@ -11,15 +11,31 @@ export interface OriginalHudAssets {
   selectionAnimation?: { colors: number[][]; modalCyclesPerColor: number; referenceHz: number };
   initialBlocked: number[];
 }
-export async function createOriginalHud(assets: OriginalHudAssets) {
-  const original = { id: 'original', label: 'Original' };
-  const visuals = await Promise.all(
-    [assets.background, ...assets.icons, assets.blocked].map((a) => loadVisual(a, original)),
-  );
+export async function createOriginalHud(
+  assets: OriginalHudAssets,
+  pack: GraphicsPack = { id: 'original', label: 'Original' },
+) {
+  const cache = new Map<string, Promise<Awaited<ReturnType<typeof loadVisual>>[]>>();
+  function preparePack(next: GraphicsPack) {
+    let pending = cache.get(next.id);
+    if (!pending) {
+      pending = Promise.all(
+        [assets.background, ...assets.icons, assets.blocked].map((asset) =>
+          loadVisual({ ...asset, remaster: true }, next),
+        ),
+      );
+      cache.set(next.id, pending);
+    }
+    return pending;
+  }
+  let visuals = await preparePack(pack);
   const layer = new Container();
   layer.eventMode = 'none';
   layer.visible = false;
-  layer.addChild(new Sprite(visuals[0].texture));
+  const background = new Sprite(visuals[0].texture);
+  background.width = assets.background.width;
+  background.height = assets.background.height;
+  layer.addChild(background);
   const icons = Array.from({ length: 10 }, (_, i) => {
     const s = new Sprite();
     s.position.set(i * 32 + 4, 4);
@@ -29,6 +45,8 @@ export async function createOriginalHud(assets: OriginalHudAssets) {
   const crosses = Array.from({ length: 10 }, (_, i) => {
     const s = new Sprite(visuals.at(-1)!.texture);
     s.position.set(i * 32 + 4, 4);
+    s.width = assets.blocked.width;
+    s.height = assets.blocked.height;
     s.visible = false;
     layer.addChild(s);
     return s;
@@ -57,12 +75,29 @@ export async function createOriginalHud(assets: OriginalHudAssets) {
     cells = entries.slice(0, 10);
     icons.forEach((s, i) => {
       s.texture = visuals[(cells[i]?.icon ?? -1) + 1]?.texture ?? Texture.EMPTY;
+      const asset = assets.icons[cells[i]?.icon ?? -1];
+      if (asset) {
+        s.width = asset.width;
+        s.height = asset.height;
+      }
       s.visible = !!cells[i];
       crosses[i].visible = cells[i]?.blocked === true;
     });
   }
   return {
     layer,
+    async setPack(next: GraphicsPack) {
+      visuals = await preparePack(next);
+      background.texture = visuals[0].texture;
+      background.width = assets.background.width;
+      background.height = assets.background.height;
+      for (const cross of crosses) {
+        cross.texture = visuals.at(-1)!.texture;
+        cross.width = assets.blocked.width;
+        cross.height = assets.blocked.height;
+      }
+      setEntries(cells);
+    },
     tick(deltaMs: number) {
       const animation = assets.selectionAnimation;
       if (!layer.visible || !animation) return;
