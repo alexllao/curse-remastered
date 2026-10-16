@@ -1,6 +1,12 @@
 import { chooseFrame } from './frame-layout.js';
+import { hudCursorPosition } from './hud-cursor.js';
 import { needsSceneLayers } from './scene-layer-selection.js';
 import { foregroundPresentation } from './foreground-presentation.js';
+import {
+  dungeonPickupArt,
+  visibleDungeonPickup,
+  dungeonPresentationOrder,
+} from './dungeon-visuals.js';
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
   createDungeon,
@@ -490,9 +496,11 @@ async function start() {
   gameCursor.eventMode = 'none';
   gameCursor.visible = false;
   let pointerOnGame = false;
+  const pointerPosition = { x: 0, y: 0 };
   world.on('pointermove', (event) => {
     pointerOnGame = true;
-    gameCursor.position.copyFrom(event.global);
+    pointerPosition.x = event.global.x;
+    pointerPosition.y = event.global.y;
   });
   world.on('pointerout', () => {
     pointerOnGame = false;
@@ -570,6 +578,18 @@ async function start() {
         visual: await loadVisual({ ...asset, remaster: record.id === 0 }, targetPack),
       })),
     );
+    const pickupArt =
+      record.id === 0
+        ? await Promise.all(
+            dungeonPickupArt.map(async (art) => ({
+              ...art,
+              visual: await loadVisual(
+                { ...manifest.originalHud.icons[art.icon], remaster: true },
+                targetPack,
+              ),
+            })),
+          )
+        : [];
     const texture = (frame: number, bank = 24576) => {
       const entry = assets.find(
         (entry) => entry.asset.frame === frame && entry.asset.bank === bank,
@@ -614,9 +634,11 @@ async function start() {
       sceneId: record.id,
       packId: targetPack.id,
       objects,
+      pickupArt,
       foreground,
       texture,
       dispose() {
+        for (const art of pickupArt) if (art.visual.disposable) art.visual.texture.destroy(true);
         for (const entry of assets) if (entry.visual.disposable) entry.visual.texture.destroy(true);
       },
     };
@@ -629,6 +651,7 @@ async function start() {
     if (layerView !== next) layerView.dispose();
     layerView = next;
     actorsLayer.addChild(ben);
+
     for (const item of layerView.objects) actorsLayer.addChild(item.sprite);
     for (const item of layerView.foreground) {
       foregroundLayer.addChild(item.sprite);
@@ -842,6 +865,24 @@ async function start() {
       for (const view of animated.slice(1)) {
         const sprite = layerView.objects.find((item) => item.slot === view.slot)?.sprite;
         if (!sprite) continue;
+        const art = layerView.pickupArt.find((entry) => entry.slot === view.slot);
+        const pickup =
+          art && visibleDungeonPickup(scene().id, view.slot, view.flags, art.visual.usedPack);
+        if (pickup && art) {
+          const target = sprite;
+          target.visible = true;
+          target.texture = art.visual.texture;
+          target.width = pickup.width;
+          target.height = pickup.height;
+          target.scale.x = Math.abs(target.scale.x);
+          target.position.set(view.x + pickup.dx, view.y + pickup.dy);
+          // El clip conserva un brillo leve, pero nunca desaparece entre destellos.
+          target.alpha = 1;
+          target.tint = view.slot === 9 && view.frame === 42 ? 0x9aabba : 0xffffff;
+          continue;
+        }
+        sprite.alpha = 1;
+        sprite.tint = 0xffffff;
         sprite.visible = !!view.flags && !(view.flags & 2) && view.frame !== 255;
         if (!sprite.visible) continue;
         sprite.texture = layerView.texture(view.frame & 127, view.bank);
@@ -872,7 +913,8 @@ async function start() {
         height: 48,
         depthOffset: 0,
       };
-    depthOrder = originalActorOrder(slots, depthOrder);
+    const renderedSlots = dungeonPresentationOrder(scene().id, slots);
+    depthOrder = originalActorOrder(renderedSlots, depthOrder);
     let drawIndex = 0;
     for (const slot of depthOrder) {
       const sprite =
@@ -897,7 +939,10 @@ async function start() {
         piece.sprite.height = piece.height;
       }
       if (piece.mask) piece.mask.visible = !!refined;
-      piece.sprite.visible = originalForegroundOverlaps(refined ? refined.bounds : piece, slots);
+      piece.sprite.visible = originalForegroundOverlaps(
+        refined ? refined.bounds : piece,
+        renderedSlots,
+      );
     }
     sceneLabel.textContent = showingStatic
       ? `${currentView} · ${staticScreens[staticIndex].name}`
@@ -1202,6 +1247,12 @@ async function start() {
       const asset = manifest.originalHud.cursors![cursorIndex];
       gameCursor.width = asset.width * world.scale.x;
       gameCursor.height = asset.height * world.scale.y;
+      const position = hudCursorPosition(
+        world.toLocal(pointerPosition),
+        originalHud.visible ? { x: 0, y: originalHud.layer.y, width: 320, height: 32 } : null,
+        asset,
+      );
+      gameCursor.position.copyFrom(world.toGlobal(position));
     }
     fpsElapsed += ticker.elapsedMS;
     fpsFrames++;
