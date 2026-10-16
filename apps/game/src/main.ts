@@ -510,7 +510,6 @@ async function start() {
   async function finishStartup() {
     startup = null;
     awaitingTitle = true;
-    background.alpha = 1;
     await show(0, pack);
     sync();
     app.canvas.focus({ preventScroll: true });
@@ -843,8 +842,7 @@ async function start() {
   }
   function stopPresentation() {
     playback = null;
-    background.alpha = 1;
-    background.texture = visual.texture;
+    // Conservar el último fotograma hasta que el siguiente fondo esté listo.
   }
   async function playPresentation(resume = 0) {
     if (changing) return;
@@ -1216,6 +1214,7 @@ async function start() {
       player = nextPlayer;
       savePreferences();
       background.texture = loaded.texture;
+      background.alpha = 1;
       if (nextLayers) installLayers(nextLayers);
       if (moved) {
         if (!showingStatic && actors.has(scene().id)) {
