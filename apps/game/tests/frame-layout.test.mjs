@@ -40,6 +40,11 @@ test('el marco automático respeta asociaciones, respaldo y elección manual', (
   assert.equal(chooseFrame(frames, 'auto', 'scene:0').id, 'mazmorra');
   assert.equal(chooseFrame(frames, 'auto', 'scene:12').id, 'bosque');
   assert.equal(chooseFrame(frames, 'auto', 'scene:99').id, 'castillo');
+  const withDefault = [...frames, { id: 'default', contexts: ['title', 'core', 'intro'] }];
+  assert.equal(chooseFrame(withDefault, 'auto', 'title').id, 'default');
+  assert.equal(chooseFrame(withDefault, 'auto', 'scene:99').id, 'default');
+  assert.equal(chooseFrame(withDefault, 'auto', 'scene:0').id, 'mazmorra');
+  assert.equal(chooseFrame(withDefault, 'castillo', 'title').id, 'castillo');
   assert.equal(chooseFrame(frames, 'bosque', 'scene:0').id, 'bosque');
   assert.equal(chooseFrame([frames[0]], 'auto', 'title').id, 'bosque');
   assert.equal(chooseFrame([], 'auto', 'title'), undefined);

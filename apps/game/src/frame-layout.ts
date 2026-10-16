@@ -36,6 +36,7 @@ export function chooseFrame<T extends { id: string; contexts?: string[] }>(
   if (selection !== 'auto') return frames.find((frame) => frame.id === selection);
   return (
     frames.find((frame) => frame.contexts?.includes(context)) ??
+    frames.find((frame) => frame.id === 'default') ??
     frames.find((frame) => frame.id === 'castillo') ??
     frames[0]
   );
