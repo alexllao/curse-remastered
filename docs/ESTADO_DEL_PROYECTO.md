@@ -135,3 +135,7 @@ La primera máscara geométrica seguía intersectando el alpha escalonado del SP
 El contorno se aplica solo cuando el fondo cargado procede realmente de Remaster. Original y los fondos de otros paquetes mantienen el SPR nativo; un respaldo a Original no recibe la forma del dibujo remasterizado. Las 1001 selecciones de primeros planos y las escrituras VGA de las dos piezas coinciden con la traza aislada del ejecutable. Esto no sustituye una captura comparativa en DOSBox ni demuestra que el borde observado por el usuario esté resuelto en Original.
 
 Se inspecciona una composición antes/después y se prepara una secuencia de paso por el borde, sin audio. Son previsualizaciones técnicas, no capturas del navegador. Queda pendiente la aceptación en partida del contorno ajustado.
+
+### Corrección del zócalo que ocultaba la pierna
+
+La captura de Àlex demuestra que el primer ajuste del contorno sigue mal: incorpora la cuña clara del zócalo detrás de Ben y corta su pierna antes de llegar a la cara oscura del primer plano. Se retira esa cuña de la máscara y se desplaza la diagonal hasta el borde del elemento oscuro. Se añaden puntos de regresión sobre la zona clara y la oscura. No se considera aceptado el resultado anterior; la revisión en partida del nuevo contorno sigue pendiente. Los PNG permanecen intactos.
