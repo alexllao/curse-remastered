@@ -101,3 +101,7 @@ La piedra cerrada ya no usa una ilustración de bloque independiente: se extrae 
 Se trasladan4519 archivos locales desde mods a assets, conservando sus hashes. Cada versión contiene graficos/, musica/ y/o sonidos/. Se unifica remastered como remaster para los efectos. Los selectores, las rutas web, los marcos, los extractores y los scripts de arte usan la estructura nueva. Original/ sigue reservado a la copia DOS; reports conserva referencias e informes. La puerta de DUNGEON usa ahora el alpha del dibujo en sus cinco fotogramas, evitando recortar su arco con la silueta VGA.
 
 El marco remaster de mazmorra se revisa a un acabado ilustrado de1254×1254, sin ampliar el PNG. Se conservan los otros tres marcos y el marco de estilo original. La música disponible se agrupa ahora en original y remaster; cada selector detecta sus propios tipos de recursos.
+
+### Bienvenida de la web
+
+Se aplica la maqueta aprobada con wallpaper a ventana completa, menú compacto abajo a la izquierda, opciones en diálogo nativo, créditos existentes y acceso a pantalla completa. Se precarga y decodifica WALLPAPER.png antes de mostrar la bienvenida, con respaldo en TITLE. Se conserva la imagen aportada sin redibujarla. El marco fino de la bienvenida respeta Mostrar marco. Al comenzar se conserva el flujo CORE/TITLE/presentación del juego y sus controles. La depuración sigue accesible desde Opciones.

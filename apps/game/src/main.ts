@@ -39,6 +39,8 @@ import {
   type VisualAsset,
 } from './presentation.js';
 import './style.css';
+import './welcome-menu.css';
+import { createWelcomeMenu } from './welcome-menu.js';
 import { DecorativeFrames, discoverFrames, frameVariant } from './decorative-frames.js';
 import { createOriginalHud, type OriginalHudAssets } from './original-hud.js';
 import { discoverSounds, SoundPlayer } from './sounds.js';
@@ -258,6 +260,7 @@ async function start() {
     resumeButton = button('resume-game'),
     menuButton = button('open-menu'),
     skipButton = button('skip-intro');
+  const welcomeMenu = createWelcomeMenu();
   let menuOpen = false,
     gameStarted = false,
     startingGame = false,
@@ -362,6 +365,8 @@ async function start() {
     menuOpen = open;
     menu.hidden = !open;
     resumeButton.hidden = !gameStarted;
+    startButton.hidden = gameStarted;
+    welcomeMenu.sync(!gameStarted && !debugMode, open);
     document.querySelector('#menu-heading')!.textContent = gameStarted
       ? 'La aventura te espera'
       : 'Tu aventura comienza aquí';
@@ -828,6 +833,7 @@ async function start() {
       : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
     skipButton.hidden = !debugMode || !playback || menuOpen;
     document.body.classList.toggle('playing', gameStarted && !menuOpen && !debugMode);
+    welcomeMenu.sync(!gameStarted && !debugMode, menuOpen);
     button('toggle-debug').disabled = !!startup;
     startButton.disabled =
       resumeButton.disabled =
@@ -1477,6 +1483,8 @@ async function start() {
   sync();
   status.textContent = 'Elige gráficos y música y comienza la partida.';
   await updateFrame();
+  setResourceLoading('Preparando la bienvenida…');
+  await welcomeMenu.prepare();
   revealGame();
   resize();
   app.render();

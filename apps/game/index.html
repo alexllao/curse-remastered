@@ -51,56 +51,96 @@
         <p id="original-hud-note" class="screen-prompt hud-note" hidden>Clic derecho · Acciones</p>
         <div id="game-toast" role="status" hidden></div>
         <div id="music-toast" role="status" hidden></div>
+        <img id="welcome-wallpaper" class="welcome-only" alt="" hidden />
+        <div id="welcome-border" class="welcome-only" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <button
+          id="welcome-fullscreen"
+          class="welcome-only"
+          aria-label="Pantalla completa"
+          title="Pantalla completa"
+        >
+          ⛶
+        </button>
+        <p id="welcome-status" class="welcome-only" role="status"></p>
+        <p class="welcome-only welcome-attribution" lang="en">
+          Unofficial fan project · Core Design, 1992 · Web port &amp; remaster: Àlex Llaó
+        </p>
         <div id="viewport"><p id="loading">Cargando CURSE…</p></div>
-        <section id="game-menu" aria-label="Menú del juego" hidden>
-          <h2 id="menu-heading">Tu aventura comienza aquí</h2>
-          <div class="settings-grid">
-            <label
-              >Gráficos<select id="graphics-select" disabled>
-                <option>Original</option>
-              </select></label
-            >
-            <label
-              >Música<select id="music-select" disabled>
-                <option value="none">Sin música</option>
-              </select></label
-            >
-            <label
-              >Efectos de sonido<select id="sounds-select">
-                <option value="none">Sin efectos</option>
-              </select></label
-            >
-            <label
-              >Marco<select id="frame-select">
-                <option value="">No hay marcos</option>
-              </select></label
-            >
+        <section id="game-menu" class="compact-menu" aria-label="Menú del juego" hidden>
+          <div class="menu-home">
+            <div aria-hidden="true">
+              <span class="menu-corner"></span><span class="menu-corner"></span
+              ><span class="menu-corner"></span><span class="menu-corner"></span>
+            </div>
+            <h2 id="menu-heading">Tu aventura comienza aquí</h2>
+            <div class="menu-actions">
+              <button id="start-game" class="primary" disabled>Comenzar partida</button>
+              <button id="resume-game" class="primary" hidden>Continuar partida</button>
+              <button id="open-options" aria-haspopup="dialog" aria-controls="menu-settings">
+                Opciones
+              </button>
+            </div>
+            <p class="shortcut-note">
+              <span><kbd>F2</kbd> · Gráficos</span><span><kbd>F3</kbd> · Música</span
+              ><span><kbd>Esc</kbd> · Menú</span>
+            </p>
           </div>
-          <div class="menu-options">
-            <label class="check"
-              ><input id="intro-enabled" type="checkbox" checked /> Ver presentación</label
-            >
-            <label class="check"><input id="show-frame" type="checkbox" /> Mostrar marco</label>
-            <label class="volume"
-              >Volumen
-              <input
-                id="music-volume"
-                aria-label="Volumen de música"
-                type="range"
-                min="0"
-                max="100"
-                value="65"
-            /></label>
-          </div>
-          <p class="shortcut-note">Durante la partida: F2 · Gráficos · F3 · Música · Esc · Menú</p>
-          <p id="sound-note"></p>
-          <p id="music-note" role="status">Buscando versiones de música…</p>
-          <div class="menu-actions">
-            <button id="preview-music" disabled>Activar música</button>
-            <button id="refresh-music">Actualizar música</button>
-            <button id="start-game" class="primary" disabled>Comenzar partida</button
-            ><button id="resume-game" hidden>Continuar partida</button>
-          </div>
+          <dialog id="menu-settings" aria-labelledby="settings-heading">
+            <div class="settings-heading">
+              <h2 id="settings-heading">Opciones</h2>
+              <button id="close-options" aria-label="Cerrar opciones">×</button>
+            </div>
+            <div class="settings-grid">
+              <label
+                >Gráficos<select id="graphics-select" disabled>
+                  <option>Original</option>
+                </select></label
+              >
+              <label
+                >Música<select id="music-select" disabled>
+                  <option value="none">Sin música</option>
+                </select></label
+              >
+              <label
+                >Efectos de sonido<select id="sounds-select">
+                  <option value="none">Sin efectos</option>
+                </select></label
+              >
+              <label
+                >Marco<select id="frame-select">
+                  <option value="">No hay marcos</option>
+                </select></label
+              >
+            </div>
+            <div class="menu-options">
+              <label class="check"
+                ><input id="intro-enabled" type="checkbox" checked /> Ver presentación</label
+              >
+              <label class="check"><input id="show-frame" type="checkbox" /> Mostrar marco</label>
+              <label class="volume"
+                >Volumen
+                <input
+                  id="music-volume"
+                  aria-label="Volumen de música"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="65"
+              /></label>
+            </div>
+            <p class="shortcut-note">
+              Durante la partida: F2 · Gráficos · F3 · Música · Esc · Menú
+            </p>
+            <p id="sound-note"></p>
+            <p id="music-note" role="status">Buscando versiones de música…</p>
+            <div class="settings-actions">
+              <button id="preview-music" disabled>Activar música</button>
+              <button id="refresh-music">Actualizar música</button>
+              <button id="menu-debug">Depuración</button>
+            </div>
+          </dialog>
         </section>
       </div>
       <div class="controls game-actions">
