@@ -260,7 +260,7 @@ async function start() {
     resumeButton = button('resume-game'),
     menuButton = button('open-menu'),
     skipButton = button('skip-intro');
-  const welcomeMenu = createWelcomeMenu();
+  const welcomeMenu = createWelcomeMenu(soundCatalog, silentPreview);
   let menuOpen = false,
     gameStarted = false,
     startingGame = false,

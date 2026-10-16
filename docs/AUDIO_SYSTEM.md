@@ -72,3 +72,9 @@ Se conservan los WAV experimentales anteriores y los mapas personalizados. Una s
 En el juego se elige **Efectos de sonido → Original**. Ayuda, saludo, cadenas, recogida de objetos, pared, puerta y ambiente utilizan los eventos de sus canales originales; sus solicitudes también se comparan en la traza de 577 ciclos. La reproducción mantiene una sola voz PCM: una solicitud con prioridad igual o menor se ignora mientras suena otra. Los remasters parciales pueden sustituir cada evento y volver al original cuando falte. «Sin efectos», el cambio de sala, el menú y ocultar la página detienen la voz según el flujo existente.
 
 Esto valida datos y solicitudes digitales, no una comparación auditiva con DOSBox ni la salida analógica de una Sound Blaster. Las pruebas automatizadas usan audio simulado y se ejecutan en silencio.
+
+### Respuesta sonora de la bienvenida
+
+El menú del port reutiliza provisionalmente los eventos globales 7 (señalar, 70 ms) y 4 (clic, 91 ms) de STD.SFX, desde el catálogo de efectos. Es una decisión de interfaz propia, no una asociación comprobada del DOS. Cada paquete puede sustituir esos eventos; si faltan, se utiliza el original disponible. No se duplican ni versionan WAV.
+
+Su voz es independiente del controlador PCM del juego, sin superponer sonidos de interfaz entre sí. Respeta «Sin efectos», el volumen general, la página oculta y `?silent=1`. El hover solo responde al ratón y al foco visible de teclado, con límite entre repeticiones; los bloqueos de reproducción no se reintentan más tarde. El menú se mantiene azul y muestra el dorado al señalar o enfocar cada botón.

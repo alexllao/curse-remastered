@@ -1,5 +1,7 @@
+import type { SoundCatalog } from './sounds.js';
+
 /** Presentación del port. El arranque y el lienzo DOS conservan su propio flujo. */
-export function createWelcomeMenu() {
+export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
   const settings = document.querySelector<HTMLDialogElement>('#menu-settings')!;
   const options = document.querySelector<HTMLButtonElement>('#open-options')!;
   const image = document.querySelector<HTMLImageElement>('#welcome-wallpaper')!;
@@ -8,6 +10,61 @@ export function createWelcomeMenu() {
   const music = document.querySelector<HTMLSelectElement>('#music-select')!;
   const showFrame = document.querySelector<HTMLInputElement>('#show-frame')!;
   const status = document.querySelector<HTMLElement>('#welcome-status')!;
+  const effects = document.querySelector<HTMLSelectElement>('#sounds-select')!;
+  const volume = document.querySelector<HTMLInputElement>('#music-volume')!;
+  // Voz propia de la interfaz: no altera las prioridades PCM del juego DOS.
+  const feedback = new Audio();
+  feedback.preload = 'auto';
+  feedback.muted = muted;
+  let lastHover = -Infinity;
+  const stopFeedback = () => feedback.pause();
+  function playFeedback(click: boolean) {
+    if (muted || effects.value === 'none' || document.hidden) return;
+    const now = performance.now();
+    if (!click && now - lastHover < 100) return;
+    if (!click) lastHover = now;
+    // Elección provisional del port: dos muestras breves de STD.SFX.
+    // No se atribuye esta asociación al menú del juego original.
+    const id = click ? '4' : '7';
+    const selected = soundCatalog.versions?.find((pack) => pack.id === effects.value);
+    const file = selected?.events[id] ?? soundCatalog.events[id];
+    if (!file) return;
+    stopFeedback();
+    feedback.src = file;
+    feedback.volume = (Number(volume.value) / 100) * (click ? 0.3 : 0.18);
+    void feedback.play().catch(() => {
+      /* El navegador puede exigir un primer clic. */
+    });
+  }
+  function menuButton(target: EventTarget | null) {
+    if (!document.body.classList.contains('welcome') || !(target instanceof Element)) return;
+    const button = target.closest<HTMLButtonElement>(
+      '#game-menu button, #project-credits button, #welcome-fullscreen',
+    );
+    return button && !button.disabled ? button : undefined;
+  }
+  document.addEventListener('pointerover', (event) => {
+    if (event.pointerType !== 'mouse') return;
+    const button = menuButton(event.target);
+    if (button && (!(event.relatedTarget instanceof Node) || !button.contains(event.relatedTarget)))
+      playFeedback(false);
+  });
+  document.addEventListener('focusin', (event) => {
+    if (menuButton(event.target)?.matches(':focus-visible')) playFeedback(false);
+  });
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (menuButton(event.target)) playFeedback(true);
+    },
+    { capture: true },
+  );
+  effects.addEventListener('change', stopFeedback);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopFeedback();
+  });
+  window.addEventListener('pagehide', stopFeedback);
+
   options.addEventListener('click', () => settings.showModal());
   document.querySelector('#close-options')!.addEventListener('click', () => settings.close());
   settings.addEventListener('close', () => options.focus({ preventScroll: true }));
@@ -47,6 +104,7 @@ export function createWelcomeMenu() {
     },
     sync(welcome: boolean, open: boolean) {
       document.body.classList.toggle('welcome', welcome);
+      if (!welcome) stopFeedback();
       if (!open && settings.open) settings.close();
       frame.hidden = !showFrame.checked;
       const graphicsLabel = graphics.selectedOptions[0]?.textContent ?? 'Original';
