@@ -56,6 +56,19 @@ for group in metadata:
    for pos in pixels:mp[pos%im.width,pos//im.width]=alpha[pos%im.width,pos//im.width]
   sprite=im.copy();sprite.putalpha(mask);sprite=sprite.crop(bb);b=entry['bbox'];sprite=sprite.resize(((b[2]-b[0])*6,(b[3]-b[1])*6),Image.Resampling.LANCZOS)
   final=Image.new('RGBA',(entry['width']*6,entry['height']*6));final.alpha_composite(sprite,(b[0]*6,b[1]*6));save(final,entry['file'],key+f' slot{i}')
+# Pecera corregida: vidrio y agua translúcidos, misma caja y anclaje nativos.
+if 'pecera_v2' in sources:
+ bowl=Image.open(sources['pecera_v2']).convert('RGBA')
+ bounds=bowl.getchannel('A').point(lambda v:255 if v>32 else 0).getbbox()
+ if bounds is None:raise RuntimeError('Pecera sin dibujo visible')
+ bowl=bowl.crop(bounds)
+ for file in ['escenario/001/animation-24576-12.png','interfaz/hud/icon-32.png']:
+  native=Image.open(r/'assets/original/graficos'/file).convert('RGBA');bounds=native.getbbox()
+  if bounds is None:raise RuntimeError('Referencia de pecera vacía')
+  sprite=bowl.resize(((bounds[2]-bounds[0])*6,(bounds[3]-bounds[1])*6),Image.Resampling.LANCZOS)
+  final=Image.new('RGBA',(native.width*6,native.height*6));final.alpha_composite(sprite,(bounds[0]*6,bounds[1]*6))
+  save(final,file,'pecera_v2; generated translucent glass alpha; native bbox x6')
+
 # Ben aprobado: compartir arte, conservar los PNG originales de cada paleta.
 for bank in [16384,20480,65537]:
  for src in (active/'escenario/000').glob(f'animation-{bank}-*.png'):

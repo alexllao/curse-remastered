@@ -25,7 +25,7 @@ de salida y por la orden F6 de los programas de actor.
 - Fondo Remaster: `assets/remaster/graficos/fondos/001-CORRIDOR.png`, 7296 × 1200.
 - Animaciones: `assets/remaster/graficos/escenario/001/`, bancos CORRIDOR, STD, MANA,
   DIG y SPLAT. Se reutiliza el Ben aprobado de la primera mazmorra.
-- Iconos de inventario 32, 33 y 34: recipiente, pez y gema.
+- Iconos de inventario 32, 33 y 34: pecera, pez y gema.
 - Marcos `corridor.png` en `assets/original/graficos/marcos/` y
   `assets/remaster/graficos/marcos/`, asociados automáticamente a `scene:1`.
   El marco Original es arte nuevo del port reducido a 64 × 200 y 64 colores;
@@ -60,3 +60,11 @@ de sonido; no certifican la reproducción audible ni un recorrido manual complet
 del puzle. El panorama se monta con cortes en solapes de sus referencias; necesita
 revisión visual en movimiento, especialmente uniones, retratos y apoyos de llamas.
 No se ha realizado una prueba interactiva completa en Firefox en esta sesión.
+
+## Revisión de la pecera
+
+Àlex descartó la primera interpretación: parecía un aro metálico en el escenario
+y una vasija en el inventario. La revisión `pecera_v2` usa una esfera de cristal,
+agua y reflejos translúcidos, tanto para el fotograma 12 como para el icono 32.
+Conserva cajas y anclajes originales ×6. El pez continúa siendo otro actor.
+Máster, prompt y recibo: `reports/remaster/corridor/`; versión previa conservada.
