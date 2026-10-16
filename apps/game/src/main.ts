@@ -234,6 +234,20 @@ async function start() {
     },
     musicAudio,
   );
+  const gameToast = document.querySelector<HTMLElement>('#game-toast')!;
+  let gameToastTimer: number | undefined;
+  function notifyGame(message: string) {
+    if (!gameStarted || menuOpen || debugMode) return;
+    window.clearTimeout(gameToastTimer);
+    gameToast.textContent = message;
+    gameToast.hidden = false;
+    gameToast.classList.remove('show');
+    void gameToast.offsetWidth;
+    gameToast.classList.add('show');
+    gameToastTimer = window.setTimeout(() => {
+      gameToast.hidden = true;
+    }, 2600);
+  }
   const toast = document.querySelector<HTMLElement>('#music-toast')!;
   let toastTimer: number | undefined;
   music.onTrackPlaying((label) => {
@@ -806,6 +820,7 @@ async function start() {
     } finally {
       selectingPack = false;
       sync();
+      notifyGame(`Gráficos · ${modeLabel.textContent}`);
     }
   }
   const nextScene = (direction: number) =>
@@ -998,6 +1013,7 @@ async function start() {
       awaitingTitle &&
       event.key !== 'Escape' &&
       event.key !== 'F2' &&
+      event.key !== 'F3' &&
       !['Shift', 'Control', 'Alt', 'Meta'].includes(event.key) &&
       (target === document.body || target === app.canvas)
     ) {
@@ -1011,6 +1027,7 @@ async function start() {
       !event.repeat &&
       event.key !== 'Escape' &&
       event.key !== 'F2' &&
+      event.key !== 'F3' &&
       !['Shift', 'Control', 'Alt', 'Meta'].includes(event.key) &&
       (target === document.body || target === app.canvas)
     ) {
@@ -1027,9 +1044,21 @@ async function start() {
       event.preventDefault();
       if (!event.repeat) void nextPack();
     }
-    if (event.key === 'F3' && debugMode) {
+    if (event.key === 'F3') {
       event.preventDefault();
-      if (!event.repeat) void nextScene(event.shiftKey ? -1 : 1);
+      if (!event.repeat) {
+        if (debugMode) void nextScene(event.shiftKey ? -1 : 1);
+        else if (gameStarted) {
+          const versions = [{ id: 'none', label: 'Sin música' }, ...musicCatalog.versions];
+          const current = versions.findIndex((v) => v.id === musicSelect.value);
+          const selected = versions[(current + 1) % versions.length];
+          musicSelect.value = selected.id;
+          selectMusic();
+          music.start();
+          savePreferences();
+          notifyGame(`Música · ${selected.label}`);
+        }
+      }
     }
     if (event.key === 'ArrowLeft' && debugMode) {
       event.preventDefault();

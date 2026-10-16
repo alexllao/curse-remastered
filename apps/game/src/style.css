@@ -299,3 +299,39 @@ body.playing .game-actions {
 body.playing canvas {
   outline: none;
 }
+
+#game-toast {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  max-width: calc(100% - 28px);
+  padding: 10px 14px;
+  color: #f3dfb4;
+  background: rgb(17 17 18 / 90%);
+  border: 1px solid #665439;
+  border-radius: 5px;
+  pointer-events: none;
+  font-size: 13px;
+}
+#game-toast.show {
+  animation: game-notification 2.6s ease both;
+}
+.shortcut-note,
+#sound-note {
+  font-size: 12px;
+}
+@keyframes game-notification {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  80% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #game-toast.show {
+    animation: none;
+  }
+}
