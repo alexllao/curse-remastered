@@ -618,7 +618,7 @@ async function start() {
   fps.textContent = '— FPS';
   viewport.replaceChildren(app.canvas, fps);
   const resize = () => {
-    fitPresentation(app, world, viewport, decorativeFrames.layer.visible);
+    fitPresentation(app, world, viewport);
     decorativeFrames.resize(
       app.screen.width,
       world.x,

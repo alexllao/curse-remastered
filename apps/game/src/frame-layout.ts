@@ -1,6 +1,6 @@
 /** Encuadre de presentación; las coordenadas DOS siguen siendo 320 × 200. */
-export function presentationBounds(width: number, height: number, framed = false) {
-  const scale = Math.min(width / (framed ? 348 : 320), height / 200);
+export function presentationBounds(width: number, height: number) {
+  const scale = Math.min(width / 320, height / 200);
   return {
     scale,
     x: Math.floor((width - 320 * scale) / 2),

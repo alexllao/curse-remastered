@@ -37,16 +37,11 @@ export async function discoverPacks(): Promise<GraphicsPack[]> {
   }
 }
 /** El tamaño lógico no depende de la resolución del PNG ni de la ventana. */
-export function fitPresentation(
-  app: Application,
-  world: Container,
-  host: HTMLElement,
-  framed = false,
-) {
+export function fitPresentation(app: Application, world: Container, host: HTMLElement) {
   const width = Math.max(1, host.clientWidth),
     height = Math.max(1, host.clientHeight);
   app.renderer.resize(width, height);
-  const bounds = presentationBounds(width, height, framed);
+  const bounds = presentationBounds(width, height);
   world.scale.set(bounds.scale);
   world.position.set(bounds.x, bounds.y);
 }
