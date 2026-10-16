@@ -38,6 +38,7 @@ import {
   type GraphicsPack,
   type VisualAsset,
 } from './presentation.js';
+import { fullscreenElement, toggleFullscreen } from './fullscreen.js';
 import './style.css';
 import './welcome-menu.css';
 import { createWelcomeMenu } from './welcome-menu.js';
@@ -190,6 +191,8 @@ async function start() {
     music?: string;
     musicBeforeMute?: string;
     effects?: string;
+    effectsVolume?: number;
+    ambienceVolume?: number;
     volume?: number;
     intro?: boolean;
     sounds?: boolean;
@@ -217,6 +220,16 @@ async function start() {
   const soundCatalog = await discoverSounds(),
     sounds = new SoundPlayer(soundCatalog);
   const soundSelect = document.querySelector<HTMLSelectElement>('#sounds-select')!;
+  const effectsVolume = document.querySelector<HTMLInputElement>('#effects-volume')!;
+  const ambienceVolume = document.querySelector<HTMLInputElement>('#ambience-volume')!;
+  for (const [input, saved] of [
+    [effectsVolume, preferences.effectsVolume],
+    [ambienceVolume, preferences.ambienceVolume],
+  ] as const) {
+    input.value = String(typeof saved === 'number' ? Math.max(0, Math.min(100, saved)) : 100);
+  }
+  sounds.setVolume('effects', Number(effectsVolume.value) / 100);
+  sounds.setVolume('ambience', Number(ambienceVolume.value) / 100);
   const soundVersions = soundCatalog.versions ?? [];
   soundSelect.replaceChildren(
     new Option('Sin efectos', 'none'),
@@ -330,6 +343,8 @@ async function start() {
           volume: Number(volume.value),
           intro: introEnabled.checked,
           effects: soundSelect.value,
+          effectsVolume: Number(effectsVolume.value),
+          ambienceVolume: Number(ambienceVolume.value),
           frame: frameSelect.value,
           showFrame: showFrame.checked,
         }),
@@ -492,7 +507,7 @@ async function start() {
   let frameTask: Promise<void> = Promise.resolve();
   function updateFrame() {
     frameSelect.disabled = !showFrame.checked || !frameCatalog.length;
-    const active = showFrame.checked && !!document.fullscreenElement;
+    const active = showFrame.checked && !!fullscreenElement();
     const context = startup
       ? 'core'
       : playback
@@ -518,10 +533,16 @@ async function start() {
       savePreferences();
       void updateFrame();
     });
-  document.addEventListener('fullscreenchange', () => {
+  const fullscreenChanged = () => {
     void updateFrame();
     resize();
-  });
+    const label = fullscreenElement() ? 'Salir de pantalla completa' : 'Pantalla completa';
+    button('fullscreen').textContent = label;
+    button('welcome-fullscreen').setAttribute('aria-label', label);
+    button('welcome-fullscreen').title = label;
+  };
+  document.addEventListener('fullscreenchange', fullscreenChanged);
+  document.addEventListener('webkitfullscreenchange', fullscreenChanged);
   new ResizeObserver(resize).observe(viewport);
   resize();
   const introButton = button('play-intro');
@@ -839,6 +860,9 @@ async function start() {
       : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
     skipButton.hidden = !debugMode || !playback || menuOpen;
     document.body.classList.toggle('playing', gameStarted && !menuOpen && !debugMode);
+    const musicVolumeLabel = gameStarted ? 'Música del juego' : 'Música del menú';
+    document.querySelector('#music-volume-label')!.textContent = musicVolumeLabel;
+    volume.setAttribute('aria-label', `Volumen de ${musicVolumeLabel.toLowerCase()}`);
     welcomeMenu.sync(!gameStarted && !debugMode, menuOpen);
     button('toggle-debug').disabled = !!startup;
     startButton.disabled =
@@ -1444,6 +1468,23 @@ async function start() {
     savePreferences();
     sync();
   });
+  for (const [input, bus] of [
+    [effectsVolume, 'effects'],
+    [ambienceVolume, 'ambience'],
+  ] as const) {
+    input.addEventListener('input', () => {
+      sounds.setVolume(bus, Number(input.value) / 100);
+      savePreferences();
+    });
+  }
+  for (const input of [volume, effectsVolume, ambienceVolume]) {
+    const output = document.querySelector<HTMLOutputElement>(`#${input.id}-value`)!;
+    const update = () => {
+      output.value = `${input.value}%`;
+    };
+    input.addEventListener('input', update);
+    update();
+  }
   introEnabled.addEventListener('change', savePreferences);
   soundSelect.addEventListener('change', () => {
     selectSounds();
@@ -1460,16 +1501,27 @@ async function start() {
     else if (!gameStarted && !startingGame) music.start();
   });
   window.addEventListener('pagehide', pauseAudio);
-  function unlockMenuAudio() {
+  function unlockMenuAudio(event: Event) {
+    // El altavoz resuelve su primer gesto sin invertirlo después en mute.
+    if (event.target instanceof Element && event.target.closest('#welcome-audio, #preview-music'))
+      return;
     if (!gameStarted && !startingGame && music.needsGesture && !document.hidden) music.start();
   }
   window.addEventListener('pointerdown', unlockMenuAudio, { capture: true });
   window.addEventListener('keydown', unlockMenuAudio, { capture: true });
 
   function toggleMusicMute() {
+    if (music.needsGesture && musicSelect.value !== 'none' && Number(volume.value) > 0) {
+      music.start();
+      savePreferences();
+      return;
+    }
     if (musicSelect.value === 'none' || Number(volume.value) === 0) {
       if (musicSelect.value === 'none') musicSelect.value = lastMusicVersion;
-      if (Number(volume.value) === 0) volume.value = '65';
+      if (Number(volume.value) === 0) {
+        volume.value = '65';
+        document.querySelector<HTMLOutputElement>('#music-volume-value')!.value = '65%';
+      }
     } else musicSelect.value = 'none';
     selectMusic();
     if (!document.hidden) music.start();
@@ -1479,13 +1531,19 @@ async function start() {
   button('preview-music').addEventListener('click', toggleMusicMute);
   button('welcome-audio').addEventListener('click', toggleMusicMute);
   button('fullscreen').addEventListener('click', () => {
-    void (
-      document.fullscreenElement
-        ? document.exitFullscreen()
-        : document.querySelector<HTMLElement>('main')!.requestFullscreen()
-    ).catch(() => {
-      status.textContent = 'La pantalla completa no está disponible en esta ventana.';
-    });
+    const reportFullscreen = () => {
+      const message = /iPhone|iPod/.test(navigator.userAgent)
+        ? 'Safari en este dispositivo no permite pantalla completa para el juego. Usa Compartir → Añadir a pantalla de inicio.'
+        : 'No se ha podido activar la pantalla completa. Prueba desde una pestaña normal del navegador.';
+      status.textContent = message;
+      welcomeMenu.showNotice(message);
+      notifyGame(message);
+    };
+    void toggleFullscreen(document.querySelector<HTMLElement>('main')!)
+      .then((supported) => {
+        if (!supported) reportFullscreen();
+      })
+      .catch(reportFullscreen);
   });
   resetActor();
   drawLimits();

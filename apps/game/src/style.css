@@ -210,7 +210,7 @@ footer {
 #loading {
   padding: 40px;
 }
-#viewport:fullscreen {
+#viewport:is(:fullscreen, :-webkit-full-screen) {
   width: 100vw;
   height: 100vh;
   border: 0;
@@ -265,12 +265,12 @@ footer {
   }
 }
 
-.stage:fullscreen {
+.stage:is(:fullscreen, :-webkit-full-screen) {
   width: 100vw;
   height: 100vh;
   background: #000;
 }
-.stage:fullscreen #viewport {
+.stage:is(:fullscreen, :-webkit-full-screen) #viewport {
   width: 100%;
   height: 100%;
   aspect-ratio: auto;
@@ -346,7 +346,7 @@ body.playing header {
   gap: 12px;
   flex-wrap: wrap;
 }
-main:fullscreen {
+main:is(:fullscreen, :-webkit-full-screen) {
   max-width: none;
   width: 100vw;
   height: 100vh;
@@ -355,11 +355,11 @@ main:fullscreen {
   background: #101011;
   padding: 12px;
 }
-main:fullscreen .stage {
+main:is(:fullscreen, :-webkit-full-screen) .stage {
   flex: 1;
   min-height: 0;
 }
-main:fullscreen #viewport {
+main:is(:fullscreen, :-webkit-full-screen) #viewport {
   height: 100%;
   aspect-ratio: auto;
 }

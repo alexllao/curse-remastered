@@ -1,3 +1,4 @@
+import { interfaceFontsReady } from './interface-fonts.js';
 import type { SoundCatalog } from './sounds.js';
 
 /** Presentación del port. El arranque y el lienzo DOS conservan su propio flujo. */
@@ -18,13 +19,14 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
       Number(document.querySelector<HTMLInputElement>('#music-volume')!.value) === 0;
     audioButton.classList.toggle('is-muted', mutedMusic);
     audioButton.setAttribute('aria-pressed', String(mutedMusic));
-    audioButton.title = mutedMusic ? 'Activar música' : 'Silenciar música';
+    audioButton.title = mutedMusic || musicHint ? 'Activar música' : 'Silenciar música';
     audioButton.setAttribute('aria-label', audioButton.title);
     status.textContent = `${musicLabel}${musicHint ? ` · ${musicHint}` : ''}`;
   }
 
   const effects = document.querySelector<HTMLSelectElement>('#sounds-select')!;
-  const volume = document.querySelector<HTMLInputElement>('#music-volume')!;
+  const volume = document.querySelector<HTMLInputElement>('#effects-volume')!;
+  let feedbackLevel = 0.18;
   // Voz propia de la interfaz: no altera las prioridades PCM del juego DOS.
   const feedback = new Audio();
   feedback.preload = 'auto';
@@ -44,7 +46,8 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
     if (!file) return;
     stopFeedback();
     feedback.src = file;
-    feedback.volume = (Number(volume.value) / 100) * (click ? 0.3 : 0.18);
+    feedbackLevel = click ? 0.3 : 0.18;
+    feedback.volume = (Number(volume.value) / 100) * feedbackLevel;
     void feedback.play().catch(() => {
       /* El navegador puede exigir un primer clic. */
     });
@@ -73,6 +76,10 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
     { capture: true },
   );
   effects.addEventListener('change', stopFeedback);
+  volume.addEventListener('input', () => {
+    feedback.volume = (Number(volume.value) / 100) * feedbackLevel;
+    if (!Number(volume.value)) stopFeedback();
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopFeedback();
   });
@@ -95,13 +102,23 @@ export function createWelcomeMenu(soundCatalog: SoundCatalog, muted = false) {
     settings.close();
     document.querySelector<HTMLButtonElement>('#toggle-debug')!.click();
   });
+  let noticeTimer: number | undefined;
   return {
+    showNotice(message: string) {
+      const notice = document.querySelector<HTMLElement>('#welcome-notice')!;
+      window.clearTimeout(noticeTimer);
+      notice.textContent = message;
+      notice.hidden = false;
+      noticeTimer = window.setTimeout(() => {
+        notice.hidden = true;
+      }, 8000);
+    },
     setMusicHint(message: string) {
       musicHint = message;
       updateStatus();
     },
     async prepare() {
-      await document.fonts.load('18px "IM Fell English"').catch(() => {});
+      await interfaceFontsReady;
       // La imagen se decodifica bajo el loading; una ausencia conserva TITLE.
       for (const path of [
         '/remaster/graficos/menu/WALLPAPER.png',

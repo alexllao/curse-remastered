@@ -149,10 +149,7 @@ body.welcome .menu-home .project-attribution {
   width: 100%;
   min-height: 54px;
   padding: 9px 36px;
-  font:
-    normal clamp(23px, 1.85vw, 32px) / 1.15 'IM Fell English',
-    Georgia,
-    serif;
+  font: normal clamp(23px, 1.85vw, 32px) / 1.15 var(--interface-font);
   color: #fff0c5;
   border: 0;
   border-radius: 0;
@@ -210,10 +207,7 @@ body.welcome .menu-home .project-attribution {
   border-top: 1px solid #ad8c50;
   text-align: center;
   color: #f3dfb4;
-  font:
-    15px / 1.4 'IM Fell English',
-    Georgia,
-    serif;
+  font: 15px / 1.4 var(--interface-font);
   text-shadow: 0 1px 2px #000;
 }
 .menu-home .shortcut-note::before {
@@ -257,10 +251,7 @@ body.welcome .menu-home .project-attribution {
   background: #091a29ed;
   box-shadow: 0 2px 10px #0006;
   color: #fff0ce;
-  font:
-    16px / 1.4 'IM Fell English',
-    Georgia,
-    serif;
+  font: 16px / 1.4 var(--interface-font);
   pointer-events: none;
 }
 .welcome-attribution {
@@ -276,10 +267,7 @@ body.welcome .menu-home .project-attribution {
   text-align: center;
   color: #efdfbb;
   background: #091a29ed;
-  font:
-    13px / 1.4 'IM Fell English',
-    Georgia,
-    serif;
+  font: 13px / 1.4 var(--interface-font);
   pointer-events: none;
 }
 #menu-settings {
@@ -392,7 +380,7 @@ body.welcome .menu-home .project-attribution {
 #project-credits h2,
 #project-credits h3,
 #project-credits button {
-  font-family: 'IM Fell English', Georgia, serif;
+  font-family: var(--interface-font);
 }
 #menu-settings label,
 #menu-settings button,
@@ -484,10 +472,7 @@ body.welcome #welcome-audio {
   border-radius: 0;
   color: #f3dfb4;
   background: transparent;
-  font:
-    19px / 1.4 'IM Fell English',
-    Georgia,
-    serif;
+  font: 19px / 1.4 var(--interface-font);
   text-shadow: 0 1px 3px #000;
 }
 #welcome-audio svg {
@@ -540,4 +525,70 @@ body.welcome #welcome-audio {
     bottom: 50px;
     max-width: calc(100% - 374px);
   }
+}
+
+.audio-levels {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  margin: 20px 0;
+  border-top: 1px solid #ad8c5066;
+}
+.audio-level {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(80px, 2fr) 4ch;
+  gap: 12px;
+  align-items: center;
+}
+.audio-level input {
+  width: 100%;
+  margin: 0;
+}
+.audio-level output {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #f3dfb4;
+}
+
+#welcome-notice {
+  position: absolute;
+  top: 75px;
+  right: 24px;
+  z-index: 5;
+  width: min(400px, calc(100% - 48px));
+  margin: 0;
+  padding: 14px 18px;
+  border: 1px solid #b99a5c;
+  color: #f3dfb4;
+  background: #091a29f2;
+  font: 18px / 1.4 var(--interface-font);
+}
+
+.font-settings {
+  margin: 22px 0;
+  padding-top: 18px;
+  border-top: 1px solid #ad8c5066;
+}
+.font-settings label {
+  display: grid;
+  gap: 8px;
+}
+.font-settings select {
+  width: 100%;
+}
+.font-preview {
+  font: 26px / 1.4 var(--interface-font);
+  color: #f3dfb4;
+  margin-top: 14px;
+}
+#font-note {
+  font-size: 15px;
+  line-height: 1.4;
+}
+header h1,
+header button,
+footer p,
+#game-toast,
+#music-toast {
+  font-family: var(--interface-font);
 }

@@ -62,6 +62,7 @@
         <div id="welcome-border" class="welcome-only" aria-hidden="true">
           <span></span><span></span><span></span><span></span>
         </div>
+        <p id="welcome-notice" class="welcome-only" role="status" hidden></p>
         <button
           id="welcome-fullscreen"
           class="welcome-only"
@@ -154,16 +155,50 @@
                 ><input id="intro-enabled" type="checkbox" checked /> Ver presentación</label
               >
               <label class="check"><input id="show-frame" type="checkbox" /> Mostrar marco</label>
-              <label class="volume"
-                >Volumen
-                <input
+            </div>
+            <div class="font-settings">
+              <label
+                >Fuente de la interfaz<select id="interface-font" aria-describedby="font-note">
+                  <option>IM Fell English</option>
+                </select></label
+              >
+              <p class="font-preview">Tu aventura comienza aquí · Àlex Llaó</p>
+              <p id="font-note" role="status"></p>
+            </div>
+            <div class="audio-levels" aria-label="Volúmenes de audio">
+              <label class="audio-level"
+                ><span>Música</span
+                ><input
                   id="music-volume"
-                  aria-label="Volumen de música"
+                  aria-label="Volumen de música del menú"
                   type="range"
                   min="0"
                   max="100"
                   value="65"
-              /></label>
+                /><output id="music-volume-value" for="music-volume">65%</output></label
+              >
+              <label class="audio-level"
+                ><span>Efectos</span
+                ><input
+                  id="effects-volume"
+                  aria-label="Volumen de efectos"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="100"
+                /><output id="effects-volume-value" for="effects-volume">100%</output></label
+              >
+              <label class="audio-level"
+                ><span>Ambiente</span
+                ><input
+                  id="ambience-volume"
+                  aria-label="Volumen de ambiente"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="100"
+                /><output id="ambience-volume-value" for="ambience-volume">100%</output></label
+              >
             </div>
             <p class="shortcut-note">
               Durante la partida: F2 · Gráficos · F3 · Música · Esc · Menú

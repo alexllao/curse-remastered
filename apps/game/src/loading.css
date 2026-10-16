@@ -1,3 +1,27 @@
+:root {
+  --interface-font: 'IM Fell English', Georgia, serif;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('./fonts/cormorantgaramond/Roman.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Alegreya';
+  src: url('./fonts/alegreya/Roman.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cinzel';
+  src: url('./fonts/cinzel/Roman.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
 @font-face {
   font-family: 'IM Fell English';
   src: url('./fonts/im-fell-english/IMFeENrm28P.ttf') format('truetype');
@@ -18,7 +42,7 @@
   background:
     radial-gradient(ellipse at 50% 40%, #203b50aa, transparent 60%),
     repeating-linear-gradient(135deg, #142b3c18 0 1px, transparent 1px 8px), #071420;
-  font-family: 'IM Fell English', Georgia, serif;
+  font-family: var(--interface-font);
 }
 #resource-loading[hidden] {
   display: none;
@@ -61,10 +85,7 @@
 .loading-title {
   margin: 0 0 32px;
   color: #f4dfaa;
-  font:
-    normal clamp(30px, 6vw, 46px) / 1.15 'IM Fell English',
-    Georgia,
-    serif;
+  font: normal clamp(30px, 6vw, 46px) / 1.15 var(--interface-font);
   text-shadow: 0 2px 3px #000;
 }
 .loading-title span {
@@ -78,10 +99,7 @@
 #loading-message {
   margin: 20px 0 0;
   color: #e3d0a7;
-  font:
-    18px / 1.5 'IM Fell English',
-    Georgia,
-    serif;
+  font: 18px / 1.5 var(--interface-font);
   min-height: 2lh;
 }
 .loading-progress {

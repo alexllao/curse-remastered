@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SoundPlayer } from '../src/sounds.ts';
+import { soundBus, SoundPlayer } from '../src/sounds.ts';
 
 class AudioFixture extends globalThis.EventTarget {
   static instances = [];
@@ -96,3 +96,37 @@ test('sin efectos detiene la voz y un evento antiguo no borra el estado de la nu
     player.play(0);
     assert.equal(AudioFixture.instances.length, 2);
   }));
+
+test('efectos y ambiente tienen volumen independiente y los cambios actúan sobre la voz actual', () =>
+  fixture(() => {
+    const player = new SoundPlayer(catalog);
+    player.setScene(0);
+    player.setVolume('effects', 0.7);
+    player.setVolume('ambience', 0.2);
+    player.play(17);
+    const ambience = AudioFixture.instances.at(-1);
+    assert.equal(ambience.volume, 0.2);
+    player.setVolume('effects', 0.5);
+    assert.equal(ambience.volume, 0.2);
+    player.setVolume('ambience', 0.1);
+    assert.equal(ambience.volume, 0.1);
+    ambience.dispatchEvent(new globalThis.Event('ended'));
+    player.play(0);
+    const effect = AudioFixture.instances.at(-1);
+    assert.equal(effect.volume, 0.5);
+    player.setVolume('effects', 0);
+    assert.equal(effect.paused, true);
+    const count = AudioFixture.instances.length;
+    player.play(0);
+    assert.equal(AudioFixture.instances.length, count);
+    player.play(17);
+    assert.equal(AudioFixture.instances.at(-1).volume, 0.1);
+  }));
+
+test('la clasificación ambiental se limita a los eventos de la sala comprobada', () => {
+  assert.equal(soundBus(0, 17), 'ambience');
+  assert.equal(soundBus(0, 19), 'ambience');
+  assert.equal(soundBus(0, 0), 'effects');
+  assert.equal(soundBus(1, 17), 'effects');
+  assert.equal(soundBus(null, 19), 'effects');
+});
