@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import struct
 from unicorn import UC_HOOK_CODE
-from unicorn.x86_const import UC_X86_REG_CX, UC_X86_REG_DX, UC_X86_REG_DS, UC_X86_REG_SI, UC_X86_REG_SP, UC_X86_REG_IP
+from unicorn.x86_const import UC_X86_REG_CX, UC_X86_REG_DX, UC_X86_REG_DS, UC_X86_REG_SI, UC_X86_REG_SP, UC_X86_REG_IP, UC_X86_REG_EFLAGS
 
 
 def main():
@@ -55,15 +55,29 @@ def main():
     trace.require(len(calls) == 12 and [c['frame'] for c in calls[:10]] == list(range(10)), 'Unexpected initial icons')
     handlers = [machine.word(0xb60c + n * 2) + 512 for n in range(10)]
     trace.require(handlers[1:3] == [0xe096, 0xe096], 'Unexpected disabled actions')
+    selection_machine = trace.Machine(exe)
+    selection_machine.execute(0xdd1c, 0xdd2d)
+    initial_counter = selection_machine.word(0xb63a)
+    initial_index = selection_machine.word(0xb63c)
+    for _ in range(96):
+        # 0xDCDC AND AL,FC termina la copia previa con CF=0.
+        selection_machine.uc.reg_write(UC_X86_REG_EFLAGS, 2)
+        selection_machine.execute(0xdd53, 0xdd8e)
+    colors = list(exe[0x1ab4e:0x1ab4e+72])
+    trace.require(initial_counter == 1 and initial_index == 0, 'Unexpected selection initial phase')
+    trace.require(len(selection_machine.frames) == 24, 'Unexpected selection period')
+    trace.require(all(frame['firstIndex'] == 255 and frame['rgb6'] == colors[i*3:i*3+3]
+                      for i, frame in enumerate(selection_machine.frames)), 'Unexpected selection palette cycle')
     report = {'schemaVersion': 1, 'executableSha256': trace.PROFILE,
               'sources': {name: hashlib.sha256((root / 'original/DATA' / name).read_bytes()).hexdigest()
-                          for name in ('MENU.DAT', 'ICONS.SPR', 'SPRITES.PAL', 'DUNGEON.MAP')},
+                          for name in ('MENU.DAT', 'ICONS.SPR', 'MOUSE.SPR', 'SPRITES.PAL', 'DUNGEON.MAP')},
               'positions': positions, 'calls': calls, 'initialHandlers': handlers,
               'width': 320, 'height': 32,
               'selection': {'xInset': 3, 'yInset': 3, 'width': 26, 'height': 26},
+              'selectionAnimation': {'modalCyclesPerColor': 4, 'colors': 24, 'testedModalCycles': 96},
               'selectionColorsRgb6': list(exe[0x1ab4e:0x1ab4e+72]),
               'limitations': ['Isolated calls and synthetic mouse; no physical timing capture',
-                              'Initial DUNGEON menu only; action execution not implemented']}
+                              'Initial DUNGEON layout only; action execution is covered separately by trace-dungeon-actions.py']}
     (root / 'reports/navigation/original-hud.json').write_text(json.dumps(report, indent=2)+'\n')
     print(json.dumps({'positions': len(positions), 'icons': 10, 'blocked': [1, 2]}))
 

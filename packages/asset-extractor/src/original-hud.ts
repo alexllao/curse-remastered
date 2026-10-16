@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { decode, png } from './spr-codec.js';
 import { unpackRnc1 } from './rnc1.js';
 import { indexedRgba } from './scene-background.js';
-import { colorContextPixels, colorSharedPixels, indexPalette } from './shared-palette.js';
+import { colorContextPixels, indexPalette } from './shared-palette.js';
 import { composeScenePalette, executableSha256, sha256 } from './scene-palette.js';
 
 /** Solo la barra inicial de DUNGEON; los programas de acción se portan aparte. */
@@ -45,24 +45,22 @@ export async function prepareOriginalHud<T>(
     const source = `reports/interface/${name}.png`;
     await writeFile(
       join(root, source),
-      png(
-        width,
-        height,
-        name === 'MENU' || name === 'blocked'
-          ? colorContextPixels(indexed, scenePalette)
-          : colorSharedPixels(indexed, palette),
-      ),
+      png(width, height, colorContextPixels(indexed, scenePalette)),
     );
     return prepare(source, `interfaz/hud/${name}.png`);
   }
   const background = await image('MENU', 320, 32, indexedRgba(menu));
   const iconAssets = [];
-  for (const [index, call] of report.calls.slice(0, 10).entries()) {
-    if (call.frame !== index || call.x !== index * 32 + 4 || call.y !== 4)
-      throw new Error('Original icon layout changed');
-    const sprite = icons[index];
+  for (const [index, sprite] of icons.entries())
     iconAssets.push(await image(`icon-${index}`, sprite.width, sprite.height, sprite.pixels));
-  }
+  const mouse = decode(
+    await readFile(join(root, 'original/DATA/MOUSE.SPR')),
+    indexPalette,
+    'MOUSE.SPR',
+  );
+  const cursors = [];
+  for (const [index, sprite] of mouse.entries())
+    cursors.push(await image(`mouse-${index}`, sprite.width, sprite.height, sprite.pixels));
   // El aspa que bloquea recoger/interactuar está integrada en el EXE como SPR.
   const wrapper = Buffer.alloc(16);
   wrapper.writeUInt16LE(1);
@@ -72,12 +70,22 @@ export async function prepareOriginalHud<T>(
   return {
     background,
     icons: iconAssets,
+    cursors,
     blocked,
     selection: report.selection,
     selectionColor: report.selectionColorsRgb6
       .slice(0, 3)
       .map((n: number) => Math.round((n * 255) / 63)),
+    selectionAnimation: {
+      colors: Array.from({ length: 24 }, (_, i) =>
+        report.selectionColorsRgb6
+          .slice(i * 3, i * 3 + 3)
+          .map((n: number) => Math.round((n * 255) / 63)),
+      ),
+      modalCyclesPerColor: report.selectionAnimation.modalCyclesPerColor,
+      referenceHz: 70,
+    },
     initialBlocked: [1, 2],
-    scope: 'DUNGEON initial selector; native action execution pending',
+    scope: 'Original contextual selector and submenus; DUNGEON actions in separate room controller',
   };
 }

@@ -129,6 +129,13 @@ if (
   dungeon.ticks.length !== 1000
 )
   throw new Error('Repeat DUNGEON animation trace');
+const dungeonActions = JSON.parse(
+  await readFile(join(root, 'reports/navigation/dungeon-actions.json'), 'utf8'),
+);
+if (dungeonActions.executableSha256 !== exeHash) throw new Error('Repeat DUNGEON action trace');
+for (const [name, hash] of Object.entries(dungeonActions.sourceSha256))
+  if (sha256(await readFile(join(root, 'original/DATA', name))) !== hash)
+    throw new Error('DUNGEON action source changed');
 const dungeonAssets = [],
   dimensions: Record<string, [number, number]> = {};
 const dungeonPalette = composeScenePalette(
@@ -139,20 +146,20 @@ for (const [bank, name] of [
   [16384, 'MANA.BRD'],
   [20480, 'STD.BRD'],
   [24576, 'DUNGEON.SPR'],
+  ...dungeonActions.banks
+    .filter((b: { mode: number }) => b.mode !== 0)
+    .map((b: { bank: number; file: string }) => [b.bank, b.file] as const),
 ] as const) {
   const source = await readFile(join(root, 'original/DATA', name));
-  if (sha256(source) !== dungeon.sourceSha256[name])
+  if (sha256(source) !== (dungeon.sourceSha256[name] ?? dungeonActions.sourceSha256[name]))
     throw new Error('DUNGEON animation source differs');
   const decoded = name.endsWith('.BRD')
     ? decodeBrd(source, name).frames
     : decode(source, indexPalette, name);
   for (const [index, image] of decoded.entries())
     dimensions[`${bank}:${index}`] = [image.width, image.height];
-  const used = new Set<number>();
-  for (const actors of [dungeon.initial, ...dungeon.ticks])
-    for (const actor of actors)
-      if (actor[0] && (actor[31] | (actor[32] << 8)) === bank && actor[1] !== 255)
-        used.add(actor[1] & 127);
+  // Las acciones pueden alcanzar fotogramas que no aparecen en la animación ambiental.
+  const used = new Set<number>(decoded.map((_, i) => i));
   for (const frame of used) {
     const image = decoded[frame];
     const sourceFile = `reports/scenes/layers/000/animation-${bank}-${frame}.png`;
@@ -185,7 +192,7 @@ Object.assign(
       assets: dungeonAssets,
       cyclePulses: 5,
       referenceHz: 70,
-      scope: 'Initial DUNGEON channels only; no interactions or dynamic handlers',
+      scope: 'DUNGEON initial and action programs; native action trace exported separately',
     },
   },
 );
@@ -402,6 +409,7 @@ await writeFile(
       presentation,
       presentationPlayback,
       actorPrograms: dungeon.programs,
+      dungeon: { memory: dungeonActions.memory, banks: dungeonActions.banks },
       scenes,
       player,
       originalHud,

@@ -10,6 +10,7 @@ export interface ActorPrograms {
   collision: number;
   pendingRoom: number | null;
   sounds: number[];
+  spriteBanks?: Record<number, number>;
 }
 const word = (actor: number[], at: number) => actor[at] | (actor[at + 1] << 8);
 const signed = (n: number) => (n << 16) >> 16;
@@ -150,8 +151,20 @@ export function tickOriginalActors(state: ActorPrograms) {
             state.collision = value === 250 ? 1 : 0;
             continue;
           }
-          if (value === 248)
-            throw new Error('Actor sprite bank switch not yet verified in this profile');
+          if (value === 248) {
+            const mode = read();
+            if (!state.spriteBanks)
+              throw new Error('Actor bank switch requires a verified bank profile');
+            state.bank = mode;
+            const period = mode === 255 ? 1 : 2;
+            actor[20] = actor[19] = period;
+            actor[25] = actor[30] = period;
+            const bank = mode === 255 ? 20480 : mode === 254 ? 24576 : 16384;
+            if (mode !== 255 && mode !== 254 && state.spriteBanks[mode] === undefined)
+              throw new Error('Missing verified actor bank');
+            setWord(actor, 31, bank);
+            continue;
+          }
           let frame = value;
           if (value === 247) {
             const range = read(),
@@ -164,7 +177,10 @@ export function tickOriginalActors(state: ActorPrograms) {
           }
           if (value === 246) state.pendingRoom = frame = read();
           actor[1] = frame;
-          const dimensions = state.dimensions[`${word(actor, 31)}:${frame & 127}`];
+          const rawBank = word(actor, 31);
+          const visualBank =
+            rawBank === 16384 ? (state.spriteBanks?.[state.bank] ?? rawBank) : rawBank;
+          const dimensions = state.dimensions[`${visualBank}:${frame & 127}`];
           if (!dimensions) throw new Error('Unverified actor frame dimensions');
           setWord(actor, 6, dimensions[0]);
           setWord(actor, 8, dimensions[1]);

@@ -62,6 +62,8 @@ try {
     'trace-startup',
     'trace-dungeon',
     'trace-original-hud',
+    'trace-dungeon-actions',
+    'trace-dungeon-boundaries',
     'trace-game-clock',
     'trace-ambient',
   ]) {
@@ -83,6 +85,14 @@ try {
     'exec',
     'tsx',
     '../../tools/reverse-engineering/verify-ambient.mts',
+  ]);
+  run(process.execPath, [
+    pnpm,
+    '--filter',
+    '@curse/asset-extractor',
+    'exec',
+    'tsx',
+    '../../tools/reverse-engineering/verify-dungeon-actions.mts',
   ]);
   for (const name of ['scene-layers', 'navigation-verify', 'prepare-playtest']) packageStep(name);
   console.log('\nRecursos locales preparados. Ejecuta pnpm dev. Tus remasters se han conservado.');

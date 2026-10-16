@@ -54,9 +54,10 @@ export function startOriginalWalk(
   actor: WalkActor,
   target: { x: number; y: number },
   data: WalkProfile,
+  size = { width: 32, height: 48 },
 ) {
-  const dx = Math.trunc(target.x) - actor.x - 15,
-    dy = Math.trunc(target.y) - actor.y - 47;
+  const dx = Math.trunc(target.x) - actor.x - (Math.floor(size.width / 2) - 1),
+    dy = Math.trunc(target.y) - actor.y - size.height + 1;
   const horizontal = Math.abs(dx) >= Math.abs(dy);
   let steps = horizontal ? ((Math.abs(dx) >> 1) + 1) >> 1 : (Math.abs(dy) + 1) >> 1;
   if (!steps) return;

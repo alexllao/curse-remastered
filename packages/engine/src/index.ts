@@ -31,3 +31,6 @@ export * from './original-walk.js';
 export * from './scene-order.js';
 
 export * from './actor-program.js';
+
+export * from './dungeon.js';
+export * from './original-action-menu.js';

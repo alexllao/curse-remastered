@@ -1,6 +1,18 @@
 import { chooseFrame } from './frame-layout.js';
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
+  createDungeon,
+  performDungeonAction,
+  tickDungeon,
+  walkDungeon,
+  dungeonInventory,
+  dungeonNearby,
+  dungeonByte,
+  dungeonWord,
+  OriginalActionMenu,
+  type DungeonState,
+  type DungeonProfile,
+  type ActionCommand,
   originalActorOrder,
   originalActorView,
   tickOriginalActors,
@@ -82,6 +94,7 @@ interface Manifest {
   };
   navigationProfile: WalkProfile;
   actorPrograms: number[];
+  dungeon: DungeonProfile;
   originalHud: OriginalHudAssets;
 }
 const resourceLoading = document.querySelector<HTMLDivElement>('#resource-loading')!;
@@ -421,7 +434,23 @@ async function start() {
   world.hitArea = new Rectangle(0, 0, 320, 200);
   world.cursor = 'pointer';
   const decorativeFrames = new DecorativeFrames();
-  app.stage.addChild(world, decorativeFrames.layer);
+  const cursorVisuals = await Promise.all(
+    (manifest.originalHud.cursors ?? []).map((asset) =>
+      loadVisual(asset, { id: 'original', label: 'Original' }),
+    ),
+  );
+  const gameCursor = new Sprite();
+  gameCursor.eventMode = 'none';
+  gameCursor.visible = false;
+  let pointerOnGame = false;
+  world.on('pointermove', (event) => {
+    pointerOnGame = true;
+    gameCursor.position.copyFrom(event.global);
+  });
+  world.on('pointerout', () => {
+    pointerOnGame = false;
+  });
+  app.stage.addChild(world, decorativeFrames.layer, gameCursor);
   const fps = document.createElement('span');
   app.canvas.tabIndex = 0;
   app.canvas.setAttribute('aria-label', 'Pantalla del juego');
@@ -537,6 +566,7 @@ async function start() {
   const animationStates = new Map<number, ActorPrograms>();
   let animationState: ActorPrograms | null = null,
     animationElapsed = 0;
+  let dungeonState: DungeonState | null = null;
   let actor: WalkActor | null = null,
     cameraX = 0,
     renderCameraX = 0,
@@ -652,6 +682,8 @@ async function start() {
       !showingStatic && scene().animation ? structuredClone(scene().animation!) : null;
     if (animationState && !animationState.programs.length)
       animationState.programs = manifest.actorPrograms;
+    if (animationState && scene().id === 0)
+      dungeonState = createDungeon(animationState, manifest.dungeon);
     animationElapsed = 0;
     const spawn =
       showingStatic || scene().animation?.includePlayer ? null : scene().navigation.spawn;
@@ -671,7 +703,7 @@ async function start() {
       : actor
         ? 'Haz clic para caminar. Las acciones y salidas se señalarán sin ejecutarlas.'
         : scene().animation?.includePlayer
-          ? 'Ben empieza encadenado, como en el original. Su liberación requiere una acción todavía pendiente; las animaciones de la sala ya avanzan.'
+          ? 'Clic derecho para abrir las acciones originales. Los objetos disponibles dependen de la posición y del estado de la sala.'
           : scene().navigation.entryStatus === 'hidden-player'
             ? 'El original oculta a Ben en esta pantalla. Vista del escenario sin paseo.'
             : 'Secuencia especial pendiente de reproducir. Vista del escenario sin paseo libre.';
@@ -706,7 +738,11 @@ async function start() {
     ben.visible = actor !== null;
     if (animatedBen) {
       ben.visible = !!animatedBen.flags && !(animatedBen.flags & 2) && animatedBen.frame !== 255;
-      ben.texture = layerView.texture(animatedBen.frame & 127, animatedBen.bank);
+      const bank =
+        animatedBen.bank === 16384
+          ? (animationState?.spriteBanks?.[animationState.bank] ?? 16384)
+          : animatedBen.bank;
+      ben.texture = layerView.texture(animatedBen.frame & 127, bank);
       ben.width = animatedBen.width;
       ben.height = animatedBen.height;
       ben.scale.x = Math.abs(ben.scale.x) * (animatedBen.frame & 128 ? -1 : 1);
@@ -920,14 +956,56 @@ async function start() {
     if (menuOpen || changing || selectingPack || transition || showingStatic || scene().id !== 0)
       return;
     if (!animationState?.controls[1]) return;
-    originalHud.open(x, y);
+    actionMenu.reset();
+    originalHud.open(x, y, actionMenu.cells());
     sync();
     elapsed = animationElapsed = 0;
     app.canvas.focus({ preventScroll: true });
   }
+  const actionMenu = new OriginalActionMenu({
+    inventory: () => (dungeonState ? dungeonInventory(dungeonState) : []),
+    nearby: (mask) => (dungeonState ? dungeonNearby(dungeonState, mask) : []),
+    vocabulary: () =>
+      dungeonState
+        ? Array.from({ length: 10 }, (_, i) => dungeonWord(dungeonState!, 0x5239 + i * 2)).filter(
+            (n) => n !== 65535,
+          )
+        : [],
+    icon: (item) => (dungeonState ? dungeonByte(dungeonState, 0x524e + item * 2) : 0),
+    blocked: () =>
+      !!animationState &&
+      (animationState.actors[0][16] !== 0 || animationState.actors[0][17] !== 0),
+    execute: executeOriginalAction,
+  });
+  function executeOriginalAction(command: ActionCommand) {
+    if (!dungeonState) return;
+    const { item, other, verb } = command;
+    let action: Parameters<typeof performDungeonAction>[1] | undefined;
+    if (command.kind === 'talk') action = item === 0 ? 'help' : 'hello';
+    if (command.kind === 'take')
+      action =
+        item === 1 ? 'take-key' : item === 3 ? 'take-clip' : item === 5 ? 'take-coin' : undefined;
+    if (command.kind === 'use') {
+      if (verb === 0 && ((item === 0 && other === 1) || (item === 1 && other === 0)))
+        action = 'unlock-chains';
+      if (verb === 0 && ((item === 4 && other === 3) || (item === 3 && other === 4)))
+        action = 'unlock-door';
+      if (verb === 2 && item === 2) action = 'push-wall';
+    }
+    if (action) performDungeonAction(dungeonState, action, manifest.navigationProfile);
+    else if (command.kind === 'disk')
+      notifyGame('Guardar y cargar todavía no están implementados.');
+    else if (command.kind === 'info')
+      notifyGame(`Puntuación · ${dungeonWord(dungeonState, 0x35c7)}`);
+    else dungeonState.cursor = 'failure';
+    sync();
+  }
   function selectOriginalHud() {
-    const action = originalHud.select();
-    if (action !== null) notifyGame('Esta acción todavía no está disponible.');
+    const index = originalHud.select();
+    if (index === null) return;
+    if (actionMenu.select(index)) originalHud.close();
+    else originalHud.setEntries(actionMenu.cells());
+    sync();
   }
   app.canvas.addEventListener('contextmenu', (event) => event.preventDefault());
   world.on('rightclick', (event) => {
@@ -974,6 +1052,11 @@ async function start() {
     const local = world.toLocal(event.global),
       point = { x: Math.trunc(local.x + renderCameraX), y: Math.trunc(local.y) };
     if (point.x < 0 || point.x >= scene().background.width || point.y < 0 || point.y >= 200) return;
+    if (scene().id === 0 && dungeonState) {
+      walkDungeon(dungeonState, point, manifest.navigationProfile);
+      animationElapsed = 0;
+      return;
+    }
     if (!actor) {
       describe();
       return;
@@ -991,6 +1074,18 @@ async function start() {
     status.textContent = 'Probando el recorrido de Ben…';
   });
   app.ticker.add((ticker) => {
+    decorativeFrames.tick(ticker.elapsedMS);
+    originalHud.tick(ticker.elapsedMS);
+    const customCursor = !menuOpen && !showingStatic && scene().id === 0 && !!dungeonState;
+    const cursorIndex =
+      dungeonState?.cursor === 'success' ? 1 : dungeonState?.cursor === 'failure' ? 2 : 0;
+    const cursorVisual = cursorVisuals[cursorIndex];
+    gameCursor.visible = customCursor && pointerOnGame && !!cursorVisual;
+    world.cursor = customCursor && cursorVisual ? 'none' : 'pointer';
+    if (gameCursor.visible) {
+      gameCursor.texture = cursorVisual.texture;
+      gameCursor.scale.copyFrom(world.scale);
+    }
     fpsElapsed += ticker.elapsedMS;
     fpsFrames++;
     if (fpsElapsed >= 500) {
@@ -1048,8 +1143,16 @@ async function start() {
       animationElapsed += Math.min(ticker.deltaMS, 100);
       while (animationElapsed >= gameCycleMs) {
         animationElapsed -= gameCycleMs;
-        tickOriginalActors(animationState);
+        if (scene().id === 0 && dungeonState)
+          tickDungeon(dungeonState, manifest.navigationProfile, scene().navigation.regions);
+        else tickOriginalActors(animationState);
         for (const id of animationState.sounds) sounds.play(id);
+      }
+      if (scene().id === 0 && dungeonState) {
+        if (dungeonState.exited) {
+          const corridor = manifest.scenes.findIndex((s) => s.id === 1);
+          if (corridor >= 0) void show(staticScreens.length + corridor, pack);
+        }
       }
       sync();
     }
