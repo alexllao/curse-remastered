@@ -10,7 +10,7 @@ import json, hashlib
 ROOT = Path(__file__).resolve().parents[1]
 DEST = ROOT/'reports/remaster/dungeon/referencias'
 DEST.mkdir(parents=True,exist_ok=True)
-original=ROOT/'mods/graficos/original'
+original=ROOT/'assets/original/graficos'
 background=Image.open(original/'fondos/000-DUNGEON.png').convert('RGBA')
 background.resize((1920,1200),Image.Resampling.NEAREST).save(DEST/'fondo-original-x6.png')
 background.crop((265,70,315,171)).resize((300,606),Image.Resampling.NEAREST).save(DEST/'pared-derecha-original-x6.png')
@@ -45,7 +45,7 @@ for name,group in groups.items():
 
 root=ROOT
 ref=root/'reports/remaster/dungeon/referencias'
-original=root/'mods/graficos/original'
+original=root/'assets/original/graficos'
 metadata=json.loads((ref/'atlases.json').read_text())
 menu=Image.open(original/'interfaz/hud/MENU.png').convert('RGBA')
 sheet=Image.new('RGBA',(960,384))

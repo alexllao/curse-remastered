@@ -25,8 +25,8 @@ function header() {
 test('agrupa variantes del marco sin confundirlas con escenarios o paquetes', () =>
   fixture(async (root) => {
     for (const pack of ['original', 'remaster', 'remaster2']) {
-      await mkdir(join(root, pack, 'marcos'), { recursive: true });
-      await writeFile(join(root, pack, 'marcos', 'castillo.png'), header());
+      await mkdir(join(root, pack, 'graficos', 'marcos'), { recursive: true });
+      await writeFile(join(root, pack, 'graficos', 'marcos', 'castillo.png'), header());
       await writeFile(join(root, pack, 'fondo.png'), header());
     }
     const result = await framesCatalog(root);
@@ -37,7 +37,7 @@ test('agrupa variantes del marco sin confundirlas con escenarios o paquetes', ()
   }));
 test('respeta las bandas declaradas e ignora metadatos inválidos y falsos PNG', () =>
   fixture(async (root) => {
-    const directory = join(root, 'original', 'marcos');
+    const directory = join(root, 'original', 'graficos', 'marcos');
     await mkdir(directory, { recursive: true });
     for (const file of ['Piedra y oro.png', 'fuera.png', 'nulo.png'])
       await writeFile(join(directory, file), header());

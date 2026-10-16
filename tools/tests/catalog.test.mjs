@@ -17,11 +17,11 @@ async function fixture(run) {
 }
 test('descubre versiones, prefiere audio a MIDI y no inventa asociaciones', () =>
   fixture(async (root) => {
-    await mkdir(join(root, 'original'));
-    await mkdir(join(root, 'cinematic'));
-    await writeFile(join(root, 'original', 'CURSE.RS1.mid'), 'fixture');
-    await writeFile(join(root, 'original', 'CURSE.RS1.ogg'), 'fixture');
-    await writeFile(join(root, 'cinematic', 'CURSE.RS1.mp3'), 'fixture');
+    await mkdir(join(root, 'original', 'musica'), { recursive: true });
+    await mkdir(join(root, 'cinematic', 'musica'), { recursive: true });
+    await writeFile(join(root, 'original', 'musica', 'CURSE.RS1.mid'), 'fixture');
+    await writeFile(join(root, 'original', 'musica', 'CURSE.RS1.ogg'), 'fixture');
+    await writeFile(join(root, 'cinematic', 'musica', 'CURSE.RS1.mp3'), 'fixture');
     const result = await musicCatalog(root);
     assert.equal(result.versions.length, 2);
     assert.equal(result.versions[0].tracks.length, 1);
@@ -30,8 +30,8 @@ test('descubre versiones, prefiere audio a MIDI y no inventa asociaciones', () =
   }));
 test('solo utiliza el mapa explícito y conserva nombres con espacios', () =>
   fixture(async (root) => {
-    await mkdir(join(root, 'medieval'));
-    await writeFile(join(root, 'medieval', 'CURSE RS1.mp3'), 'fixture');
+    await mkdir(join(root, 'medieval', 'musica'), { recursive: true });
+    await writeFile(join(root, 'medieval', 'musica', 'CURSE RS1.mp3'), 'fixture');
     await writeFile(join(root, 'music.json'), JSON.stringify({ contexts: { title: 'CURSE RS1' } }));
     const result = await musicCatalog(root);
     assert.equal(result.contexts.title, 'CURSE RS1');
@@ -47,34 +47,37 @@ test('sonidos ausentes son opcionales; los eventos solo enlazan archivos existen
       JSON.stringify({ events: { 7: 'puerta.ogg', 8: '../fuera.wav', 9: 'ausente.ogg' } }),
     );
     const result = await soundsCatalog(root);
-    assert.equal(result.events['42'], '/sonidos/original/42.wav');
-    assert.equal(result.events['7'], '/sonidos/original/puerta.ogg');
+    assert.equal(result.events['42'], '/original/sonidos/42.wav');
+    assert.equal(result.events['7'], '/original/sonidos/puerta.ogg');
     assert.equal(result.events['8'], undefined);
     assert.equal(result.events['9'], undefined);
   }));
 
 test('detecta paquetes de efectos y mantiene separados sus eventos', () =>
   fixture(async (root) => {
-    await mkdir(join(root, 'original'));
-    await mkdir(join(root, 'restaurados'));
-    await writeFile(join(root, 'original', '42.wav'), 'fixture');
-    await writeFile(join(root, 'restaurados', '42.ogg'), 'fixture');
+    await mkdir(join(root, 'original', 'sonidos', 'sonidos'), { recursive: true });
+    await mkdir(join(root, 'restaurados', 'sonidos', 'sonidos'), { recursive: true });
+    await writeFile(join(root, 'original', 'sonidos', '42.wav'), 'fixture');
+    await writeFile(join(root, 'restaurados', 'sonidos', '42.ogg'), 'fixture');
     const result = await soundPacksCatalog(root);
-    assert.equal(result.events['42'], '/sonidos/original/42.wav');
+    assert.equal(result.events['42'], '/original/sonidos/42.wav');
     assert.equal(
       result.versions.find((v) => v.id === 'restaurados').events['42'],
-      '/sonidos/restaurados/42.ogg',
+      '/restaurados/sonidos/42.ogg',
     );
   }));
 
 test('los mapas explícitos admiten subcarpetas verificadas y mantienen eventos por sala', () =>
   fixture(async (root) => {
-    await mkdir(join(root, 'original', 'verificados'), { recursive: true });
-    await writeFile(join(root, 'original', 'verificados', 'ayuda original.wav'), 'fixture');
-    await writeFile(join(root, 'original', 'verificados', 'puerta.wav'), 'fixture');
+    await mkdir(join(root, 'original', 'sonidos', 'verificados'), { recursive: true });
+    await writeFile(
+      join(root, 'original', 'sonidos', 'verificados', 'ayuda original.wav'),
+      'fixture',
+    );
+    await writeFile(join(root, 'original', 'sonidos', 'verificados', 'puerta.wav'), 'fixture');
     await writeFile(join(root, 'fuera.wav'), 'fixture');
     await writeFile(
-      join(root, 'original', 'sounds.json'),
+      join(root, 'original', 'sonidos', 'sounds.json'),
       JSON.stringify({
         events: { 0: 'verificados/ayuda original.wav', 8: '../fuera.wav', 9: '/fuera.wav' },
         priorities: { 0: 255, 8: 50 },
@@ -82,11 +85,11 @@ test('los mapas explícitos admiten subcarpetas verificadas y mantienen eventos 
       }),
     );
     const result = await soundPacksCatalog(root);
-    assert.equal(result.events['0'], '/sonidos/original/verificados/ayuda%20original.wav');
+    assert.equal(result.events['0'], '/original/sonidos/verificados/ayuda%20original.wav');
     assert.equal(result.events['8'], undefined);
     assert.equal(result.events['9'], undefined);
     assert.equal(result.events['15'], undefined);
     assert.equal(result.priorities['0'], 255);
-    assert.equal(result.scenes['0'].events['15'], '/sonidos/original/verificados/puerta.wav');
+    assert.equal(result.scenes['0'].events['15'], '/original/sonidos/verificados/puerta.wav');
     assert.equal(result.versions[0].scenes['0'].priorities['15'], 100);
   }));

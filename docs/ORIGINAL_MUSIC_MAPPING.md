@@ -12,11 +12,11 @@ Se han recibido cinco archivos MIDI reconstruidos de `CURSE.RS1`–`CURSE.RS5`, 
 | CURSE.RS4     | CURSE.RS4.mid    | Pendiente                | Provisional     |
 | CURSE.RS5     | CURSE.RS5.mid    | Pendiente                | Provisional     |
 
-Las escuchas MT-32 generadas preservan los tiempos de esos MIDI. No confirman los tiempos del RS original ni la inicialización específica de instrumentos/canales del juego. El código del sintetizador, los archivos generados y sus hashes se mantienen localmente en `reports/` y `mods/`.
+Las escuchas MT-32 generadas preservan los tiempos de esos MIDI. No confirman los tiempos del RS original ni la inicialización específica de instrumentos/canales del juego. El código del sintetizador, los archivos generados y sus hashes se mantienen localmente en `reports/` y `assets/`.
 
 ## Mapa de configuración local
 
-`mods/musica/music.json` puede declarar `contexts`, que asocia un contexto con un identificador de tema. Los contextos reconocidos son `core`, `title`, `intro`, `game` y `scene:N`, con N igual al identificador de recurso 0–77. `game` actúa como respaldo general cuando no hay una asociación concreta. Las extensiones de archivo no forman parte del identificador.
+`assets/<versión>/musica/music.json` puede declarar `contexts`, que asocia un contexto con un identificador de tema. Los contextos reconocidos son `core`, `title`, `intro`, `game` y `scene:N`, con N igual al identificador de recurso 0–77. `game` actúa como respaldo general cuando no hay una asociación concreta. Las extensiones de archivo no forman parte del identificador.
 
 El mapa inicial está vacío hasta verificar las asociaciones. El selector manual permite escuchar los temas sin afirmar que corresponden a una escena. Una configuración del usuario es una elección explícita; para documentarla como original deberá incluirse evidencia del ejecutable o de una captura reproducible.
 

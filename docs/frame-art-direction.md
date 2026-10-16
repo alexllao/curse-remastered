@@ -17,7 +17,7 @@ Un panel cuadrado aislado, con un reborde estrecho en el lado derecho y decoraci
 
 Solicitar la máxima calidad, normalmente 2048 × 2048, y comprobar la resolución entregada. El objetivo aceptado para Remaster es al menos 1200 píxeles reales de altura. Registrar tamaño solicitado, tamaño real, SHA-256 y prompt. No ampliar artificialmente un PNG pequeño y describirlo como detalle de mayor resolución.
 
-Guardar como `mods/graficos/original/marcos/default.png` y `mods/graficos/remaster/marcos/default.png`, con sus respectivos `.png.json`. Los paneles se adaptan a distintas proporciones de monitor mediante recorte y escala uniforme, sin alterar las coordenadas lógicas 320 × 200. Mostrar solo en pantalla completa y cuando el jugador lo active.
+Guardar como `assets/original/graficos/marcos/default.png` y `assets/remaster/graficos/marcos/default.png`, con sus respectivos `.png.json`. Los paneles se adaptan a distintas proporciones de monitor mediante recorte y escala uniforme, sin alterar las coordenadas lógicas 320 × 200. Mostrar solo en pantalla completa y cuando el jugador lo active.
 
 ## Prompt base de generación
 
@@ -49,3 +49,9 @@ Requested 2048x2048, minimum1200 pixels tall, genuine alpha transparency.
 ```
 
 Los prompts exactos de cada generación, incluidos los de las propuestas anteriores, se conservan en `reports/referencias/marcos/prompts/`, fuera de Git. Esta guía se versiona para poder reproducir la intención artística desde una copia nueva del repositorio.
+
+## Revisión pintada del marco de mazmorra — 16/10/2026
+
+Se sustituye exclusivamente la variante remaster de mazmorra por una interpretación pintada, usando castillo como referencia de acabado. Se mantienen motivos, contexto scene:0 y reflejo del panel; castillo, bosque, default y la variante original no se modifican. Entrega real1254×1254, sin ampliación, con alpha real. Se guarda copia previa y prompt exacto en reports/referencias/marcos/.
+
+Use case: style-transfer. Image1 is the DUNGEON SIDE PANEL edit target. Image2 CASTLE SIDE PANEL is the approved ART STYLE reference only. Repaint image1 in exactly image2's charming stylized hand-painted 2D fantasy adventure rendering: broad designed brush strokes, simplified readable blue-grey stone forms, clear painted contours, deliberately illustrated ironwork, restrained highlights. REMOVE gritty photographic microtexture, realistic rusty PBR metal, photoreal lighting, cinematic gloss. Preserve image1's exact square composition: broad quiet stone wall on LEFT, its three horizontal iron straps and small hanging shackles, narrow full-height carved jamb on extreme RIGHT with one small torch. Preserve motif placements, right inner contour and genuinely transparent thin right edge; no black shadow/backing. Keep subdued blue-grey dungeon palette and a small warm painted torch, visually coherent with Curse of Enchantia and image2. Do not borrow castle jewels/stars or add objects. No characters, logos, text, top/bottom bars or central opening. Single square panel, requested2048x2048, at least1200pixels tall, maximum detail in PAINTED artwork, not realism. Genuine alpha transparency at right edge. Output only edited image1 panel.

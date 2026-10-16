@@ -4,6 +4,7 @@ import { join } from 'node:path';
 const priorities = ['.ogg', '.opus', '.mp3', '.m4a', '.wav', '.flac', '.aac', '.mid', '.midi'];
 const labels = {
   original: 'Original',
+  remaster: 'Remaster',
   medieval: 'Medieval',
   cinematic: 'Cinematic',
   symphonic: 'Symphonic',
@@ -31,7 +32,7 @@ export async function musicCatalog(root) {
   for (const folder of await entries(root)) {
     if (!folder.isDirectory() || folder.name.startsWith('.')) continue;
     const selected = new Map();
-    for (const file of await entries(join(root, folder.name))) {
+    for (const file of await entries(join(root, folder.name, 'musica'))) {
       if (!file.isFile() || file.name.startsWith('.')) continue;
       const dot = file.name.lastIndexOf('.'),
         extension = file.name.slice(dot).toLowerCase();
@@ -40,7 +41,7 @@ export async function musicCatalog(root) {
       const track = {
         id,
         label: file.name.slice(0, dot),
-        file: `/musica/${encodeURIComponent(folder.name)}/${encodeURIComponent(file.name)}`,
+        file: `/${encodeURIComponent(folder.name)}/musica/${encodeURIComponent(file.name)}`,
         midi: extension === '.mid' || extension === '.midi',
       };
       const previous = selected.get(id);
@@ -48,7 +49,7 @@ export async function musicCatalog(root) {
         selected.set(id, { track, priority: priorities.indexOf(extension) });
     }
     if (!selected.size) continue;
-    const info = await metadata(join(root, folder.name, 'version.json'));
+    const info = await metadata(join(root, folder.name, 'musica', 'version.json'));
     versions.push({
       id: folder.name,
       label:

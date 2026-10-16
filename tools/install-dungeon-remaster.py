@@ -12,8 +12,8 @@ import shutil
 
 ROOT=Path(__file__).resolve().parents[1]
 REPORT=ROOT/'reports/remaster/dungeon'
-ORIGINAL=ROOT/'mods/graficos/original'
-OUTPUT=ROOT/'mods/graficos/remaster'
+ORIGINAL=ROOT/'assets/original/graficos'
+OUTPUT=ROOT/'assets/remaster/graficos'
 
 
 def digest(data):
@@ -156,7 +156,7 @@ def main():
                         i=ids.index(index);tw=override.width//cols;th=override.height//((len(ids)+cols-1)//cols)
                         cell=override.crop(((i%cols)*tw,(i//cols)*th,(i%cols+1)*tw,(i//cols+1)*th))
                         replacement=corrections[key]
-                natural=group in ('hud','cursores-aspa','cadenas') or (group=='guardia' and 'guardia' in corrections) or replacement is not None or (group=='efectos' and entry['frame']==41) or (group=='rata-cara' and 48<=entry['frame']<=53)
+                natural=group in ('hud','cursores-aspa','cadenas') or (group=='guardia' and 'guardia' in corrections) or replacement is not None or (group=='efectos' and entry['frame']==41) or (group=='rata-cara' and 48<=entry['frame']<=53) or (group=='piedra-puerta' and 12<=entry['frame']<=16)
                 if natural:
                     if group=='rata-cara':cell=clean_alpha_islands(cell)
                     if cell.getchannel('A').getextrema()[0]>=250:

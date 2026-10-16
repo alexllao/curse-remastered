@@ -26,7 +26,7 @@ Ben es un joven de pelo medio rojizo/cobrizo con flequillo visible. No lleva gor
 
 ## Referencias y revisión
 
-Guardar referencias, atlas de entrada, salidas del generador, versiones previas e informes en `reports/remaster/`. Las entregas activas van en `mods/graficos/remaster/` con la ruta del original. Los gráficos, aunque estén generados o modificados mediante IA, permanecen fuera de Git.
+Guardar referencias, atlas de entrada, salidas del generador, versiones previas e informes en `reports/remaster/`. Las entregas activas van en `assets/remaster/graficos/` con la ruta del original. Los gráficos, aunque estén generados o modificados mediante IA, permanecen fuera de Git.
 
 Primero comprobar resolución, alpha y correspondencia de fotogramas; después probar F2 y todas las acciones de la sala. Una máscara correcta no certifica por sí sola la calidad de la pintura ni todos los apoyos del fondo. Registrar cualquier diferencia pendiente sin darla por validada.
 

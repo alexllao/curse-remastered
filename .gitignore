@@ -8,4 +8,5 @@ __pycache__/
 
 # Todos los recursos locales, originales y derivados.
 mods/*
-!mods/README.md
+assets/*
+!assets/README.md

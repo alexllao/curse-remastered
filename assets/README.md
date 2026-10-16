@@ -1,163 +1,85 @@
 # Recursos locales del juego
 
-Los gráficos, la música, los sonidos y sus derivados son locales y permanecen fuera de Git. Solo se versiona este documento. No publiques una compilación que incluya estos gráficos.
-
-## Carpetas y nombres
+Cada carpeta agrupa una versión, y dentro se separan sus gráficos, música y sonidos. **Los archivos originales y derivados no se suben a Git.** Aquí solo se versiona este README.
 
 ```text
-mods/
-  graficos/
-    original/fondos/070-STUDY.png
-    remaster/fondos/070-STUDY.png
-    remaster2/fondos/070-STUDY.png
-  musica/
-    original/CURSE.RS1.mid
-    original/CURSE.RS1.ogg
-    medieval/CURSE.RS1.mp3
-    cinematic/CURSE.RS1.mp3
-    symphonic/CURSE.RS1.mp3
-  sonidos/original/
+assets/
+  original/
+    graficos/
+      fondos/
+      escenario/
+      ben/
+      interfaz/
+      presentacion/
+      arranque/
+      marcos/
+    musica/
+      CURSE.RS1.mid
+      CURSE.RS1.ogg
+      ...
+    sonidos/
+      sounds.json
+      verificados/
+      ...
+  remaster/
+    graficos/
+      fondos/
+      escenario/
+      interfaz/
+      presentacion/
+      marcos/
+    sonidos/
+    musica/
+      CURSE.RS1.mp3
+      ...
 ```
 
-Las referencias, los prompts y los descartes están en `reports/referencias/`. El manifiesto del juego se genera en `reports/playtest/manifest.json`. La copia DOS de los disquetes se conserva en `original/`, en la raíz del repositorio. Esa carpeta no contiene aportaciones, prototipos ni ROM externas; véase [la guía de originales](../docs/original-files.md).
+`remaster` es el nombre del paquete mejorado de respaldo, también para los sonidos. No se usa `remastered` como nombre alternativo. Puedes añadir `assets/remaster2/graficos/`, `assets/storybook/musica/` u otra versión sin tener que aportar los tres tipos de recurso.
 
-La web carga los recursos necesarios y abre TITLE con el menú. Permite elegir gráficos, música y efectos. RS5 suena en bucle a volumen reducido en el menú; si el navegador bloquea el audio basta un primer clic o tecla. «Comenzar partida» desvanece la música y arranca CORE → TITLE → presentación → DUNGEON, con las esperas e intervalos contrastados; TITLE espera la entrada del jugador sin botones web de continuar. La liberación de Ben y las interacciones siguen pendientes. «Depuración» muestra el catálogo de pantallas, límites y panoramas; F3 y las flechas solo actúan en ese modo.
+## Qué guardar en cada sitio
 
-La música se detecta al cargar y con «Actualizar música». Las carpetas vacías no aparecen como versiones disponibles. El audio generado con los MIDI actuales se identifica como **Original · MT-32 provisional**. Véanse `docs/AUDIO_SYSTEM.md`, `docs/MUSIC_SYNC.md` y `docs/ORIGINAL_MUSIC_MAPPING.md`.
+- `original/` en la raíz del repositorio: únicamente los archivos DOS de los disquetes, con `CURSE.EXE` y `DATA/`. No editar ni guardar aquí PNG, música convertida, ROM externas o prototipos.
+- `assets/original/`: recursos preparados a partir de tu copia, listos para el motor. Los extractores escriben aquí; no editar manualmente sus gráficos.
+- `assets/remaster/` y otras versiones: entregas listas para usar, con los mismos nombres y rutas relativas que el original.
+- `reports/`: extracciones intermedias, referencias, descartes, aportaciones e informes. Las ROM opcionales se conservan en `reports/audio/roms/` y no se sirven a la web.
+- `docs/`: investigación, criterios artísticos y prompts versionados.
 
-`graficos/original/` contiene las copias preparadas a partir de la extracción: no editarlas. `graficos/remaster/` es el paquete mejorado de respaldo. Puedes crear otra carpeta con el nombre que quieras, por ejemplo `remaster2`, y poner dentro imágenes con **la misma ruta y nombre** que sus originales. Puede estar incompleta o vacía.
+Por ejemplo, `assets/original/graficos/fondos/000-DUNGEON.png` corresponde a `assets/remaster/graficos/fondos/000-DUNGEON.png`. El original lógico320×200 se remasteriza habitualmente a1920×1200 (×6). Un panorama conserva su ancho completo. Los sprites conservan su propio lienzo multiplicado por seis y sus anclajes; no todos miden1920×1200.
 
-En desarrollo, F2 vuelve a consultar las carpetas en cada pulsación. Detecta las carpetas directas de `mods/graficos/`, salvo `original`, la antigua `escalado` y los nombres que empiezan por punto. Original y Remaster siempre aparecen. Los demás paquetes se ordenan por nombre. Una compilación guarda la lista disponible al compilar: para añadir carpetas nuevas después, hay que volver a compilar.
+Ben mantiene sus sprites originales hasta que se apruebe sustituirlos. Aplicar la [dirección artística](../docs/ESTILO_ARTISTICO.md) a fondos, objetos, HUD, cursores y marcos.
 
-## Carga y comparación
+## Detección de versiones
 
-- **F2:** siguiente paquete gráfico; conserva la escena y el encuadre.
-- **F3 / Mayús+F3 (depuración):** escenario siguiente / anterior entre los 78 fondos.
-- **Flechas izquierda / derecha (depuración):** desplazar la cámara en un panorama.
-- **FPS:** contador en la esquina superior derecha.
+Los selectores son independientes: gráficos descubre las subcarpetas `graficos/`, música las `musica/` con pistas y efectos las `sonidos/` con audio. Una versión solo musical no aparece en F2. Los marcos se guardan en `assets/<versión>/graficos/marcos/`, con su PNG y el `.png.json` correspondiente.
 
-Cada recurso usa el primer PNG válido de **paquete seleccionado → remaster → original**. El modo Original carga directamente el original. Si falta una imagen, falla su carga o tiene una proporción incompatible, se intenta el respaldo. Los originales usan vecino más cercano, sin interpolación; los fondos HD usan muestreo lineal para adaptarse a la ventana. No hay un modo intermedio de escalado.
+F2 cambia los gráficos durante la partida y vuelve a consultar las versiones. La búsqueda por imagen sigue **versión elegida → remaster → original**. Original carga directamente el original. Las versiones parciales conservan ese respaldo. Al compilar se fija el catálogo disponible: vuelve a compilar para añadir versiones a una compilación existente.
 
-Por decisión del usuario, **todos los sprites de Ben permanecen originales**. La propuesta descartada está en `reports/referencias/ben-frente-descartado.png`, fuera de las rutas de carga. No se encargan sprites nuevos por ahora.
+Las pistas conservan sus identificadores, por ejemplo `CURSE.RS1.mp3`. Cada versión puede incluir `musica/version.json` con su etiqueta. El mapa global opcional es `assets/music.json`; no se adivinan asociaciones por orden de archivos. Los efectos usan `sonidos/sounds.json` con eventos explícitos; un WAV experimental no queda validado por estar en Original. Véanse [audio](../docs/AUDIO_SYSTEM.md) y [asociaciones musicales](../docs/ORIGINAL_MUSIC_MAPPING.md).
 
-## Cómo preparar un fondo
+## Preparación y migración
 
-1. Usa como referencia el PNG correspondiente de `graficos/original/fondos/`.
-2. Conserva el encuadre completo, perspectiva, suelo, puertas, objetos y posiciones. No añadas personajes ni objetos. Mantén también las zonas negras que rodean algunos interiores.
-3. Guarda el resultado con la misma ruta y nombre en el paquete deseado.
-4. Pulsa F2 para salir del paquete y volver a él; compara después de mover la cámara a ambos extremos si es un panorama.
-
-No hace falta que el factor sea 2×, 3× ni 4×: se admite otra resolución con la proporción del original, con hasta dos píxeles nativos de tolerancia por redondeo. La referencia habitual es ×6: STUDY mide 320 × 200 y su remaster se prepara a 1920 × 1200. Los panoramas conservan **todo su ancho lógico**: CORRIDOR mide 1216 × 200, LAKEBED 1600 × 200 y EDGE 2144 × 200. No los fuerces a 320 × 200.
-
-Algunas propuestas generadas contienen bandas negras adicionales para alojar panoramas muy anchos. El archivo opcional `imagen.png.json`, mediante `contentRect`, indica qué región del PNG debe usar la textura. El PNG se conserva intacto y el motor comprueba tanto los límites como la proporción de esa región. Este metadato está preparado en los fondos instalados que lo necesitan; una entrega sin bandas no requiere ningún archivo adicional.
-
-## Estado artístico y revisión
-
-Se han instalado propuestas para **33 de los 78 escenarios**, correspondientes a **26 de los 57 fondos distintos**. Las imágenes idénticas del original comparten propuesta. Quedan 31 fondos distintos sin generar. El registro local `reports/referencias/background-generation.json` guarda procedencia, asociaciones, dimensiones, estado y prompts; no se versiona.
-
-La presencia de un PNG y su carga correcta no equivalen a una revisión aprobada. La IA ha desplazado detalles en varias propuestas: deberán revisarse con los recorridos originales y probablemente rehacerse. La prioridad pasa a la fidelidad del juego antes de ampliar la producción artística. Todas las propuestas, salvo la prueba visual de STUDY ya valorada por el usuario, siguen pendientes de revisión; esa valoración artística tampoco verifica su navegación.
-
-## Preparación local y límites del prototipo
+Con la copia DOS en `original/`:
 
 ```powershell
-pnpm --filter @curse/asset-extractor scene-backgrounds
-pnpm --filter @curse/asset-extractor brd-extract
-pnpm mods:prepare
+pnpm assets:prepare
 pnpm dev
 ```
 
-Abre `http://127.0.0.1:8787/`. La preparación copia los 78 fondos y los 27 fotogramas iniciales de STD.BRD. No sobrescribe los paquetes remaster ni las referencias. Si una copia original local difiere de la extracción actual, se detiene para conservarla.
-
-El paseo STD y las regiones BOXDET ya sustituyen la alfombra provisional. En 62 fondos se toma el destino de una entrada STD contrastada, después de ejecutar sus canales de entrada; 15 quedan como especiales y BASEBAT oculta a Ben, según el original. No se coloca un Ben arbitrario en esas escenas. El botón «Mostrar límites» ayuda a revisar obstáculos. La cámara sigue a Ben y desliza el panorama en ocho pasos de cuatro píxeles. Las acciones y salidas se señalan sin ejecutarse; no se permite usar objetos. Las cadencias temporales son de prueba y los scripts de sala siguen pendientes. Véase `docs/navigation.md`.
-
-Antes de `mods:prepare`, genera también los datos de navegación:
+Para reconstruir solo el manifiesto y las copias gráficas, una vez disponibles los informes de extracción y contraste:
 
 ```powershell
-pnpm --filter @curse/asset-extractor boxdet-extract
-python -m pip install --target reports/tool-deps -r tools/reverse-engineering/requirements.txt
-$env:PYTHONPATH = (Resolve-Path reports/tool-deps).Path
-python tools/reverse-engineering/trace-boxdet.py
-python tools/reverse-engineering/trace-navigation.py
-python tools/reverse-engineering/trace-scene-order.py
-pnpm --filter @curse/asset-extractor scene-layers
-pnpm --filter @curse/asset-extractor navigation-verify
+pnpm assets:playtest
 ```
 
-La preparación comprueba que los hashes del ejecutable, BOXDET y STD coincidan con la exportación.
+La preparación conserva los remasters y se detiene si una copia original preparada difiere de su extracción. El manifiesto se genera en `reports/playtest/manifest.json`.
 
-F4 y la prueba de luces se han retirado. El fondo estático, la capa reservada para futuros efectos y el personaje se mantienen separados. El manifiesto reserva `animationLayers`, pero no existe aún un reproductor de esas capas. Añadir animaciones será trabajo posterior y no exige sustituir los PNG estáticos ni cambiar las coordenadas lógicas.
+Para una instalación antigua con `mods/graficos/<versión>/`, `mods/musica/<versión>/` y `mods/sonidos/<versión>/`:
 
-## Piezas de escenario y pantalla de título
+```powershell
+node tools/migrate-assets.mjs
+node tools/migrate-assets.mjs --apply
+```
 
-La preparación incluye las piezas originales de escenario en `graficos/original/escenario/`. Se dibujan con su orden de profundidad y se restauran los primeros planos que deben ocultar a Ben. Estas piezas conservan sus gráficos originales. El visor reproduce los canales ambientales iniciales con cambios visuales contrastados en 32 recursos; todavía faltan los controladores de interacción. El uso de objetos sigue desactivado.
+Cerrar antes el servidor local. La primera ejecución solo presenta el inventario. La segunda valida las rutas, rechaza destinos ocupados, conserva los archivos y comprueba sus SHA-256. El informe queda en `reports/asset-migration/`. Los metadatos antiguos de los WAV originales quedan en `assets/original/sonidos/`.
 
-La pantalla de título se prepara como `graficos/original/interfaz/TITLE.png`, con el remaster en `graficos/remaster/interfaz/TITLE.png` (respetar mayúsculas). Es una pantalla completa de 320 × 200: ×6 corresponde a 1920 × 1200. El catálogo de depuración conserva TITLE como pantalla 0 y permite reproducir la presentación con Enter o con su botón, además de revisarla mediante F3. Los originales y los remasters proporcionados por el usuario se conservan intactos.
-
-El trabajo artístico queda aplazado mientras se comprueba el original. Las nuevas propuestas de Ben pueden guardarse en `graficos/remaster/ben/` para revisión, conservando los nombres STD; el visor mantiene los sprites originales hasta que se apruebe activarlas.
-
-## Portada e imágenes de presentación
-
-El visor empieza en `interfaz/TITLE.png` (pantalla 0). F3 recorre las 16 imágenes de presentación en el orden contrastado del ejecutable y después los 78 escenarios; el selector permite saltar directamente. El botón «Reproducir presentación» alterna los fotogramas y sus repeticiones según la traza del ejecutable. F3 permite revisarlos manualmente. Los intervalos se cuentan en retrazados VGA y se presentan usando una referencia de 70 Hz; la duración física original sigue pendiente de medir. Sin audio todavía.
-
-Originales: `mods/graficos/original/presentacion/`. Deja tus versiones en `mods/graficos/remaster/presentacion/` con el mismo nombre, respetando mayúsculas:
-
-- `CAULDRN1.png` a `CAULDRN4.png`
-- `BALCONY1.png` a `BALCONY5.png`
-- `BASEBAL1.png` a `BASEBAL6.png`
-- `BASEBAT.png`
-
-Portada: `mods/graficos/original/interfaz/TITLE.png` → `mods/graficos/remaster/interfaz/TITLE.png`. Logotipo inicial disponible en `mods/graficos/original/interfaz/CORE.png`. F2 mantiene el original cuando falta un remaster. Puedes usar un paquete alternativo como `mods/graficos/remaster2/presentacion/` con los mismos nombres.
-
-Las originales son de 320 × 200. Conserva esa proporción y el encuadre completo (ejemplos: 1920 × 1200 (×6) o 2560 × 1600 (×8)), sin mover elementos entre fotogramas. Los sprites, máscaras y objetos animados necesitan mantener su posición respecto al fondo. La navegación de las secuencias especiales sigue pendiente; no se inserta un Ben normal artificialmente.
-
-Preparación nueva: ejecutar también `trace-room-entries.py` y `trace-presentation.py` antes de `pnpm mods:prepare`, según `docs/navigation.md`. Las imágenes y el manifiesto generado permanecen excluidos de Git.
-
-La lista completa con tamaños exactos se regenera en `reports/referencias/Guia-remaster-x6.txt`. No hace falta remasterizar los PNG de `presentacion/fundidos/`: se generan automáticamente con las paletas originales. En remaster el reproductor aplica un fundido global adaptado a la nueva imagen; en Original utiliza los colores DAC capturados, sin aproximarlos mediante opacidad.
-
-Más resolución no sustituye el detalle real ni la alineación: ×6 es la referencia habitual, sin obligar al juego a una resolución fija. Los futuros paquetes de mayor resolución se compararán manteniendo la misma geometría y continuidad entre fotogramas.
-
-F2 utiliza un fundido cruzado de 320 ms entre los paquetes, conservando posición y cámara. La presentación se pausa durante ese cambio y continúa desde el mismo instante. Se respeta la preferencia de reducir movimiento del sistema.
-
-## Aportaciones y prototipos pendientes de integrar
-
-Deja los paquetes completos de animación, sus fuentes y sus instrucciones en `reports/referencias/aportaciones/`. Los paquetes recibidos de la portada se conservan como `original-animated-title/` y `remastered-animated-title/`, incluidas sus imágenes y el GIF de referencia. Sus píxeles coinciden con los TITLE ya instalados; no se sustituyen esas imágenes ni se duplican en los paquetes activos. La integración de esas nuevas animaciones queda separada de la reproducción del TITLE DOS posterior a «Comenzar partida».
-
-`mods/` contiene recursos que el juego puede utilizar. Las referencias, los prototipos sin integrar y las ROM MT-32 no se colocan aquí. Las ROM opcionales se leen desde `reports/audio/roms/`, fuera de la carpeta pública de la web.
-
-## Marcos decorativos y colección personal
-
-Las carpetas reservadas para prototipos de marcos son `mods/graficos/original/marcos/` y `mods/graficos/remaster/marcos/`. Usar el mismo nombre en ambas variantes, por ejemplo `castillo.png`. El menú incluye el selector «Marco» y la opción «Mostrar marco». Los PNG se descubren al cargar la web. Los marcos solo se muestran en pantalla completa; en ventana quedan ocultos aunque la preferencia esté activada. La variante acompaña al paquete gráfico: Original utiliza `original`; los otros paquetes buscan su propia variante y, si falta, `remaster` y después `original`. El marco ocupa los márgenes laterales y un reborde de referencia de dos píxeles lógicos sobre la imagen, compensando el margen transparente interior de cada PNG. No cambia las coordenadas, el escalado del juego ni sus zonas de clic. Se retiró la sombra artificial por petición del usuario: se conserva el relieve del PNG.
-
-Los fondos de pantalla y el arte de caja que no utiliza el juego se guardan en `reports/coleccion/fondos-de-pantalla/`, `reports/coleccion/caratulas/original/` y `reports/coleccion/caratulas/remaster/`. Las referencias de trabajo, incluida la portada aportada, permanecen en `reports/referencias/`. Conservar estas carpetas al limpiar informes: son aportaciones personales, no salidas desechables del extractor. Todo ese material queda fuera de Git.
-
-Los diseños disponibles se llaman `default.png`, `castillo.png`, `bosque.png` y `mazmorra.png`. Castillo se ha rehecho y los tres diseños remaster utilizan paneles de 1254 × 1254, conservados tal como los entregó el generador. Su resolución puede ser distinta de la del juego: los paneles se ajustan al espacio disponible. Un archivo opcional `castillo.png.json` declara `label` y los rectángulos de origen `left` y `right`, cada uno con `x`, `y`, `width` y `height`. Sin metadatos se usa el 10 % exterior de cada lado del PNG. El visor solo dibuja esos paneles, por lo que el centro no tapa la partida. En pantalla completa, si se activa un marco disponible, se reserva un pequeño margen lateral reduciendo uniformemente el juego; así también puede verse en 16:10 sin recortar la escena.
-
-Los metadatos pueden añadir `innerPadding: { "left": 0, "right": 0 }`, en píxeles de la imagen fuente, para compensar espacio transparente entre el borde del panel y su cuerpo opaco. El ajuste conserva el PNG y evita dejar franjas negras entre marco y juego. No se añade una sombra artificial.
-
-Las columnas conservan su proporción: la misma escala se aplica en horizontal y vertical, tomando la altura del juego como referencia. Se anclan al borde de la imagen sin ensancharse para rellenar todo el margen. La opción permanece guardada al salir de pantalla completa, pero la capa desaparece totalmente en ventana.
-
-### Variantes de diseño y encaje en cada pantalla
-
-Los diseños locales actuales son `default.png`, `castillo.png`, `bosque.png` y `mazmorra.png`, cada uno con versión `original` y `remaster`. La versión «original» de estos marcos es una recreación artística de estilo pixel art; no pertenece al juego DOS. Los PNG y sus metadatos permanecen fuera de Git.
-
-No hace falta duplicar el mismo diseño por cada resolución. El visor calcula el encaje para 16:10, 16:9, 21:9, 24:9, 32:9 y proporciones intermedias. Conserva la proporción 320:200 del juego y aplica una sola escala a cada panel. Al activar un marco en 16:10 reduce ligeramente el juego para reservar laterales. En ventana no reserva espacio ni muestra el marco.
-
-Los metadatos aceptan `fit: "cover"` para paneles amplios: cubren el margen con escala uniforme y recortan el exterior o el exceso vertical. El área queda limitada a la altura del juego; no invade las barras de controles. Sin esa propiedad, `fit: "height"` conserva un encaje por altura y puede dejar espacio oscuro en el exterior de monitores muy anchos. Los tres diseños instalados usan `cover`. Las resoluciones de los paneles son independientes de los 320 × 200 originales o los 1920 × 1200 del remaster. Los tres diseños remaster tienen 1254 píxeles de altura real; los primeros atlas de Bosque y Mazmorra en estilo pixel art mantienen sus 2172 × 724. No se amplían artificialmente los PNG para declarar una resolución mayor.
-
-### Un marco según el escenario
-
-El selector incluye **Automático · según escenario**. Cada archivo `nombre.png.json` puede declarar `contexts: ["scene:0"]` para asociar ese diseño a la primera sala. El identificador es el `id` del escenario en el manifiesto, no su posición en el catálogo visual. También se admiten `title`, `core` e `intro`. Utiliza la misma asociación en ambas versiones gráficas. No asignes dos diseños al mismo contexto: si ocurre, se usa el primero del catálogo ordenado por etiqueta.
-
-Mazmorra se asigna a `scene:0`. Default acompaña a la bienvenida, CORE y presentación, y sirve de marco general para las salas sin asociación. No se han inventado asociaciones para las salas sin revisar. Si falta Default, el respaldo es Castillo y después el primer diseño disponible. La selección manual fija un marco para todas las salas. Las asociaciones son decoración del port y no datos recuperados del ejecutable original. Reinicia o recarga la web tras añadir diseños o modificar sus metadatos; una compilación requiere volver a compilar.
-
-### Paneles remaster con más resolución
-
-Los remaster actuales y Castillo pixel art usan un único panel cuadrado de 1254 × 1254. Los rectángulos `left` y `right` pueden apuntar a la misma región; `mirrorRight: true` refleja horizontalmente el panel derecho al dibujarlo. Esto dedica la resolución al arte, evita desperdiciarla en un centro transparente y mantiene iguales los adornos de ambos lados. Se conserva el muestreo lineal en remaster y vecino más cercano en Original. Los prototipos anteriores se conservan en `reports/referencias/marcos/`, fuera de las carpetas activas.
-
-La referencia de calidad para nuevos paneles remaster es **al menos 1200 píxeles de altura real**, con detalle generado o dibujado a esa resolución. Aumentar solamente las dimensiones de un PNG pequeño no cumple ese objetivo. El generador entregó 1254 × 1254 frente a los 2048 × 2048 solicitados; se registra el tamaño real y no se presenta como una imagen 2K nativa. Para pantallas de 2160 píxeles de alto puede prepararse una versión de mayor resolución posteriormente.
-
-### Default y guía de estilo
-
-`default.png` es el marco general del modo Automático. Respeta «Mostrar marco», la restricción a pantalla completa y la selección manual guardada por el jugador; añadirlo no activa el marco ni cambia una elección manual anterior. Usa piedra azul, bronce antiguo, estrellas discretas y pequeños detalles de vidrio turquesa, con un lenguaje de aventura fantástica ilustrada. Original es pixel art; Remaster conserva los motivos y el encuadre en una ilustración pintada, sin acabado fotorealista, materiales PBR ni textura cinematográfica. Los otros diseños son propuestas anteriores y aún pueden necesitar una revisión de estilo para compartir ese mismo acabado.
-
-Los prompts completos y la procedencia de las generaciones se conservan localmente en `reports/referencias/marcos/prompts/`. La guía artística reutilizable, sin gráficos originales, se versiona en [docs/frame-art-direction.md](../docs/frame-art-direction.md). Las dimensiones reales y el hash de cada imagen figuran en su `default.png.json`; no confundir el tamaño solicitado al generador con su entrega real.
+No publiques una compilación que incluya recursos protegidos. La comprobación `pnpm assets:check` impide versionar originales, gráficos, audio y derivados, también dentro de `assets/`.

@@ -16,10 +16,10 @@ La vista de la barra queda separada de los controles web, del controlador compar
 ```powershell
 python tools/reverse-engineering/trace-dungeon.py
 python tools/reverse-engineering/trace-original-hud.py
-pnpm mods:prepare
+pnpm assets:playtest
 ```
 
-La preparación completa incluye la nueva traza. Los PNG se generan en `reports/interface/` y se copian a `mods/graficos/original/interfaz/hud/`. Ningún gráfico ni dato derivado se versiona.
+La preparación completa incluye la nueva traza. Los PNG se generan en `reports/interface/` y se copian a `assets/original/graficos/interfaz/hud/`. Ningún gráfico ni dato derivado se versiona.
 
 ## Comportamiento disponible
 

@@ -28,7 +28,7 @@ La sala **todavía no se considera terminada al 100 %**. La integración visual 
 - `tools/reverse-engineering/trace-dungeon-actions.py`: ejecuta rutinas originales en Unicorn con entradas explícitas, sin render ni hardware de audio. Recorre siete acciones, incluida la moneda opcional, abre la puerta y alcanza la salida.
 - `tools/reverse-engineering/verify-dungeon-actions.mts`: compara 577 ciclos de 69 registros de actor, bancos, semilla aleatoria, controles, inventario, puntuación y plantillas. Contrasta también 135 consultas de objetos y la salida al corredor.
 - `trace-dungeon.py` y `verify-dungeon.mts`: comprobación ambiental previa de 1000 ciclos.
-- Los informes, memoria extraída y gráficos se generan en `reports/` y `mods/`; permanecen fuera de Git.
+- Los informes, memoria extraída y gráficos se generan en `reports/` y `assets/`; permanecen fuera de Git.
 - El ensayo DOSBox anterior de reloj figura como inconcluso en `reports/navigation/dosbox-dungeon-probe/status.json`. No se usa como prueba de que la velocidad ya sea correcta.
 
 ## Qué es genérico y qué queda por generalizar
@@ -59,7 +59,7 @@ Este documento se versiona; los informes de ejecución, las capturas y los recur
 
 El usuario confirma que ha conseguido salir de la primera mazmorra y alcanzar la segunda. Las acciones de la segunda siguen pendientes; la prioridad continúa en la primera.
 
-Se han generado 21 WAV originales por evento en `mods/sonidos/original/verificados/`, a partir de STD.SFX y DUNGEON.SFX. La selección de muestras, cabeceras, recortes, frecuencias y prioridades se contrasta con las rutinas Sound Blaster del EXE: 21 asociaciones y 126 casos de prioridad. Los efectos de esta sala no se asignan a la siguiente. Las extracciones experimentales anteriores se conservan. La reproducción está conectada a las solicitudes de los canales originales, incluido el saludo inmediato del HUD. Falta comparar la escucha con DOSBox; no se da por completada la validación auditiva.
+Se han generado 21 WAV originales por evento en `assets/original/sonidos/verificados/`, a partir de STD.SFX y DUNGEON.SFX. La selección de muestras, cabeceras, recortes, frecuencias y prioridades se contrasta con las rutinas Sound Blaster del EXE: 21 asociaciones y 126 casos de prioridad. Los efectos de esta sala no se asignan a la siguiente. Las extracciones experimentales anteriores se conservan. La reproducción está conectada a las solicitudes de los canales originales, incluido el saludo inmediato del HUD. Falta comparar la escucha con DOSBox; no se da por completada la validación auditiva.
 
 ### Lista de comprobación manual de la primera sala
 
@@ -86,7 +86,7 @@ El cambio F2 prepara también los sprites de esta sala, el HUD y los cursores, m
 
 Se han revisado composiciones de estados originales con las piezas nuevas. Son vistas reproducibles de los recursos, **no capturas del navegador**. Queda pendiente la aceptación dentro del juego al alternar F2 y completar las acciones, especialmente la gota, el paso de la rata y las fases de rotura de la piedra. No dar por terminada esa revisión solo por cumplir tamaño y alpha.
 
-Referencias, atlas, PNG activos, copias anteriores y comprobaciones permanecen fuera de Git. La carpeta `mods/` solo contiene las entregas activas; las versiones intermedias se conservan en `reports/remaster/dungeon/`.
+Referencias, atlas, PNG activos, copias anteriores y comprobaciones permanecen fuera de Git. La carpeta `assets/` solo contiene las entregas activas; las versiones intermedias se conservan en `reports/remaster/dungeon/`.
 
 ### Revisión de recortes del remaster de DUNGEON — 16/10/2026
 
@@ -95,3 +95,9 @@ Se cambia la política de alpha para HUD, manos, cadenas, guardia, piedra, fuego
 Revisión posterior solicitada por Àlex: las seis poses de la rata también pasan al alpha del dibujo, conservando lienzos y anclajes. Sustituye la conservación temporal de hashes descrita antes: el usuario detectó bordes defectuosos al mirarlos de cerca.
 
 La piedra cerrada ya no usa una ilustración de bloque independiente: se extrae del muro reconstruido sin la reja, continuando las juntas a las coordenadas originales. El primer fotograma agrietado conserva esa base con grietas pintadas; no se trasladan los agujeros del tramado VGA a la ilustración nueva. Los fragmentos posteriores mantienen los anclajes y ciclos originales; queda revisar visualmente la transición completa.
+
+### Recursos agrupados por versión
+
+Se trasladan4519 archivos locales desde mods a assets, conservando sus hashes. Cada versión contiene graficos/, musica/ y/o sonidos/. Se unifica remastered como remaster para los efectos. Los selectores, las rutas web, los marcos, los extractores y los scripts de arte usan la estructura nueva. Original/ sigue reservado a la copia DOS; reports conserva referencias e informes. La puerta de DUNGEON usa ahora el alpha del dibujo en sus cinco fotogramas, evitando recortar su arco con la silueta VGA.
+
+El marco remaster de mazmorra se revisa a un acabado ilustrado de1254×1254, sin ampliar el PNG. Se conservan los otros tres marcos y el marco de estilo original. La música disponible se agrupa ahora en original y remaster; cada selector detecta sus propios tipos de recursos.

@@ -22,6 +22,6 @@ pnpm assets:prepare
 pnpm dev
 ```
 
-Los resultados locales se generan en `reports/` y `mods/graficos/original/`. Los paquetes listos para usar se colocan en `mods/graficos/`, `mods/musica/` y `mods/sonidos/`. Las aportaciones y prototipos que requieren revisión se conservan en `reports/referencias/aportaciones/`. Las ROM MT-32 opcionales se guardan en `reports/audio/roms/MT32_CONTROL.ROM` y `reports/audio/roms/MT32_PCM.ROM`; no se sirven a la web y no son parte del juego de los disquetes. No borres esas aportaciones ni ROM al limpiar informes generados.
+Los resultados locales se generan en `reports/` y `assets/original/graficos/`. Los paquetes listos para usar se colocan en `assets/<versión>/graficos/`, `assets/<versión>/musica/` y `assets/<versión>/sonidos/`. Las aportaciones y prototipos que requieren revisión se conservan en `reports/referencias/aportaciones/`. Las ROM MT-32 opcionales se guardan en `reports/audio/roms/MT32_CONTROL.ROM` y `reports/audio/roms/MT32_PCM.ROM`; no se sirven a la web y no son parte del juego de los disquetes. No borres esas aportaciones ni ROM al limpiar informes generados.
 
 Los archivos originales, las ROM, los recursos extraídos, las aportaciones gráficas y los remasters permanecen fuera de Git. La documentación se conserva en `docs/` para que `original/` no contenga ficheros del proyecto.

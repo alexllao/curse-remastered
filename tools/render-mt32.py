@@ -38,7 +38,7 @@ def main():
     message_now = bind('play_msg_now', None, [c.c_void_p, c.c_uint])
     sysex_now = bind('play_sysex_now', None, [c.c_void_p, c.POINTER(c.c_ubyte), c.c_uint])
     render = bind('render_bit16s', None, [c.c_void_p, c.POINTER(c.c_int16), c.c_uint])
-    folder = root / 'mods/musica/original'
+    folder = root / 'assets/original/musica'
     report_folder = root / 'reports/audio'
     report_folder.mkdir(parents=True, exist_ok=True)
     report_path = report_folder / 'mt32-render.json'

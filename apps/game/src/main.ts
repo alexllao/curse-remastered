@@ -123,7 +123,7 @@ const modeButton = button('visual-mode'),
   boundaryButton = button('boundaries');
 
 async function start() {
-  const response = await fetch('/__mods/game.json', { cache: 'no-store' });
+  const response = await fetch('/__assets/game.json', { cache: 'no-store' });
   if (!response.ok || !response.headers.get('content-type')?.includes('application/json'))
     throw new Error('Prepare local assets');
   const manifest: Manifest = await response.json();
@@ -1486,6 +1486,6 @@ void start().catch((error) => {
   console.error('Unable to start local walking viewer', error);
   revealGame();
   viewport.innerHTML =
-    '<p id="loading">Prepara los datos de navegación y los recursos locales con las instrucciones de mods/README.md y vuelve a cargar.</p>';
+    '<p id="loading">Prepara los datos de navegación y los recursos locales con las instrucciones de assets/README.md y vuelve a cargar.</p>';
   status.textContent = 'La prueba todavía no ha podido iniciarse.';
 });

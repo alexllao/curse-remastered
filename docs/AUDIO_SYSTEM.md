@@ -7,18 +7,18 @@ Los recursos se guardan exclusivamente en carpetas excluidas de Git:
 ```text
 reports/audio/roms/MT32_CONTROL.ROM
 reports/audio/roms/MT32_PCM.ROM
-mods/musica/original/CURSE.RS1.mid
-mods/musica/original/CURSE.RS1.ogg
-mods/musica/medieval/CURSE.RS1.mp3
-mods/musica/cinematic/CURSE.RS1.mp3
-mods/musica/symphonic/CURSE.RS1.mp3
-mods/sonidos/original/
+assets/original/musica/CURSE.RS1.mid
+assets/original/musica/CURSE.RS1.ogg
+assets/medieval/musica/CURSE.RS1.mp3
+assets/cinematic/musica/CURSE.RS1.mp3
+assets/symphonic/musica/CURSE.RS1.mp3
+assets/original/sonidos/
 reports/audio/
 ```
 
 Cada versión musical conserva el mismo identificador de tema, incluido `CURSE.`. Se admiten OGG, Opus, MP3, M4A, WAV, FLAC y AAC según los decodificadores del navegador. Cuando conviven MIDI y audio renderizado con el mismo nombre, se ofrece el audio renderizado. Las versiones se descubren al arrancar y mediante «Actualizar música». Un `version.json` opcional dentro de una versión permite declarar `label` y `provisional`.
 
-El selector gráfico recorre únicamente `mods/graficos/`. Música, sonidos y referencias no aparecen en F2. El directorio `original/` de la raíz no se sirve a la web: sus ROM permanecen locales. Las compilaciones que contienen recursos también están excluidas de Git y no deben publicarse con ellos.
+El selector gráfico descubre únicamente las versiones que contienen `assets/<versión>/graficos/`. Música, sonidos y referencias no aparecen en F2. El directorio `original/` de la raíz no se sirve a la web: las ROM opcionales permanecen en `reports/audio/roms/`. Las compilaciones que contienen recursos también están excluidas de Git y no deben publicarse con ellos.
 
 ## Reproducción
 
@@ -41,13 +41,13 @@ Estos audios se identifican como **Original · MT-32 provisional**. Los MIDI sum
 
 ## Sonidos opcionales
 
-Los 109 WAV aportados, procedentes de 19 SFX, figuran en `mods/sonidos/manifest.json` como `experimental_unverified`. Ese lote sigue siendo experimental; no se activa por sus índices secuenciales. La primera mazmorra dispone ahora de una extracción independiente contrastada con el ejecutable, descrita a continuación. `sourceIndex` es secuencial y empieza en 1; no se interpreta como identificador de evento. Los archivos de ese lote permanecen sin activar directamente en la partida.
+Los 109 WAV aportados, procedentes de 19 SFX, figuran en `assets/original/sonidos/manifest.json` como `experimental_unverified`. Ese lote sigue siendo experimental; no se activa por sus índices secuenciales. La primera mazmorra dispone ahora de una extracción independiente contrastada con el ejecutable, descrita a continuación. `sourceIndex` es secuencial y empieza en 1; no se interpreta como identificador de evento. Los archivos de ese lote permanecen sin activar directamente en la partida.
 
-Para efectos contrastados se admite un mapa explícito `mods/sonidos/original/sounds.json` con `events`, donde las claves son los argumentos de sonido originales y los valores archivos locales existentes. También se reserva el nombre numérico `42.wav` para un evento 42 ya identificado. La ausencia de archivos o asociaciones mantiene el silencio. Los canales de actores ya recogen sus solicitudes de sonido; todavía faltan los controladores completos de sala.
+Para efectos contrastados se admite un mapa explícito `assets/original/sonidos/sounds.json` con `events`, donde las claves son los argumentos de sonido originales y los valores archivos locales existentes. También se reserva el nombre numérico `42.wav` para un evento 42 ya identificado. La ausencia de archivos o asociaciones mantiene el silencio. Los canales de actores ya recogen sus solicitudes de sonido; todavía faltan los controladores completos de sala.
 
 Los formatos, posiciones y eventos deberán contrastarse en el EXE antes de habilitar las extracciones experimentales. Los efectos de ejemplo de las pruebas son archivos sintéticos temporales y no se incluyen sonidos reales en el repositorio.
 
-Los paquetes de efectos se descubren en `mods/sonidos/<paquete>/`; «Sin efectos» desactiva la reproducción y «Original» conserva las asociaciones originales disponibles. Las carpetas adicionales aparecen cuando contienen audio. Cada paquete puede declarar su `sounds.json`; un evento ausente vuelve al original si existe. No se enlazan los WAV experimentales por sus índices secuenciales ni se da por validado su formato al elegir «Original».
+Los paquetes de efectos se descubren en `assets/<paquete>/sonidos/`; «Sin efectos» desactiva la reproducción y «Original» conserva las asociaciones originales disponibles. Las carpetas adicionales aparecen cuando contienen audio. Cada paquete puede declarar su `sounds.json`; un evento ausente vuelve al original si existe. No se enlazan los WAV experimentales por sus índices secuenciales ni se da por validado su formato al elegir «Original».
 
 ## Efectos originales de la primera mazmorra
 
@@ -62,8 +62,8 @@ python tools/extract-dungeon-sounds.py
 
 La preparación completa `pnpm assets:prepare` también ejecuta ambos pasos. Salidas locales:
 
-- `mods/sonidos/original/verificados/000.wav` a `020.wav`: WAV por evento, incluidos los recortes y frecuencias distintos de una misma muestra.
-- `mods/sonidos/original/sounds.json`: asociaciones explícitas globales y por sala, con prioridades.
+- `assets/original/sonidos/verificados/000.wav` a `020.wav`: WAV por evento, incluidos los recortes y frecuencias distintos de una misma muestra.
+- `assets/original/sonidos/sounds.json`: asociaciones explícitas globales y por sala, con prioridades.
 - `reports/audio/dungeon-sounds.json`: argumentos nativos, hashes y casos de prioridad.
 - `reports/audio/prepared-dungeon-sounds.json`: archivos generados y metadatos de los WAV.
 

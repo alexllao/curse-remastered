@@ -17,7 +17,7 @@ export interface VisualAsset {
 }
 export async function discoverPacks(): Promise<GraphicsPack[]> {
   try {
-    const response = await fetch('/__mods/packs.json', { cache: 'no-store' });
+    const response = await fetch('/__assets/packs.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('No pack catalog');
     const data = await response.json();
     if (!Array.isArray(data.packs)) throw new Error('Invalid pack catalog');
@@ -60,7 +60,7 @@ export async function loadVisual(asset: VisualAsset, pack: GraphicsPack) {
   for (const candidate of candidates) {
     let bitmap: ImageBitmap | undefined;
     try {
-      const path = `/graficos/${encodeURIComponent(candidate)}/${asset.file.split('/').map(encodeURIComponent).join('/')}`;
+      const path = `/${encodeURIComponent(candidate)}/graficos/${asset.file.split('/').map(encodeURIComponent).join('/')}`;
       const response = await fetch(`${path}?v=${Date.now()}`, { cache: 'no-store' });
       if (!response.ok || !response.headers.get('content-type')?.includes('image/png')) continue;
       bitmap = await createImageBitmap(await response.blob());
@@ -100,7 +100,7 @@ export async function loadVisual(asset: VisualAsset, pack: GraphicsPack) {
       bitmap?.close();
     }
   }
-  const texture = await Assets.load<Texture>(`/graficos/original/${asset.file}`);
+  const texture = await Assets.load<Texture>(`/original/graficos/${asset.file}`);
   texture.source.scaleMode = 'nearest';
   return { texture, usedPack: 'original', fallback: pack.id !== 'original', disposable: false };
 }

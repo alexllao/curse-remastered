@@ -15,7 +15,7 @@ export interface MusicCatalog {
   contexts: Record<string, string>;
 }
 export async function discoverMusic(): Promise<MusicCatalog> {
-  const response = await fetch('/__mods/music.json', { cache: 'no-store' });
+  const response = await fetch('/__assets/music.json', { cache: 'no-store' });
   if (!response.ok) throw new Error('Music catalog unavailable');
   const data: MusicCatalog = await response.json();
   if (data.schemaVersion !== 1 || !Array.isArray(data.versions) || !data.contexts)
@@ -148,7 +148,7 @@ export class MusicPlayer {
         !version
           ? this.catalog.versions.length
             ? 'Música desactivada.'
-            : 'Copia tus versiones en mods/musica/ para elegirlas aquí.'
+            : 'Copia tus versiones en assets/<versión>/musica/ para elegirlas aquí.'
           : track?.midi
             ? 'Este tema está en MIDI. Añade su versión de audio (por ejemplo, RS1.ogg) para reproducirlo en la web.'
             : id

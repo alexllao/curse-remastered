@@ -1,36 +1,18 @@
+import { graphicsCatalog } from '../../tools/graphics-catalog.mjs';
 import { defineConfig, type Plugin } from 'vite';
 import { soundPacksCatalog } from '../../tools/sounds-catalog.mjs';
 import { framesCatalog } from '../../tools/frames-catalog.mjs';
 import { musicCatalog } from '../../tools/music-catalog.mjs';
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-const modsRoot = fileURLToPath(new URL('../../mods/graficos', import.meta.url));
-async function packs() {
-  const entries = await readdir(modsRoot, { withFileTypes: true });
-  const excluded = new Set(['original', 'referencias', 'escalado', 'audio']);
-  const names = entries
-    .filter(
-      (entry) => entry.isDirectory() && !entry.name.startsWith('.') && !excluded.has(entry.name),
-    )
-    .map((entry) => entry.name);
-  if (!names.includes('remaster')) names.push('remaster');
-  names.sort((a, b) =>
-    a === 'remaster' ? -1 : b === 'remaster' ? 1 : a.localeCompare(b, 'es', { numeric: true }),
-  );
-  return {
-    schemaVersion: 1,
-    packs: [
-      { id: 'original', label: 'Original' },
-      ...names.map((id) => ({ id, label: id === 'remaster' ? 'Remaster' : id })),
-    ],
-  };
-}
+const assetsRoot = fileURLToPath(new URL('../../assets', import.meta.url));
+const packs = () => graphicsCatalog(assetsRoot);
 function localPacks(): Plugin {
   return {
     name: 'curse-local-graphics-packs',
     configureServer(server) {
-      server.middlewares.use('/__mods/game.json', (_req, res) => {
+      server.middlewares.use('/__assets/game.json', (_req, res) => {
         void readFile(
           fileURLToPath(new URL('../../reports/playtest/manifest.json', import.meta.url)),
           'utf8',
@@ -45,8 +27,8 @@ function localPacks(): Plugin {
             res.end('Prepare local game assets');
           });
       });
-      server.middlewares.use('/__mods/sounds.json', (_req, res) => {
-        void soundPacksCatalog(fileURLToPath(new URL('../../mods/sonidos', import.meta.url)))
+      server.middlewares.use('/__assets/sounds.json', (_req, res) => {
+        void soundPacksCatalog(assetsRoot)
           .then((result) => {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Cache-Control', 'no-store');
@@ -57,8 +39,8 @@ function localPacks(): Plugin {
             res.end('Unable to list local sounds');
           });
       });
-      server.middlewares.use('/__mods/music.json', (_req, res) => {
-        void musicCatalog(fileURLToPath(new URL('../../mods/musica', import.meta.url)))
+      server.middlewares.use('/__assets/music.json', (_req, res) => {
+        void musicCatalog(assetsRoot)
           .then((result) => {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Cache-Control', 'no-store');
@@ -69,8 +51,8 @@ function localPacks(): Plugin {
             res.end('Unable to list local music');
           });
       });
-      server.middlewares.use('/__mods/frames.json', (_req, res) => {
-        void framesCatalog(modsRoot)
+      server.middlewares.use('/__assets/frames.json', (_req, res) => {
+        void framesCatalog(assetsRoot)
           .then((result) => {
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('Cache-Control', 'no-store');
@@ -81,7 +63,7 @@ function localPacks(): Plugin {
             res.end('Unable to list local frames');
           });
       });
-      server.middlewares.use('/__mods/packs.json', (_req, res) => {
+      server.middlewares.use('/__assets/packs.json', (_req, res) => {
         void packs()
           .then((result) => {
             res.setHeader('Content-Type', 'application/json');
@@ -97,12 +79,12 @@ function localPacks(): Plugin {
     async generateBundle() {
       this.emitFile({
         type: 'asset',
-        fileName: '__mods/frames.json',
-        source: JSON.stringify(await framesCatalog(modsRoot)),
+        fileName: '__assets/frames.json',
+        source: JSON.stringify(await framesCatalog(assetsRoot)),
       });
       this.emitFile({
         type: 'asset',
-        fileName: '__mods/game.json',
+        fileName: '__assets/game.json',
         source: await readFile(
           fileURLToPath(new URL('../../reports/playtest/manifest.json', import.meta.url)),
           'utf8',
@@ -110,28 +92,24 @@ function localPacks(): Plugin {
       });
       this.emitFile({
         type: 'asset',
-        fileName: '__mods/sounds.json',
-        source: JSON.stringify(
-          await soundPacksCatalog(fileURLToPath(new URL('../../mods/sonidos', import.meta.url))),
-        ),
+        fileName: '__assets/sounds.json',
+        source: JSON.stringify(await soundPacksCatalog(assetsRoot)),
       });
       this.emitFile({
         type: 'asset',
-        fileName: '__mods/music.json',
-        source: JSON.stringify(
-          await musicCatalog(fileURLToPath(new URL('../../mods/musica', import.meta.url))),
-        ),
+        fileName: '__assets/music.json',
+        source: JSON.stringify(await musicCatalog(assetsRoot)),
       });
       this.emitFile({
         type: 'asset',
-        fileName: '__mods/packs.json',
+        fileName: '__assets/packs.json',
         source: JSON.stringify(await packs()),
       });
     },
   };
 }
 export default defineConfig({
-  publicDir: '../../mods',
+  publicDir: '../../assets',
   plugins: [localPacks()],
   server: { host: '127.0.0.1', port: 8787, allowedHosts: ['8a7f-95-129-254-159.ngrok-free.app'] },
 });

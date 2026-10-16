@@ -16,7 +16,7 @@
     "format:check": "prettier . --check",
     "prepare": "husky",
     "check": "pnpm assets:check && pnpm lint && pnpm format:check && pnpm typecheck && pnpm build",
-    "mods:prepare": "pnpm --filter @curse/asset-extractor prepare-playtest",
+    "assets:playtest": "pnpm --filter @curse/asset-extractor prepare-playtest",
     "assets:prepare": "node tools/prepare-assets.mjs",
     "assets:check": "node tools/check-assets.mjs",
     "test": "pnpm -r --if-present test && node --test tools/tests/*.test.mjs",

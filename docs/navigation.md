@@ -80,10 +80,10 @@ Preparación y contraste adicionales:
 $env:PYTHONPATH = (Resolve-Path reports/tool-deps).Path
 python tools/reverse-engineering/trace-navigation.py
 pnpm --filter @curse/asset-extractor navigation-verify
-pnpm mods:prepare
+pnpm assets:playtest
 ```
 
-`walking-profile.json` y `walking-verification.json` se generan en `reports/navigation/`. Los programas derivados del ejecutable y las posiciones originales se copian al manifiesto local de `mods/`; no se incorporan a Git. F2 conserva posición y encuadre. F3 cambia de recurso y el botón «Mostrar límites» ayuda a comprobar contactos sin activar acciones. La ocultación por piezas de escenario ya está contrastada por separado; los canales iniciales de sus actores se contrastan ahora por separado; el paseo normal no implica que todos los scripts de animación estén implementados.
+`walking-profile.json` y `walking-verification.json` se generan en `reports/navigation/`. Los programas derivados del ejecutable y las posiciones originales se copian al manifiesto local de `assets/`; no se incorporan a Git. F2 conserva posición y encuadre. F3 cambia de recurso y el botón «Mostrar límites» ayuda a comprobar contactos sin activar acciones. La ocultación por piezas de escenario ya está contrastada por separado; los canales iniciales de sus actores se contrastan ahora por separado; el paseo normal no implica que todos los scripts de animación estén implementados.
 
 ## Objetos y primeros planos originales
 
@@ -100,10 +100,10 @@ Hay dos mecanismos distintos:
 python tools/reverse-engineering/trace-scene-order.py
 pnpm --filter @curse/asset-extractor scene-layers
 pnpm --filter @curse/asset-extractor navigation-verify
-pnpm mods:prepare
+pnpm assets:playtest
 ```
 
-Las imágenes se generan en `reports/scenes/layers/` y se copian a `mods/graficos/original/escenario/`. Son recursos derivados locales, excluidos de Git. Los objetos todavía no pueden usarse. Los canales ambientales iniciales ya cambian visibilidad, fotogramas y posición en los recursos contrastados. Los controladores de interacción pueden alterar esos programas y condiciones durante una partida; esa fase sigue pendiente. Tampoco se declaran terminados los obstáculos dinámicos que esos scripts puedan modificar.
+Las imágenes se generan en `reports/scenes/layers/` y se copian a `assets/original/graficos/escenario/`. Son recursos derivados locales, excluidos de Git. Los objetos todavía no pueden usarse. Los canales ambientales iniciales ya cambian visibilidad, fotogramas y posición en los recursos contrastados. Los controladores de interacción pueden alterar esos programas y condiciones durante una partida; esa fase sigue pendiente. Tampoco se declaran terminados los obstáculos dinámicos que esos scripts puedan modificar.
 
 ## Siguientes bloques del original
 
@@ -113,15 +113,15 @@ La base de revisión es Original. Quedan las entradas especiales, los controlado
 
 La web arranca en CORE y después muestra TITLE con el menú. El catálogo de Depuración conserva TITLE como pantalla 0; el arranque CORE se describe en `MUSIC_SYNC.md`. El botón de partida reproduce la presentación cuando está seleccionada. Las pantallas 1–16 permiten revisar manualmente CAULDRN1–4, BALCONY1–5, BASEBAL1–6 y BASEBAT. Después aparecen los 78 escenarios en orden de recurso (pantallas 17–94), conservando también su número de escenario. Es un catálogo de revisión, no un orden lineal de todos los recorridos posibles de una partida. F3 avanza, Mayús+F3 retrocede y el selector permite ir directamente a cualquier pantalla. F2 cambia de paquete también en la presentación.
 
-`trace-presentation.py` ejecuta el control original `0x2AB2–0x314F`, captura las cargas y 80 selecciones de página CRTC. Solo sustituye la carga/descompresión de imágenes; las consultas de entrada, bucles, escrituras DAC y fundidos originales se ejecutan. Cada espera explícita de flanco ascendente avanza un retrazado sintético; las consultas previas ven fase baja. No se alterna el valor por cada lectura, porque eso añadiría flancos artificiales entre bucles contiguos. No hay pulsaciones inyectadas. Contrasta las referencias estáticas de CORE (`0x698/0x6B0`), TITLE (`0x784/0x79C`) y la llamada a la presentación (`0x871`). El orden de arranque original es CORE → TITLE → presentación → entrada lógica -1 (recurso 0, BRD 0), que es distinta de la entrada normal usada para probar DUNGEON. El catálogo empieza por TITLE por decisión del usuario. CORE se conserva en `mods/graficos/original/interfaz/CORE.png`.
+`trace-presentation.py` ejecuta el control original `0x2AB2–0x314F`, captura las cargas y 80 selecciones de página CRTC. Solo sustituye la carga/descompresión de imágenes; las consultas de entrada, bucles, escrituras DAC y fundidos originales se ejecutan. Cada espera explícita de flanco ascendente avanza un retrazado sintético; las consultas previas ven fase baja. No se alterna el valor por cada lectura, porque eso añadiría flancos artificiales entre bucles contiguos. No hay pulsaciones inyectadas. Contrasta las referencias estáticas de CORE (`0x698/0x6B0`), TITLE (`0x784/0x79C`) y la llamada a la presentación (`0x871`). El orden de arranque original es CORE → TITLE → presentación → entrada lógica -1 (recurso 0, BRD 0), que es distinta de la entrada normal usada para probar DUNGEON. El catálogo empieza por TITLE por decisión del usuario. CORE se conserva en `assets/original/graficos/interfaz/CORE.png`.
 
-La traza contiene 80 selecciones de página, 206 eventos efectivos de imagen/paleta y 1005 esperas de flanco, incluidos los fundidos de salida de TITLE y de la presentación. El visor reproduce ese orden y esos intervalos a una referencia configurable en el manifiesto de 70 Hz (unos 14,36 segundos sin cargas). La frecuencia física, las latencias de disco y el audio originales no están contrastados; los tiempos en segundos son una conversión de referencia. Los 144 PNG distintos de imagen/paleta se generan automáticamente a partir de los índices descomprimidos y los valores DAC, sin tocar la geometría. Original usa esos PNG exactos; Remaster conserva las imágenes del usuario y aproxima sus fundidos mediante brillo global. F2 conserva el instante de reproducción al cambiar de paquete. Omitir o terminar lleva al escenario DUNGEON de revisión; carga ahora su estado inicial BRD 0, con Ben encadenado; liberar al personaje sigue pendiente. Los remasters conservan su nombre: `mods/graficos/original/presentacion/CAULDRN1.png` corresponde a `mods/graficos/remaster/presentacion/CAULDRN1.png`. Todos son de proporción 320:200; por ejemplo, 1920 × 1200 (×6) o 2560 × 1600 (×8) conservan el encuadre. Mantener exactamente las posiciones entre fotogramas para evitar saltos al animarlos.
+La traza contiene 80 selecciones de página, 206 eventos efectivos de imagen/paleta y 1005 esperas de flanco, incluidos los fundidos de salida de TITLE y de la presentación. El visor reproduce ese orden y esos intervalos a una referencia configurable en el manifiesto de 70 Hz (unos 14,36 segundos sin cargas). La frecuencia física, las latencias de disco y el audio originales no están contrastados; los tiempos en segundos son una conversión de referencia. Los 144 PNG distintos de imagen/paleta se generan automáticamente a partir de los índices descomprimidos y los valores DAC, sin tocar la geometría. Original usa esos PNG exactos; Remaster conserva las imágenes del usuario y aproxima sus fundidos mediante brillo global. F2 conserva el instante de reproducción al cambiar de paquete. Omitir o terminar lleva al escenario DUNGEON de revisión; carga ahora su estado inicial BRD 0, con Ben encadenado; liberar al personaje sigue pendiente. Los remasters conservan su nombre: `assets/original/graficos/presentacion/CAULDRN1.png` corresponde a `assets/remaster/graficos/presentacion/CAULDRN1.png`. Todos son de proporción 320:200; por ejemplo, 1920 × 1200 (×6) o 2560 × 1600 (×8) conservan el encuadre. Mantener exactamente las posiciones entre fotogramas para evitar saltos al animarlos.
 
 ```powershell
 python tools/reverse-engineering/trace-room-entries.py
 python tools/reverse-engineering/trace-presentation.py
 pnpm --filter @curse/asset-extractor navigation-verify
-pnpm mods:prepare
+pnpm assets:playtest
 ```
 
 Los informes derivados se guardan en `reports/navigation/`; el manifiesto local pasa a versión 7. Si el visor avisa de datos antiguos, repetir la preparación. Nunca se publican imágenes originales ni derivadas en Git.
@@ -137,7 +137,7 @@ La espera principal exige al menos cinco pulsos. DUNGEON usa una referencia de 7
 ```powershell
 python tools/reverse-engineering/trace-dungeon.py
 pnpm --filter @curse/asset-extractor exec tsx ../../tools/reverse-engineering/verify-dungeon.mts
-pnpm mods:prepare
+pnpm assets:playtest
 ```
 
 `pnpm assets:prepare` incluye la captura y su comparación antes de preparar los recursos. Los programas, semillas, tablas y capturas resultantes permanecen exclusivamente en las carpetas locales excluidas de Git.
@@ -151,7 +151,7 @@ Se observaron cambios visuales en 32 recursos, contando DUNGEON. Esos canales se
 ```powershell
 python tools/reverse-engineering/trace-ambient.py
 pnpm --filter @curse/asset-extractor exec tsx ../../tools/reverse-engineering/verify-ambient.mts
-pnpm mods:prepare
+pnpm assets:playtest
 ```
 
 Los informes `ambient-audit.json` y `ambient-verification.json` son locales y están excluidos de Git. El manifiesto comparte una sola copia de los programas. La captura usa la semilla inicial del ejecutable, no una partida viva: no demuestra que todos los recorridos aleatorios, las variantes de entrada o las reacciones de enemigos estén completos. Las otras 46 salas no mostraron cambios visuales en esta prueba; esto no significa que carezcan de animaciones activadas mediante acciones. Los canales auditados no necesitaron F8. Los eventos de sonido y cambio de sala se registran, pero todavía no se ejecutan.

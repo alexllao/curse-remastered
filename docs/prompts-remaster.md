@@ -6,7 +6,7 @@ La prioridad actual es terminar la revisión del original. Este prompt queda pre
 
 ## Referencias que se deben adjuntar
 
-1. **Fondo original:** el PNG de `mods/graficos/original/fondos/`, como imagen que se va a transformar. No usar una captura con Ben y los objetos superpuestos.
+1. **Fondo original:** el PNG de `assets/original/graficos/fondos/`, como imagen que se va a transformar. No usar una captura con Ben y los objetos superpuestos.
 2. **Guía de geometría, si está disponible:** referencia con contornos y posiciones de piezas, puertas y límites. Solo sirve de guía; sus marcas no deben aparecer en la entrega.
 3. **Estilo aprobado, opcional:** una referencia del acabado artístico deseado. No permite trasladar sus objetos, arquitectura o iluminación a otra sala.
 

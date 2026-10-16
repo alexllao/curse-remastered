@@ -12,7 +12,7 @@ import { composeScenePalette } from './scene-palette.js';
 import { sha256 } from './scene-palette.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url)),
-  mods = join(root, 'mods');
+  assetsRoot = join(root, 'assets');
 function pngDimensions(data: Buffer) {
   if (
     data.length < 33 ||
@@ -27,7 +27,7 @@ function pngDimensions(data: Buffer) {
 async function prepare(source: string, file: string, remaster = false) {
   const bytes = await readFile(join(root, source)),
     { width, height } = pngDimensions(bytes);
-  const output = join(mods, 'graficos/original', file);
+  const output = join(assetsRoot, 'original/graficos', file);
   await mkdir(join(output, '..'), { recursive: true });
   let existing: Buffer | undefined;
   try {
@@ -278,7 +278,7 @@ for (const name of presentationTrace.uniqueImageOrder) {
   });
 }
 const core = await prepare('reports/images/DATA/CORE.png', 'interfaz/CORE.png', true);
-await mkdir(join(mods, 'graficos/remaster/presentacion'), { recursive: true });
+await mkdir(join(assetsRoot, 'remaster/graficos/presentacion'), { recursive: true });
 const paletteNames: Record<string, string> = {
   CORE: 'CORE',
   TITLE: 'TITLE',
@@ -388,9 +388,9 @@ for (let index = 0; index < 27; index++)
   );
 const originalHud = await prepareOriginalHud(root, prepare);
 const title = await prepare('reports/TITLE.png', 'interfaz/TITLE.png', true);
-await mkdir(join(mods, 'graficos/remaster/interfaz'), { recursive: true });
-await mkdir(join(mods, 'graficos/remaster/fondos'), { recursive: true });
-await mkdir(join(mods, 'graficos/remaster/ben'), { recursive: true });
+await mkdir(join(assetsRoot, 'remaster/graficos/interfaz'), { recursive: true });
+await mkdir(join(assetsRoot, 'remaster/graficos/fondos'), { recursive: true });
+await mkdir(join(assetsRoot, 'remaster/graficos/ben'), { recursive: true });
 await mkdir(join(root, 'reports/referencias'), { recursive: true });
 await mkdir(join(root, 'reports/playtest'), { recursive: true });
 await writeFile(
@@ -443,7 +443,7 @@ await writeFile(
   join(root, 'reports/referencias/Guia-remaster-x6.txt'),
   [
     'CURSE REMASTERED — TAMAÑOS ×6',
-    'Originales: mods/graficos/original/. Guardar en mods/graficos/remaster/ con la misma ruta y nombre.',
+    'Originales: assets/original/graficos/. Guardar en assets/remaster/graficos/ con la misma ruta y nombre.',
     'Conservar proporción y encuadre. En presentación mantener continuidad entre fotogramas.',
     'Más resolución solo se considera una mejora si aporta detalle real y mantiene la geometría.',
     'Los archivos presentacion/fundidos/ son derivados automáticos; no se remasterizan individualmente.',

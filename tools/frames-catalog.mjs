@@ -23,7 +23,7 @@ export async function framesCatalog(root) {
   const frames = new Map();
   for (const pack of await entries(root)) {
     if (!pack.isDirectory() || pack.name.startsWith('.')) continue;
-    const directory = join(root, pack.name, 'marcos');
+    const directory = join(root, pack.name, 'graficos', 'marcos');
     for (const file of await entries(directory)) {
       if (!file.isFile() || file.name.startsWith('.') || !/\.png$/i.test(file.name)) continue;
       let handle;
@@ -71,7 +71,7 @@ export async function framesCatalog(root) {
         if (typeof info.label === 'string' && info.label.trim())
           frame.label = info.label.slice(0, 80);
         frame.variants[pack.name] = {
-          url: `/graficos/${encodeURIComponent(pack.name)}/marcos/${encodeURIComponent(file.name)}`,
+          url: `/${encodeURIComponent(pack.name)}/graficos/marcos/${encodeURIComponent(file.name)}`,
           width,
           height,
           fit: info.fit === 'cover' ? 'cover' : 'height',

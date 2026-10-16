@@ -24,7 +24,7 @@ export interface FrameChoice {
 }
 export async function discoverFrames(): Promise<FrameChoice[]> {
   try {
-    const response = await fetch('/__mods/frames.json', { cache: 'no-store' });
+    const response = await fetch('/__assets/frames.json', { cache: 'no-store' });
     if (!response.ok) return [];
     const data = await response.json();
     return data.schemaVersion === 1 && Array.isArray(data.frames) ? data.frames : [];

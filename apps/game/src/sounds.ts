@@ -71,7 +71,7 @@ export class SoundPlayer {
 }
 export async function discoverSounds(): Promise<SoundCatalog> {
   try {
-    const response = await fetch('/__mods/sounds.json', { cache: 'no-store' });
+    const response = await fetch('/__assets/sounds.json', { cache: 'no-store' });
     if (!response.ok) return { schemaVersion: 1, events: {} };
     const data = await response.json();
     return data.schemaVersion === 1 && data.events ? data : { schemaVersion: 1, events: {} };

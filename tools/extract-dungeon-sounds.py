@@ -20,7 +20,7 @@ def main():
     for name, data in sources.items():
         if sha(data) != report['sourceSha256'][name]:
             raise RuntimeError(f'Fuente modificada: {name}')
-    folder = ROOT / 'mods/sonidos/original'
+    folder = ROOT / 'assets/original/sonidos'
     map_path = folder / 'sounds.json'
     receipt_path = ROOT / 'reports/audio/prepared-dungeon-sounds.json'
     previous = json.loads(receipt_path.read_text(encoding='utf-8')) if receipt_path.exists() else {'files': {}}

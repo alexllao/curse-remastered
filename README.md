@@ -13,17 +13,17 @@ Lo desarrollo en mis ratos libres. Mi objetivo es reconstruirlo poco a poco como
 ## Organización de los archivos locales
 
 ```text
-original/                         Solo la copia DOS de los disquetes: EXE, CFG y DATA/
-mods/graficos/                    Original preparado y paquetes gráficos
-mods/musica/                      Versiones musicales listas para usar
-mods/sonidos/                     Paquetes de efectos
+original/                        Solo la copia DOS de los disquetes: EXE, CFG y DATA/
+assets/original/                 Gráficos, música y sonidos originales preparados
+assets/remaster/                 Gráficos, música y efectos del remaster
+assets/<versión>/                Otras versiones: graficos/, musica/ y/o sonidos/
 reports/referencias/aportaciones/ Paquetes, prototipos e instrucciones aportados
-reports/audio/roms/               ROM MT-32 opcionales para renderizar audio local
+reports/audio/roms/              ROM MT-32 opcionales para renderizar audio local
 reports/                         Extracciones, manifiestos y contrastes
 docs/                            Documentación del proyecto
 ```
 
-La estructura exacta de la copia DOS y su preparación se explica en [Copia original del juego](docs/original-files.md). No pongas aportaciones ni recursos convertidos dentro de `original/`. No borres las aportaciones o ROM opcionales al limpiar informes. Estas carpetas de recursos permanecen fuera de Git.
+La organización de versiones y nombres se explica en [Recursos locales](assets/README.md). La estructura exacta de la copia DOS y su preparación se explica en [Copia original del juego](docs/original-files.md). No pongas aportaciones ni recursos convertidos dentro de `original/`. No borres las aportaciones o ROM opcionales al limpiar informes. Estas carpetas de recursos permanecen fuera de Git.
 
 ## Instalación
 
@@ -460,20 +460,20 @@ Reconstruye 78 fondos según las tablas del ejecutable y extrae 637 fotogramas B
 La galería prepara los 78 fondos originales, incluidos los panoramas completos. **F3** avanza de escenario y **Mayús+F3** retrocede. Las flechas izquierda y derecha recorren los fondos anchos. **F2** alterna Original, Remaster y los paquetes gráficos locales detectados, manteniendo el encuadre. Un contador discreto muestra los FPS arriba a la derecha.
 
 ```powershell
-pnpm mods:prepare
+pnpm assets:playtest
 pnpm dev
 pnpm --filter @curse/engine test
 ```
 
-La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. Abre `http://127.0.0.1:8787/`. En desarrollo, basta crear una carpeta como `mods/graficos/remaster2/` y pulsar F2 para detectarla, aunque esté vacía. Cada imagen se busca en **paquete seleccionado → remaster → original**. Véase [carpetas, nombres y proceso gradual](mods/README.md).
+La preparación necesita los resultados de `scene-backgrounds` y `brd-extract`. Abre `http://127.0.0.1:8787/`. En desarrollo, basta crear una carpeta como `assets/remaster2/graficos/` y pulsar F2 para detectarla, aunque esté vacía. Cada imagen se busca en **paquete seleccionado → remaster → original**. Véase [carpetas, nombres y proceso gradual](assets/README.md).
 
 Los sprites de Ben permanecen originales sin interpolar. El clic prueba el paseo STD con regiones BOXDET, condiciones de entrada y cámara. En 62 fondos se usa el destino de una entrada STD contrastada con sus canales originales; 15 quedan como secuencias especiales y BASEBAT oculta a Ben. No se coloca un personaje arbitrario en esas pantallas. «Mostrar límites» facilita revisar contactos. Las acciones y salidas se señalan sin ejecutarse. No hay salidas, inventario, interacciones ni scripts de sala implementados. El empaquetado como aplicación nativa de Windows sigue pendiente.
 
 Los fondos remasterizados son propuestas artísticas provisionales: la IA puede desplazar elementos y conservar la proporción del PNG no demuestra que su geometría encaje. Para validarlos habrá que comparar con el movimiento y los límites originales. Se ha empezado a extraer y contrastar [BOXDET.DAT y las consultas del ejecutable](docs/navigation.md); el motor ya incorpora el paseo normal y las regiones contrastadas, con cadencias de prueba y scripts de sala todavía pendientes.
 
-La prueba de luces y F4 se han retirado. Se reserva una capa de presentación independiente para futuras animaciones, sin implementarlas ahora. Todos los recursos locales de `mods/`, originales y derivados, y las compilaciones que los contienen permanecen fuera de Git.
+La prueba de luces y F4 se han retirado. Se reserva una capa de presentación independiente para futuras animaciones, sin implementarlas ahora. Todos los recursos locales de `assets/`, originales y derivados, y las compilaciones que los contienen permanecen fuera de Git.
 
-Los objetos originales del estado inicial y 82 piezas de primer plano ya se preparan para el visor: Ben puede quedar oculto por las piezas que corresponden, con ordenación contrastada frente al ejecutable. Los canales iniciales de las 78 salas están contrastados durante 1.000 ciclos cada una; se reproducen los cambios visuales observados en 32 recursos. DUNGEON muestra a Ben encadenado. Liberarlo, ejecutar los controladores e interacciones y completar los obstáculos dinámicos sigue pendiente; el uso de objetos queda fuera de esta fase. Después de pulsar «Comenzar partida», la web muestra CORE antes de TITLE y reproduce la presentación con los intervalos y repeticiones capturados del ejecutable (referencia de 70 Hz; duración física DOS todavía sin medir). En Depuración, F3 y el selector permiten revisar todas sus imágenes y escenarios. Los originales están en `mods/graficos/original/presentacion/` y tus remasters se dejan en `mods/graficos/remaster/presentacion/` con los mismos nombres. La referencia artística es ×6: 320 × 200 → 1920 × 1200; los panoramas multiplican todo su ancho y alto por seis. La guía completa se genera en `reports/referencias/Guia-remaster-x6.txt`. Véase [el alcance de las pruebas del original](docs/navigation.md).
+Los objetos originales del estado inicial y 82 piezas de primer plano ya se preparan para el visor: Ben puede quedar oculto por las piezas que corresponden, con ordenación contrastada frente al ejecutable. Los canales iniciales de las 78 salas están contrastados durante 1.000 ciclos cada una; se reproducen los cambios visuales observados en 32 recursos. DUNGEON muestra a Ben encadenado. Liberarlo, ejecutar los controladores e interacciones y completar los obstáculos dinámicos sigue pendiente; el uso de objetos queda fuera de esta fase. Después de pulsar «Comenzar partida», la web muestra CORE antes de TITLE y reproduce la presentación con los intervalos y repeticiones capturados del ejecutable (referencia de 70 Hz; duración física DOS todavía sin medir). En Depuración, F3 y el selector permiten revisar todas sus imágenes y escenarios. Los originales están en `assets/original/graficos/presentacion/` y tus remasters se dejan en `assets/remaster/graficos/presentacion/` con los mismos nombres. La referencia artística es ×6: 320 × 200 → 1920 × 1200; los panoramas multiplican todo su ancho y alto por seis. La guía completa se genera en `reports/referencias/Guia-remaster-x6.txt`. Véase [el alcance de las pruebas del original](docs/navigation.md).
 
 ## Preparar una copia recién clonada
 
@@ -485,15 +485,15 @@ El repositorio distribuye únicamente código, herramientas y documentación. Lo
 4. Ejecutar `pnpm assets:prepare`.
 5. Ejecutar `pnpm dev`.
 
-La preparación comprueba la revisión del ejecutable, descomprime RNC1/RNC2, extrae imágenes y sprites, ejecuta los contrastes de navegación/presentación y construye los recursos locales de `reports/` y `mods/graficos/original/`. Si falta Unicorn 2.1.4, prepara un entorno Python local excluido de Git e instala la dependencia fijada; la primera preparación necesita conexión para esa instalación. Se puede elegir el intérprete con `CURSE_PYTHON`. Una revisión de juego distinta se rechaza hasta investigarla.
+La preparación comprueba la revisión del ejecutable, descomprime RNC1/RNC2, extrae imágenes y sprites, ejecuta los contrastes de navegación/presentación y construye los recursos locales de `reports/` y `assets/original/graficos/`. Si falta Unicorn 2.1.4, prepara un entorno Python local excluido de Git e instala la dependencia fijada; la primera preparación necesita conexión para esa instalación. Se puede elegir el intérprete con `CURSE_PYTHON`. Una revisión de juego distinta se rechaza hasta investigarla.
 
-La preparación no genera ni reemplaza remasters. Sin un paquete gráfico local se ve Original. Los remasters se añaden aparte a `mods/graficos/remaster/` conservando las rutas; la referencia habitual es ×6. `pnpm assets:check` y el control previo al commit rechazan recursos o gráficos añadidos al índice, incluso mediante `git add -f`.
+La preparación no genera ni reemplaza remasters. Sin un paquete gráfico local se ve Original. Los remasters se añaden aparte a `assets/remaster/graficos/` conservando las rutas; la referencia habitual es ×6. `pnpm assets:check` y el control previo al commit rechazan recursos o gráficos añadidos al índice, incluso mediante `git add -f`.
 
 ## Menú de juego y audio local
 
 La web abre directamente con TITLE y el menú de partida. Solo al pulsar «Comenzar partida» se reproduce CORE con su fundido hacia TITLE; esa portada espera la entrada de teclado o clic del jugador antes de la presentación (o de DUNGEON si se desactiva). No hay botones web de continuar u omitir durante el flujo normal; los controles adicionales quedan en el menú y Depuración. Una pantalla de carga cubre la preparación inicial y las secuencias para evitar imágenes a medio preparar. Gráficos y música se seleccionan de forma independiente. Las opciones se recuerdan en este navegador; no se guarda todavía la partida. Esc abre o cierra el menú y pausa el avance; F2 mantiene la comparación gráfica. El botón «Depuración» descubre el catálogo y sus atajos F3/flechas. La presentación termina en la entrada encadenada de DUNGEON; liberar a Ben, las interacciones y las salidas siguen pendientes.
 
-Los recursos se organizan en `mods/graficos/`, `mods/musica/` y `mods/sonidos/`. Las referencias permanecen en `reports/referencias/` y el manifiesto local en `reports/playtest/`. Las ROM MT-32 se leen solo desde `reports/audio/roms/`, fuera de la carpeta servida por la web. Ninguno de estos recursos se incorpora a Git.
+Los recursos se organizan en `assets/<versión>/graficos/`, `assets/<versión>/musica/` y `assets/<versión>/sonidos/`. Las referencias permanecen en `reports/referencias/` y el manifiesto local en `reports/playtest/`. Las ROM MT-32 se leen solo desde `reports/audio/roms/`, fuera de la carpeta servida por la web. Ninguno de estos recursos se incorpora a Git.
 
 Para las escuchas provisionales MT-32, opcionalmente:
 

@@ -4,7 +4,7 @@ const audioExtension = /\.(ogg|opus|mp3|m4a|wav|flac|aac)$/i;
 const eventId = (id) => /^\d{1,3}$/.test(id) && Number(id) < 256;
 
 /** Asociaciones explícitas: los índices secuenciales de los WAV no son eventos. */
-export async function soundsCatalog(root, prefix = '/sonidos/original/') {
+export async function soundsCatalog(root, prefix = '/original/sonidos/') {
   let files;
   try {
     files = await readdir(root, { withFileTypes: true });
@@ -83,17 +83,20 @@ export async function soundPacksCatalog(root) {
   const versions = [];
   for (const folder of folders) {
     if (!folder.isDirectory() || folder.name.startsWith('.')) continue;
-    if (folder.name !== 'original' && !(await containsAudio(join(root, folder.name)))) continue;
-    const pack = await soundsCatalog(
-      join(root, folder.name),
-      `/sonidos/${encodeURIComponent(folder.name)}/`,
-    );
+    const directory = join(root, folder.name, 'sonidos');
+    try {
+      await readdir(directory);
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+    if (folder.name !== 'original' && !(await containsAudio(directory))) continue;
+    const pack = await soundsCatalog(directory, `/${encodeURIComponent(folder.name)}/sonidos/`);
     versions.push({
       id: folder.name,
       label:
-        { original: 'Original', restored: 'Restaurados', remastered: 'Remasterizados' }[
-          folder.name
-        ] ?? folder.name,
+        { original: 'Original', restored: 'Restaurados', remaster: 'Remaster' }[folder.name] ??
+        folder.name,
       events: pack.events,
       ...(pack.priorities ? { priorities: pack.priorities } : {}),
       ...(pack.scenes ? { scenes: pack.scenes } : {}),

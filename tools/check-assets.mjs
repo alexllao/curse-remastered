@@ -4,11 +4,11 @@ import { execFileSync } from 'node:child_process';
 const files = execFileSync('git', ['ls-files', '--cached', '-z'], { encoding: 'utf8' })
   .split('\0')
   .filter(Boolean);
-const permitted = new Set(['reports/.gitignore', 'mods/README.md', 'docs/images/cover.webp']);
+const permitted = new Set(['reports/.gitignore', 'assets/README.md', 'docs/images/cover.webp']);
 const forbidden = files.filter(
   (file) =>
     !permitted.has(file) &&
-    (/^(original|reports|mods)\//i.test(file) ||
+    (/^(original|reports|mods|assets)\//i.test(file) ||
       /\.(png|jpe?g|gif|webp|avif|bmp|pcx|exe|com|dat|map|spr|brd|pal|sfx|rs[1-5]|wav|ogg|mp3|flac|m4a|aac|opus|mid|midi|sf2|sf3|dls|syx|rom|dll|rgba|bin)$/i.test(
         file,
       )),
