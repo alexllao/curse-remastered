@@ -471,3 +471,12 @@ El repositorio distribuye únicamente código, herramientas y documentación. Lo
 La preparación comprueba la revisión del ejecutable, descomprime RNC1/RNC2, extrae imágenes y sprites, ejecuta los contrastes de navegación/presentación y construye los recursos locales de `reports/` y `mods/original/`. Si falta Unicorn 2.1.4, prepara un entorno Python local excluido de Git e instala la dependencia fijada; la primera preparación necesita conexión para esa instalación. Se puede elegir el intérprete con `CURSE_PYTHON`. Una revisión de juego distinta se rechaza hasta investigarla.
 
 La preparación no genera ni reemplaza remasters. Sin un paquete gráfico local se ve Original. Los remasters se añaden aparte a `mods/remaster/` conservando las rutas; la referencia habitual es ×6. `pnpm assets:check` y el control previo al commit rechazan recursos o gráficos añadidos al índice, incluso mediante `git add -f`.
+
+## Credits & Attribution
+
+- Juego original: **Core Design, 1992** — _Curse of Enchantia_.
+- Web port y remasterización: **Àlex Llaó**.
+- Proyecto de fans no oficial, sin afiliación ni respaldo de los titulares de los derechos originales.
+- Repositorio: [alexllao/curse-remastered](https://github.com/alexllao/curse-remastered).
+
+Los recursos originales pertenecen a sus respectivos titulares. No se incluyen en el repositorio ni se les concede una licencia mediante este proyecto. Estas atribuciones no modifican las condiciones de licencia existentes.
