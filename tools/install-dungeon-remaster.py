@@ -1,4 +1,4 @@
-"""Normalización técnica autorizada: recortes, tamaño ×6 y máscaras del original.
+"""Normalización técnica autorizada: recortes, tamaño ×6 y alpha por tipo de pieza.
 
 El arte procede de image_gen. No redibuja poses ni modifica coordenadas del juego.
 Los atlas, referencias, copias previas e informes se mantienen fuera de Git.
@@ -28,7 +28,7 @@ def fill_transparent_rgb(image):
     """
     image=image.convert('RGBA')
     width,height=image.size
-    colors=list(image.getdata())
+    colors=list(image.get_flattened_data() if hasattr(image,'get_flattened_data') else image.getdata())
     seen=bytearray(width*height)
     queue=deque()
     for index,color in enumerate(colors):
@@ -61,6 +61,9 @@ def main():
             shutil.copy2(source,target)
         sources[name]=str(target)
     (REPORT/'generados.json').write_text(json.dumps(sources,indent=2),encoding='utf-8')
+    corrections=json.loads((REPORT/'correcciones.json').read_text(encoding='utf-8')) if (REPORT/'correcciones.json').exists() else {}
+    if 'guardia' in corrections:sources['guardia']=corrections['guardia']
+    if 'fondo' in corrections:sources['fondo-corregido']=corrections['fondo']
     records=[]
     def save(relative,image,source,mask=None):
         original=Image.open(ORIGINAL/relative).convert('RGBA')
@@ -74,6 +77,9 @@ def main():
             backup.parent.mkdir(parents=True,exist_ok=True)
             if not backup.exists():backup.write_bytes(data)
         path.parent.mkdir(parents=True,exist_ok=True)
+        # RGB bajo alpha cero no debe aparecer como bandas en visores sin alpha.
+        transparent=image.getchannel('A').point(lambda a:255 if a==0 else 0)
+        image.paste((0,0,0,0),(0,0,image.width,image.height),transparent)
         image.save(path)
         records.append({'file':relative,'width':image.width,'height':image.height,
                         'sha256':digest(path.read_bytes()),'source':source,'mask':mask})
@@ -99,6 +105,33 @@ def main():
             if ob:
                 x,y,cw,ch=entry['cell']
                 cell=sheet.crop((x,y,x+cw,y+ch))
+                replacement=None
+                for key,ids,cols in (('bocadillos',[4,23,24,25],4),('fuego',[33,34,35],3),('piedra',list(range(3,11)),4),('agua',list(range(28,33)),5)):
+                    index=entry.get('frame') if group!='hud' else meta['entries'].index(entry)
+                    if key in corrections and index in ids and group=={'bocadillos':'hud','fuego':'efectos','piedra':'piedra-puerta','agua':'efectos'}[key]:
+                        override=Image.open(corrections[key]).convert('RGBA')
+                        i=ids.index(index);tw=override.width//cols;th=override.height//((len(ids)+cols-1)//cols)
+                        cell=override.crop(((i%cols)*tw,(i//cols)*th,(i%cols+1)*tw,(i//cols+1)*th))
+                        replacement=corrections[key]
+                natural=group in ('hud','cursores-aspa','cadenas') or (group=='guardia' and 'guardia' in corrections) or replacement is not None or (group=='efectos' and entry['frame']==41)
+                if natural:
+                    if cell.getchannel('A').getextrema()[0]>=250:
+                        raise ValueError(f'El arte independiente requiere alpha real: {entry["file"]}')
+                    # Solo los oclusores del fondo conservan el recorte VGA.
+                    # UI/personajes mantienen el alpha real del dibujo nuevo.
+                    bb=cell.getchannel('A').point(lambda a:255 if a>=64 else 0).getbbox()
+                    if not bb:raise ValueError(f'Celda vacía: {entry["file"]}')
+                    artwork=cell.crop(bb).resize(((ob[2]-ob[0])*6,(ob[3]-ob[1])*6),Image.Resampling.LANCZOS)
+                    position=(ob[0]*6,ob[1]*6)
+                    if group=='efectos' and 28<=entry['frame']<=32:
+                        # Impacto más contenido solicitado: mismo suelo y lienzo,
+                        # sin cambiar ciclos, coordenadas ni dimensiones lógicas.
+                        reduced=max(1,round(artwork.height*0.65))
+                        position=(position[0],ob[3]*6-reduced)
+                        artwork=artwork.resize((artwork.width,reduced),Image.Resampling.LANCZOS)
+                    frame.alpha_composite(artwork,position)
+                    save(entry['file'],frame,replacement or sources[group],'generated-alpha-native-bounds-x6')
+                    continue
                 # Ignora píxeles de alpha residual del borde de la generación.
                 bb=cell.getchannel('A').point(lambda a:255 if a>=64 else 0).getbbox()
                 if not bb:raise ValueError(f'Celda vacía: {group}/{entry["file"]}')
@@ -111,6 +144,15 @@ def main():
                     artwork=fill_transparent_rgb(cell.crop(bb)).resize(((ob[2]-ob[0])*6,(ob[3]-ob[1])*6),Image.Resampling.LANCZOS)
                 frame.paste(artwork,(ob[0]*6,ob[1]*6))
                 frame.putalpha(mask)
+                if group=='efectos' and 17<=entry['frame']<=25:
+                    # El SPR original mezcla un fragmento fijo de techo y una
+                    # gota clara. El fragmento toma el color del fondo nuevo.
+                    patch=background.crop((188*6,10*6,(188+original.width)*6,(10+original.height)*6))
+                    patch.putalpha(mask)
+                    bright=Image.new('L',original.size)
+                    bright.putdata([255 if r>=140 and g>=100 and a else 0
+                                    for r,g,b,a in original.getdata()])
+                    frame=Image.composite(frame,patch,bright.resize(frame.size,Image.Resampling.LANCZOS))
             save(entry['file'],frame,sources[group],'original-alpha-x6')
     # Los dos primeros planos usan el propio fondo, evitando dibujos independientes.
     for frame,x,y in ((1,0,169),(2,265,99),(47,30,83)):
@@ -143,8 +185,8 @@ def main():
                 raise ValueError(f'Máscara alterada: {file}')
     (REPORT/'instalacion.json').write_text(json.dumps({'schemaVersion':1,'scale':6,'files':records,
         'backgroundSize':[1920,1200],'playerModified':False,
-        'limitations':['Geometric masks verified; in-game visual acceptance still required']},indent=2)+'\n',encoding='utf-8')
-    print(f'Instalados {len(records)} recursos ×6. Fondo1920×1200; Ben intacto; tamaños y máscaras verificados.')
+        'limitations':['Technical dimensions verified; in-game visual acceptance still required']},indent=2)+'\n',encoding='utf-8')
+    print(f'Instalados {len(records)} recursos ×6. Fondo1920×1200; Ben intacto; tamaños verificados; revisión visual pendiente.')
 
 
 if __name__=='__main__':main()

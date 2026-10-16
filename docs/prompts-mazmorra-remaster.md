@@ -41,3 +41,71 @@ Production sprite sheet edit. First image is exact GEOMETRY AND ANIMATION MASTER
 ## hud-paneles
 
 Use case: style-transfer. EDIT first image, an atlas of TEN empty HUD button panels, fivecolumns x2rows, full960x384. Each cell192x192 is a32x32 original pixel panel at6x. Preserve EXACTLY the recessed square interior, bevel width, panel edges, padding, frame layout and all10positions. Remaster into the SAME hand-painted classic2D adventure material finish as second reference: weathered blue-grey stone/iron frame with discreet warm ochre edge highlights, original dark BURGUNDY RED recessed interiors kept empty, subdued and readable. These ten cells will be laid side by side into a1920x192gameHUDbar. Thus no outside decorations, no protruding frame, no icons, text, runes, lights, jewels, extra borders or realism. Consistent panel shading across allcells, no separators between cells beyond original borders. Fill whole canvas exactly960x384 with opaque panels, no padding or white backdrop. Paint details inside existing surfaces only.
+
+## Preparación, normalización y alcance
+
+Las herramientas de arte requieren Pillow; no añaden dependencias a la aplicación. Tras preparar los originales:
+
+```powershell
+python tools/prepare-dungeon-remaster-refs.py
+```
+
+Se generan las referencias y `reports/remaster/dungeon/referencias/atlases.json`. Los atlas producidos por image_gen se guardan en `reports/remaster/dungeon/generados/`, y su mapa de rutas en `reports/remaster/dungeon/generados.json`. Con ese mapa completo:
+
+```powershell
+python tools/install-dungeon-remaster.py
+```
+
+El instalador conserva las versiones anteriores en `reports/remaster/dungeon/anteriores/` y registra hashes, dimensiones, procedencia y máscara en `instalacion.json`. No requiere volver a llamar a la IA para repetir la normalización del mismo lote.
+
+Entrega del lote: fondo 1920 × 1200, 88 fotogramas de DUNGEON.SPR, primeros 32 iconos utilizados por esta sala, panel del HUD y 3 cursores a ×6. El aspa bloqueada conserva su dibujo original escalado. Ben y sus bancos de animación permanecen originales. Los demás iconos o piezas ausentes vuelven al original.
+
+Las siluetas proceden de las máscaras originales ampliadas; los primeros planos se recortan del fondo remasterizado. Los píxeles del techo que acompañan a la gota también toman el color del fondo nuevo. Se limpia el RGB oculto bajo alpha cero para evitar bandas en visores que omitan el canal alpha. Estos ajustes técnicos no sustituyen la revisión de la animación completa en el juego.
+
+La primera propuesta del fondo omitió la calavera y la primera propuesta del HUD añadió gorras rojas. Se corrigieron mediante las referencias originales y las indicaciones de Àlex: Ben tiene pelo rojizo con flequillo y la cabeza descubierta. Solo las celdas corregidas de los iconos sustituyen a las del primer atlas.
+
+## Corrección de recortes y detalles — 16 de octubre de 2026
+
+Generador integrado `image_gen`. Recursos y fuentes locales bajo `reports/remaster/dungeon/generados/`; selección en `correcciones.json`. No se incorporan gráficos a Git.
+
+### bocadillos
+
+Edit only the cream interior of these four speech bubbles to solid white, preserving exact black lettering, black outline, shapes, layout, four equal cells in one row. Blank, HELP!, HI!, OPEN SESAME! respectively. Genuine transparent exterior, opaque white interior. No shadows outside outlines.
+
+### fuego
+
+Redesign these three torch-flame animation frames with delicate hand-painted 2D adventure-game strokes, yellow core, restrained orange edges. No thick dark/red outline, no circular bulb shape, no sparks, no haze or background glow. Three separate flames in the same three equal cells on one row, fixed bottom anchor, slight natural variation. Genuine transparency outside each flame. Keep painted artistic finish, not photorealism.
+
+### piedra
+
+Edit this 4-column 2-row eight-frame breaking-stone animation atlas. First cell must be ONE broad single blue-grey sandstone slab without internal mortar joints or rows of bricks, no border frame. Second same slab cracking. Remaining cells progressive fragments settling as reference. Keep exact frame layout, shapes, positions, proportions and warm top-left illumination. Hand-painted stylized 2D adventure-game art, blue-grey dungeon stone, restrained texture, no thick dark border, no cast ground shadow, genuine transparent surroundings and gaps.
+
+### guard-key
+
+Background extraction for game sprite atlas. Replace the ENTIRE brown/grey gradient background with perfectly flat solid pure magenta RGB(255,0,255), including every gap between arms and body and under feet. No gradients, no ground shadows, no brown leftover fringe. Preserve the 22 guard poses and exact 6x4 grid positions and shapes unchanged. Magenta is a technical chroma-key backing, no magenta inside characters. Keep the hand-painted art unchanged.
+
+### calaveras
+
+Precise-object-edit. Image1 is exact ORIGINAL GEOMETRY for this small floor corner crop, image2 is existing hand-painted REMASTER STYLE target of same crop. Restore the MULTIPLE old skulls and bones from image1 into image2 in EXACT matching proportional positions, scale and framing. They are mostly CUT OFF by BOTTOM EDGE: central skull near x30% y86%, adjacent partial skull near x60% y95%, bone fragments left edge. Do not move skulls upward to make them visible. Keep original occlusion and crop. Match dark blue subdued dungeon lighting, hand-painted artistic adventure game style, no photorealism. Keep image2 paving and top edge unchanged so crop joins existing background. Output only same landscape corner crop, no border.
+
+### agua
+
+Precise-object-edit of five equal cells in one row: water ripple/splash animation game sprites. Remove ALL thick dark-blue raised side walls and horizontal rectangular cutting artifacts. Water ring lies FLAT on floor, thin pale blue elliptical ripples fading into true transparency, no dark oval outline, no dish/bowl or platform edge, no water volume. Preserve five-frame sequence: calm ripple, small rising droplet, taller splash, settling drops, flat ripple. Same center, base alignment, cell layout. Hand-painted stylized classic adventure-game finish, restrained highlights. Genuine alpha transparent background and no shadows.
+
+El primer intento de quitar el fondo del guardia conservó el degradado y se descartó. El segundo usa una clave magenta uniforme; se retira técnicamente antes de ajustar el lienzo nativo. El fondo completo regenerado desplazaba detalles y no se instala: solo se integra la esquina de las calaveras con transición en los márgenes superior y derecho. El fondo activo conserva 1920 × 1200.
+
+### Agua azul y reja
+
+Edit color only of this approved five-frame game water ripple atlas. Make water moderately darker, deep cool blue matching a shadowy blue-grey dungeon floor puddle. Reduce bright white/cyan highlights to restrained muted blue silver. Preserve EXACT silhouettes, alpha transparency, ripple shapes, flat edges, five equal cell positions and all animation poses. No raised sides, no new outline, no shadows or background. Hand-painted style unchanged.
+
+La reja pequeña (fotograma41) también conserva el alpha del dibujo nuevo para evitar el corte visible del lateral izquierdo.
+
+### Segunda revisión: piedra y hueso del suelo
+
+**hueso:** Precise-object-edit. Edit target image1 cropped remastered dungeon corner; reference image2 ORIGINAL geometry. Restore original skeleton condition: the leg on viewer RIGHT is incomplete, with lower shin/foot missing; do not add a second complete hanging leg. The detached long bone lies horizontally on the floor at bottom LEFT of this crop, as visible in original, around 10-25% crop width and 75-80% crop height, partly cut at left crop border. Keep skull, ribs, chains and left complete leg, ALL stone contours, perspective and floor joints unchanged. Match existing blue-grey hand-painted lighting and restrained artistic style. No extra bones or characters. Output exact same crop framing and aspect ratio1:2.
+
+**piedra:** Precise-object-edit. Image1 eight-frame breaking stone sprite atlas in 4 columns 2 rows is target; image2 dungeon wall is STYLE AND COLOR reference only. Make stone slab first two cells visually blend into the reference wall: FLAT flush masonry face, very shallow edge, no prominent bevel, no thick dark bottom/side border, no protruding top thickness, no cast shadow. Reduce mottled high contrast texture to broad restrained painted strokes matching neighbouring wall stones. Muted medium blue-grey with subdued warm ochre top illumination. First cell unbroken slab, second subtle cracks. Carry same material/color through remaining six fracture/debris frames. Keep all 8 cells, silhouettes, sizes, occupied bounding boxes and layout EXACT. No redesign wall/background in output; output ONLY transparent atlas, same 4x2 grid. No opaque backdrop.
+
+**agua:** Edit color only of this approved five-frame game water ripple atlas. Make water moderately darker, deep cool blue matching a shadowy blue-grey dungeon floor puddle. Reduce bright white/cyan highlights to restrained muted blue silver. Preserve EXACT silhouettes, alpha transparency, ripple shapes, flat edges, five equal cell positions and all animation poses. No raised sides, no new outline, no shadows or background. Hand-painted style unchanged.
+
+Solo se integra el hueso del suelo del recorte derecho: el esqueleto instalado ya conserva la pierna incompleta. Se mantiene la arquitectura existente. La altura visible de las salpicaduras28–32 se normaliza al65% con base fija, a petición de Àlex; el lienzo y los tiempos permanecen intactos.

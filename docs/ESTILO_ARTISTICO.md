@@ -31,3 +31,7 @@ Guardar referencias, atlas de entrada, salidas del generador, versiones previas 
 Primero comprobar resolución, alpha y correspondencia de fotogramas; después probar F2 y todas las acciones de la sala. Una máscara correcta no certifica por sí sola la calidad de la pintura ni todos los apoyos del fondo. Registrar cualquier diferencia pendiente sin darla por validada.
 
 Los prompts de cada lote se conservan junto a su guía. El prompt general de escenarios está en `prompts-remaster.md`; el lote de la primera mazmorra se registra en `prompts-mazmorra-remaster.md`.
+
+## Transparencia de piezas remasterizadas
+
+No imponer la silueta pixelada original a dibujos nuevos independientes: vacía los bocadillos y recorta manos, personajes y cadenas. Mantener el alpha del arte y ajustar su caja ocupada al lienzo/anclaje nativo ×6. Usar la máscara original exclusivamente donde se repite el fondo como oclusor. Los bocadillos tienen interior blanco opaco. Agua sin pared lateral ni borde rectangular elevado. Calaveras múltiples en el borde inferior izquierdo, parcialmente cortadas por pantalla, como en el original.

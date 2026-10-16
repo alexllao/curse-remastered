@@ -4,7 +4,7 @@ Actualizado: 16 de octubre de 2026. Rama de trabajo: `development`.
 
 ## Prioridad y criterio de cierre
 
-Completar la primera mazmorra con el comportamiento original antes de ampliar otras salas. Los marcos y los remasters quedan aparcados. Probar siempre en silencio. Una comparación de rutinas no equivale a una captura visual ni verifica la velocidad física del juego DOS.
+Completar la primera mazmorra con el comportamiento original antes de ampliar otras salas. Las demás salas y los marcos quedan aparcados. Àlex ha solicitado ahora el remaster coherente del fondo, las piezas, el HUD y los cursores de esta primera sala; Ben se conserva original. Probar siempre en silencio. Una comparación de rutinas no equivale a una captura visual ni verifica la velocidad física del juego DOS.
 
 ## Primera mazmorra
 
@@ -75,3 +75,19 @@ Se han generado 21 WAV originales por evento en `mods/sonidos/original/verificad
 La lista no da por implementadas todas las respuestas posibles de mirar, luchar, saltar o combinaciones incorrectas; siguen pendientes de auditoría, al igual que guardar/cargar.
 
 Validación del bloque de sonidos: 45 pruebas automatizadas, ESLint, tipos y compilación correctos. El servidor local entrega los 21 WAV; sus muestras y longitudes coinciden por SHA-256 con las porciones solicitadas por el EXE. Las pruebas no emiten sonido.
+
+## Remaster de la primera mazmorra
+
+Àlex confirma que los sonidos originales le parecen correctos tras probarlos. Se mantiene pendiente la comparación auditiva técnica con DOSBox, sin invalidar esa aceptación del usuario.
+
+Se ha instalado un lote local de **126 recursos**: fondo a **1920 × 1200**, 88 fotogramas de escenario a ×6, 32 iconos del HUD, su panel, 3 cursores y el aspa original escalada. Ben no se ha remasterizado. Los dibujos comparten la dirección artística de `ESTILO_ARTISTICO.md`; los prompts están en `prompts-mazmorra-remaster.md`. Se corrigieron la calavera ausente y las gorras de los iconos de Ben: pelo rojizo con flequillo, sin gorra.
+
+El cambio F2 prepara también los sprites de esta sala, el HUD y los cursores, manteniendo el estado de los actores. Los primeros planos repiten el dibujo del fondo con su máscara original. Las dimensiones y las máscaras se comprueban automáticamente; las posiciones, contactos y tiempos del juego no se han modificado para acomodar el arte.
+
+Se han revisado composiciones de estados originales con las piezas nuevas. Son vistas reproducibles de los recursos, **no capturas del navegador**. Queda pendiente la aceptación dentro del juego al alternar F2 y completar las acciones, especialmente la gota, el paso de la rata y las fases de rotura de la piedra. No dar por terminada esa revisión solo por cumplir tamaño y alpha.
+
+Referencias, atlas, PNG activos, copias anteriores y comprobaciones permanecen fuera de Git. La carpeta `mods/` solo contiene las entregas activas; las versiones intermedias se conservan en `reports/remaster/dungeon/`.
+
+### Revisión de recortes del remaster de DUNGEON — 16/10/2026
+
+Se cambia la política de alpha para HUD, manos, cadenas, guardia, piedra, fuego y salpicaduras. Los cuatro bocadillos tienen interior blanco; se recuperan varias calaveras cortadas por el borde inferior izquierdo. Fondo1920×1200 y126 recursos con tamaño nativo ×6 comprobados. Las seis imágenes de la rata conservan sus hashes; Ben sigue original. Se han inspeccionado composiciones de estados originales y recortes del guardia sobre fondo gris; todavía falta aceptación de todas las animaciones en el navegador. No se modifican tiempos, colisiones, sonidos ni lógica.
