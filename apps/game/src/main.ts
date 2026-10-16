@@ -489,6 +489,7 @@ async function start() {
   setResourceLoading('Cargando gráficos y personajes…');
   let visual = await loadVisual(manifest.title, pack);
   let awaitingTitle = false;
+  let titleFadeElapsed: number | null = null;
   // DOSBox: 24 fotogramas negros tras los 32 pasos DAC de CORE, antes de TITLE.
   const coreTitleBlackTicks = 24;
   let startup: {
@@ -511,6 +512,10 @@ async function start() {
     startup = null;
     awaitingTitle = true;
     await show(0, pack);
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      background.alpha = 0;
+      titleFadeElapsed = 0;
+    }
     sync();
     app.canvas.focus({ preventScroll: true });
     status.textContent = 'Portada original.';
@@ -800,7 +805,7 @@ async function start() {
   >();
   let presentationExit: { overlay: Graphics; cancelled: boolean } | null = null;
   async function leavePresentation(alreadyBlack = false) {
-    if (!playback || presentationExit || changing || selectingPack) return;
+    if (presentationExit || changing || selectingPack) return;
     const overlay = new Graphics().rect(0, 0, 320, 200).fill(0x000000);
     overlay.eventMode = 'none';
     const state = { overlay, cancelled: false };
@@ -1169,6 +1174,7 @@ async function start() {
   async function show(nextView: number, nextPack: GraphicsPack) {
     if (changing) return;
     if (!selectingPack) finishTransition();
+    titleFadeElapsed = null;
     stopPresentation();
     const nextStatic = nextView < staticScreens.length,
       nextScene = Math.max(0, nextView - staticScreens.length);
@@ -1470,6 +1476,13 @@ async function start() {
       if (progress === 1) finishTransition();
       return;
     }
+    if (titleFadeElapsed !== null) {
+      titleFadeElapsed += ticker.elapsedMS;
+      const duration = 32000 / manifest.startupPlayback.referenceHz;
+      background.alpha = Math.min(1, titleFadeElapsed / duration);
+      if (background.alpha === 1) titleFadeElapsed = null;
+      return;
+    }
     if (startup) {
       // CORE espera entrada; su fundido comienza solo al confirmar.
       if (startup.waiting) return;
@@ -1745,10 +1758,11 @@ async function start() {
     }
   });
   async function continueFromTitle() {
-    if (!awaitingTitle || changing || selectingPack || menuOpen) return;
+    if (!awaitingTitle || changing || selectingPack || menuOpen || titleFadeElapsed !== null)
+      return;
     awaitingTitle = false;
     if (introEnabled.checked) await playPresentation();
-    else await show(staticScreens.length, pack);
+    else await leavePresentation();
     sync();
   }
   async function beginGame() {

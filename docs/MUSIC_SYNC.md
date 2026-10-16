@@ -49,3 +49,7 @@ La captura normal de arranque confirma RS5 durante CORE, TITLE y la presentació
 Esc pausa la partida y su música sin mostrar la cabecera de depuración. Continuar reanuda la misma posición; Volver al inicio recupera el menú y su MP3 propio. Intro permite avanzar la presentación con un fundido. F2 cambia gráficos, F4 marcos, F5 música y F10/F11 retroceden/avanzan salas para pruebas. La carpeta `menu` está excluida del catálogo gráfico y de las versiones musicales. Los avisos de cambio solo aparecen por acciones explícitas.
 
 Los efectos globales y de la sala actual se precargan y reutilizan. Se mantienen las prioridades de la única voz PCM original. La precarga solicita datos al navegador; no garantiza latencia cero ni sustituye una prueba de escucha en Firefox.
+
+## Continuidad del fundido de TITLE
+
+La transición conserva el último fotograma (negro al terminar CORE) durante la carga; no restaura CORE ni la imagen base de la presentación. El brillo vuelve a uno al instalar el siguiente fondo. Por petición de Àlex, TITLE aparece con un fundido de 32 retrazados (~0,46 s), añadido por el port; no se atribuye a la captura DOS original. Sin presentación habilitada, también sale con fundido antes de entrar en la mazmorra. Con presentación se conserva su secuencia de paletas de salida. La entrada de TITLE se pausa con el menú y respeta movimiento reducido.
