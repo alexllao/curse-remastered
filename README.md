@@ -1,5 +1,3 @@
-![Curse of Enchantia Remastered](docs/images/cover.webp)
-
 # CURSE Remastered
 
 Reconstrucción moderna en TypeScript y PixiJS 8 de la aventura gráfica clásica de DOS, orientada a Windows actual.
