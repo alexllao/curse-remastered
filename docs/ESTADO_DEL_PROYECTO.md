@@ -125,3 +125,13 @@ El fondo incorpora musgo y raíces discretas solo en las filas 0–330 de su lie
 El recorte derecho identificado por el usuario es `animation-24576-2`. En Remaster se limita su diagonal mediante geometría de presentación, sin editar el PNG ni cambiar las colisiones. Original conserva su máscara nativa. Àlex ha comprobado que en DOSBox el borde está mejor conseguido: se retira la hipótesis inicial de fallo confirmado del juego original. La mezcla de paquetes es un fallo del port; el contorno sigue pendiente de comparación visual con DOSBox.
 
 Pendiente de aceptación en partida: animaciones completas de Ben, llave y clip a su escala real, rotura de la piedra y cruce del primer plano derecho en ambos modos. No se considera terminada al 100% la primera sala. La moneda inicial tiene un fotograma exportado vacío; su visibilidad y disponibilidad siguen pendientes de comprobación, aunque exista lógica de recogida.
+
+### Aceptación de Ben y ajuste del borde derecho — 16/10/2026
+
+Àlex confirma que el aspecto y las animaciones de Ben están bien. Se continúa con el borde derecho `animation-24576-2`.
+
+La primera máscara geométrica seguía intersectando el alpha escalonado del SPR; por eso no podía recuperar la superficie pintada que faltaba fuera de ese recorte. Ahora el oclusor Remaster repite la textura del propio fondo y la limita al contorno de su piedra, incluidos el lateral irregular y la base diagonal. Se amplía su rectángulo de activación a la zona que realmente ocupa para evitar que aparezca tarde. No se modifica ningún PNG, coordenada de Ben, navegación ni colisión.
+
+El contorno se aplica solo cuando el fondo cargado procede realmente de Remaster. Original y los fondos de otros paquetes mantienen el SPR nativo; un respaldo a Original no recibe la forma del dibujo remasterizado. Las 1001 selecciones de primeros planos y las escrituras VGA de las dos piezas coinciden con la traza aislada del ejecutable. Esto no sustituye una captura comparativa en DOSBox ni demuestra que el borde observado por el usuario esté resuelto en Original.
+
+Se inspecciona una composición antes/después y se prepara una secuencia de paso por el borde, sin audio. Son previsualizaciones técnicas, no capturas del navegador. Queda pendiente la aceptación en partida del contorno ajustado.

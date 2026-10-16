@@ -1,5 +1,6 @@
 import { chooseFrame } from './frame-layout.js';
 import { needsSceneLayers } from './scene-layer-selection.js';
+import { foregroundPresentation } from './foreground-presentation.js';
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js';
 import {
   createDungeon,
@@ -597,17 +598,15 @@ async function start() {
       sprite.width = piece.width;
       sprite.height = piece.height;
       sprite.eventMode = 'none';
-      // La diagonal VGA se conserva; en ×6 su borde se recorta como geometría,
-      // evitando escalones de seis píxeles sin modificar el PNG ni las colisiones.
-      const mask =
-        record.id === 0 && piece.frame === 2 && targetPack.id !== 'original'
-          ? new Graphics()
-              .poly([301, 99, 313, 99, 313, 199, 265, 199, 265, 198.5, 301, 162.5])
-              .fill(0xffffff)
-          : undefined;
+      const refined = foregroundPresentation(
+        record.id,
+        piece.frame,
+        targetPack.id === 'original' ? 'original' : 'remaster',
+      );
+      const mask = refined ? new Graphics().poly(refined.polygon).fill(0xffffff) : undefined;
       if (mask) {
         mask.eventMode = 'none';
-        sprite.mask = mask;
+        mask.visible = false;
       }
       return { ...piece, sprite, mask };
     });
@@ -880,8 +879,26 @@ async function start() {
         slot === 1 ? ben : layerView.objects.find((item) => item.slot === slot)?.sprite;
       if (sprite) actorsLayer.setChildIndex(sprite, drawIndex++);
     }
-    for (const piece of layerView.foreground)
-      piece.sprite.visible = originalForegroundOverlaps(piece, slots);
+    for (const piece of layerView.foreground) {
+      const refined =
+        piece.mask && foregroundPresentation(scene().id, piece.frame, visual.usedPack);
+      if (refined) {
+        // Repetir el propio fondo evita heredar agujeros y escalones del SPR nativo.
+        piece.sprite.texture = background.texture;
+        piece.sprite.position.set(0, 0);
+        piece.sprite.width = scene().background.width;
+        piece.sprite.height = scene().background.height;
+        piece.sprite.mask = piece.mask!;
+      } else {
+        piece.sprite.mask = null;
+        piece.sprite.texture = layerView.texture(piece.frame);
+        piece.sprite.position.set(piece.x, piece.y);
+        piece.sprite.width = piece.width;
+        piece.sprite.height = piece.height;
+      }
+      if (piece.mask) piece.mask.visible = !!refined;
+      piece.sprite.visible = originalForegroundOverlaps(refined ? refined.bounds : piece, slots);
+    }
     sceneLabel.textContent = showingStatic
       ? `${currentView} · ${staticScreens[staticIndex].name}`
       : `${currentView} · ${scene().name} · Escenario ${sceneIndex + 1} de ${manifest.scenes.length}`;
