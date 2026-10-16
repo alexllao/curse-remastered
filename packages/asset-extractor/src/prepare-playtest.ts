@@ -1,4 +1,5 @@
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { prepareOriginalHud } from './original-hud.js';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { unpackRnc1 } from './rnc1.js';
@@ -122,7 +123,11 @@ for (const row of report.results) {
 const dungeon = JSON.parse(
   await readFile(join(root, 'reports/navigation/dungeon-animation.json'), 'utf8'),
 );
-if (dungeon.executableSha256 !== exeHash || dungeon.ticks.length !== 1000)
+if (
+  dungeon.executableSha256 !== exeHash ||
+  dungeon.detailMode !== 1 ||
+  dungeon.ticks.length !== 1000
+)
   throw new Error('Repeat DUNGEON animation trace');
 const dungeonAssets = [],
   dimensions: Record<string, [number, number]> = {};
@@ -192,6 +197,7 @@ const ambientVerification = JSON.parse(
 );
 if (
   ambient.executableSha256 !== exeHash ||
+  ambient.detailMode !== 1 ||
   ambient.profiles.length !== 78 ||
   ambientVerification.reportSha256 !== sha256(ambientBytes) ||
   ambientVerification.results.length !== 78 ||
@@ -199,7 +205,7 @@ if (
 )
   throw new Error('Repeat ambient trace and native comparison');
 for (const profile of ambient.profiles) {
-  if (profile.resourceId === 0 || !profile.animatedSlots.length) continue;
+  if (profile.resourceId === 0) continue;
   const record = scenes.find((scene) => scene.id === profile.resourceId)!;
   const source = await readFile(join(root, 'original/DATA', profile.sprite));
   if (sha256(source) !== profile.sourceSha256) throw new Error('Ambient source differs');
@@ -373,6 +379,7 @@ for (let index = 0; index < 27; index++)
       false,
     ),
   );
+const originalHud = await prepareOriginalHud(root, prepare);
 const title = await prepare('reports/TITLE.png', 'interfaz/TITLE.png', true);
 await mkdir(join(mods, 'graficos/remaster/interfaz'), { recursive: true });
 await mkdir(join(mods, 'graficos/remaster/fondos'), { recursive: true });
@@ -397,6 +404,7 @@ await writeFile(
       actorPrograms: dungeon.programs,
       scenes,
       player,
+      originalHud,
       navigationProfile: {
         programBase: navigation.programBase,
         programs: navigation.programs,

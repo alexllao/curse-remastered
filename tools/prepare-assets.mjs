@@ -61,6 +61,7 @@ try {
     'trace-presentation',
     'trace-startup',
     'trace-dungeon',
+    'trace-original-hud',
     'trace-game-clock',
     'trace-ambient',
   ]) {

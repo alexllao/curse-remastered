@@ -167,3 +167,13 @@ El tramo `0x812–0x871` de CURSE.EXE reinicia el último código de teclado y e
 La web utiliza por ello la misma cadencia de referencia para Ben y los actores ambientales: cinco pulsos a la referencia de 70 Hz ya usada por los perfiles. Se retira el intervalo provisional independiente de 100 ms del paseo. Las posiciones, canales, colisiones y decodificación de sprites no cambian. Esto verifica el reloj compartido y el umbral; no demuestra una frecuencia física DOS exacta: siguen pendientes la captura del reloj real, el coste de dibujado, los controladores y los retrazados adicionales.
 
 El informe reproducible queda en `reports/navigation/game-clock.json`, fuera de Git. El diagnóstico requiere los mismos recursos e intérprete Python/Unicorn que las demás trazas; solo la herramienta y esta explicación se versionan.
+
+## Corrección del detalle gráfico y de las gotas de DUNGEON
+
+El ensayo inicial fijaba `DS:0xAD6=0`, que hace omitir los registros con el bit `0x80` en el cargador de objetos `0x8CA6–0x8D6E`. El asignador temporal `0x8D6F` aplica la misma condición. No era una ausencia de sprites en los recursos: era una opción de detalle desactivada en el ensayo. El perfil de contraste ahora fija ese byte a 1, como la última opción de la copia local de CURSE.CFG, sin modificar el fichero DOS.
+
+En DUNGEON aparecen cinco actores adicionales (ranuras 12–16): llama, pieza ambiental, gota vertical, salpicadura y rata. La gota usa los fotogramas SPR 26–27, en X=188, y su salpicadura los fotogramas 28–32 en X=176, Y=165. Se ejecutan los programas y pausas originales; no se crea un sistema de partículas artificial. La captura de 1.000 ciclos de los 69 registros sigue coincidiendo byte a byte con el ejecutable.
+
+La auditoría con detalle alto cubre los 78 recursos y 78.000 ciclos. Se observan cambios visuales en 39 recursos, frente a los 32 de la captura anterior con detalle bajo. Se conservan también los actores detallados estáticos en las salas sin cambios durante el ensayo. Los manifiestos rechazan informes sin la marca `detailMode: 1`, para evitar volver a preparar inadvertidamente el perfil incompleto. La geometría y el decodificador de sprites no cambian. Los controladores de interacción y las acciones de sala siguen pendientes.
+
+Las comprobaciones visuales del agente usan `?silent=1`: silencia tanto la música como los efectos sin cambiar las preferencias del usuario ni las secuencias de los actores.

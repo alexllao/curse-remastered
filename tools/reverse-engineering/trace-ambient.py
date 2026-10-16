@@ -26,7 +26,8 @@ def main():
             machine.uc.mem_write(bank, (root / 'original/DATA' / name).read_bytes())
         machine.uc.mem_write(trace.DATA_ADDRESS + 0x2c0a, bytes(70 * 33))
         machine.set_word(0x8082, row['resourceId'])
-        machine.uc.mem_write(trace.DATA_ADDRESS + 0xad6, b'\0')
+        machine.uc.mem_write(trace.DATA_ADDRESS + 0xad6, b'\x01')
+
         machine.execute(0x8ca6, 0x8d6e)
         machine.uc.mem_write(trace.DATA_ADDRESS + 0x3594, bytes(3))
 
@@ -61,7 +62,7 @@ def main():
         })
         print(json.dumps({'resourceId': row['resourceId'], 'animatedSlots': len(changed)}), flush=True)
     report = {
-        'schemaVersion': 1, 'executableSha256': trace.PROFILE, 'ticks': 1000,
+        'schemaVersion': 1, 'detailMode': 1, 'executableSha256': trace.PROFILE, 'ticks': 1000,
         'scope': 'Initial object-loader channels without player, interactions, dynamic handlers or audio',
         'profiles': profiles,
     }

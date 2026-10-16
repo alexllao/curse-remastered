@@ -21,7 +21,7 @@ def main():
         machine.uc.mem_write(bank, (root / 'original/DATA' / name).read_bytes())
     machine.uc.mem_write(trace.DATA_ADDRESS + 0x2c0a, bytes(70 * 33))
     machine.set_word(0x8082, 0)
-    machine.uc.mem_write(trace.DATA_ADDRESS + 0xad6, b'\0')
+    machine.uc.mem_write(trace.DATA_ADDRESS + 0xad6, b'\x01')
     machine.execute(0x8ca6, 0x8d6e)
     machine.uc.reg_write(UC_X86_REG_BX, 65535)
     machine.uc.reg_write(UC_X86_REG_ES, trace.DATA_SEGMENT)
@@ -67,7 +67,7 @@ def main():
         trace.require(bool(reached) == (pulses >= 5), 'Unexpected timer gate')
         clock_cases.append({'pulses': pulses, 'ready': bool(reached)})
     trace.require(exe[0x3ae:0x3b1] == bytes.fromhex('b8 50 42'), 'Unexpected PIT divisor')
-    report = {'schemaVersion': 1, 'executableSha256': hashlib.sha256(exe).hexdigest(),
+    report = {'schemaVersion': 1, 'detailMode': 1, 'executableSha256': hashlib.sha256(exe).hexdigest(),
               'sourceSha256': {name: hashlib.sha256((root / 'original/DATA' / name).read_bytes()).hexdigest() for name in ('MANA.BRD', 'STD.BRD', 'DUNGEON.SPR')},
               'resourceId': 0, 'logicalRoomId': -1, 'initial': initial, 'ticks': ticks,
               'randomCases': random_cases, 'clockCases': clock_cases,

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import struct
 from unicorn import UC_HOOK_CODE
-from unicorn.x86_const import UC_X86_REG_AX, UC_X86_REG_BX, UC_X86_REG_CX, UC_X86_REG_DX, UC_X86_REG_DS, UC_X86_REG_IP, UC_X86_REG_EFLAGS
+from unicorn.x86_const import UC_X86_REG_AX, UC_X86_REG_BX, UC_X86_REG_CX, UC_X86_REG_DX, UC_X86_REG_DS, UC_X86_REG_IP, UC_X86_REG_EFLAGS, UC_X86_REG_SS
 
 
 def main():
@@ -16,14 +16,26 @@ def main():
     exe = (root / 'original/CURSE.EXE').read_bytes()
 
     class StartupMachine(trace.Machine):
-        def __init__(self):
+        def __init__(self, input_mode=0, mouse_cx=None, key_tick=None):
             self.ticks, self.index = 0, 0
             self.dac, self.timeline, self.loads = [0] * 768, [], []
             self.visible, self.file = None, b''
+            self.mouse_cx, self.key_tick = mouse_cx, key_tick
             super().__init__(exe)
+            # El arranque consulta SS:0xAD5. La pila del perfil debe compartir DS.
+            self.uc.reg_write(UC_X86_REG_SS, trace.DATA_SEGMENT)
+            self.uc.mem_write(trace.DATA_ADDRESS + 0xad5, bytes([input_mode]))
 
         def interrupt(self, uc, number, _):
             ax = uc.reg_read(UC_X86_REG_AX)
+            if number == 0x33:
+                trace.require(ax == 5 and self.mouse_cx is not None, 'Unexpected mouse query')
+                # Entrada sintética controlada: comprobar el efecto de CX, no emular un driver real.
+                uc.reg_write(UC_X86_REG_AX, 0)
+                uc.reg_write(UC_X86_REG_BX, 0)
+                uc.reg_write(UC_X86_REG_CX, self.mouse_cx)
+                uc.reg_write(UC_X86_REG_DX, 0)
+                return
             trace.require(number == 0x21, 'Unexpected startup interrupt')
             if ax >> 8 == 0x48:
                 size = uc.reg_read(UC_X86_REG_BX)
@@ -50,6 +62,8 @@ def main():
             instruction = exe[at:at + 5]
             if instruction == bytes.fromhex('ec a8 08 74 fb'):
                 self.ticks += 1
+                if self.key_tick == self.ticks:
+                    uc.mem_write(trace.DATA_ADDRESS + 0x988c, b'\x1e')
                 return 8
             trace.require(instruction[:3] == bytes.fromhex('ec a8 08'), 'Unknown startup wait')
             return 0
@@ -70,22 +84,32 @@ def main():
             else:
                 trace.require(port in (0x3d4, 0x3c4) and size == 2, 'Unexpected startup VGA output')
 
+    def capture(machine):
+        machine.uc.mem_write(trace.LOAD_ADDRESS + 8, struct.pack('<H', 0xa000))
+        def substitute(uc, address, _size, _):
+            at = address - trace.LOAD_ADDRESS + 512
+            if at not in (0x6d1, 0x6e9, 0x77c, 0x7bd, 0x7d5):
+                return
+            if at == 0x6e9:
+                machine.visible = 'CORE.DAT'
+            elif at == 0x7d5:
+                machine.visible = 'TITLE.DAT'
+            uc.reg_write(UC_X86_REG_IP, uc.reg_read(UC_X86_REG_IP) + 3)
+        machine.uc.hook_add(UC_HOOK_CODE, substitute)
+        machine.execute(0x68d, 0x812)
+
     machine = StartupMachine()
-    machine.uc.mem_write(trace.LOAD_ADDRESS + 8, struct.pack('<H', 0xa000))
-
-    def substitute(uc, address, _size, _):
-        at = address - trace.LOAD_ADDRESS + 512
-        # Se sustituyen únicamente la descompresión y los copiadores VGA.
-        if at not in (0x6d1, 0x6e9, 0x77c, 0x7bd, 0x7d5):
-            return
-        if at == 0x6e9:
-            machine.visible = 'CORE.DAT'
-        elif at == 0x7d5:
-            machine.visible = 'TITLE.DAT'
-        uc.reg_write(UC_X86_REG_IP, uc.reg_read(UC_X86_REG_IP) + 3)
-
-    machine.uc.hook_add(UC_HOOK_CODE, substitute)
-    machine.execute(0x68d, 0x812)
+    capture(machine)
+    input_cases = []
+    for label, mode, mouse_cx, key_tick, expected in (
+            ('keyboard-input-at-70', 0, None, 70, 102),
+            ('synthetic-mouse-cx-1', 1, 1, None, 33),
+            ('synthetic-mouse-cx-140-key-at-70', 1, 140, 70, 102)):
+        sample = StartupMachine(mode, mouse_cx, key_tick)
+        capture(sample)
+        trace.require(sample.ticks == expected, 'Unexpected input-dependent CORE wait')
+        input_cases.append({'profile': label, 'inputMode': mode, 'syntheticMouseCX': mouse_cx,
+                            'injectedKeyTick': key_tick, 'totalTicks': sample.ticks})
     core = [event for event in machine.timeline if event['file'] == 'CORE.DAT']
     trace.require(len(core) == 33 and core[0]['tick'] == 0, 'Unexpected CORE palette events')
     trace.require(core[1]['tick'] == 2101 and not any(core[-1]['rgb6']), 'Unexpected CORE hold/fade')
@@ -93,9 +117,10 @@ def main():
     report = {'schemaVersion': 1, 'executableSha256': trace.PROFILE,
               'sourceSha256': {name: hashlib.sha256((root / 'original/DATA' / name).read_bytes()).hexdigest() for name in machine.loads},
               'holdTicks': 2100, 'durationTicks': machine.ticks, 'events': core,
-              'limitations': ['No injected skip input', 'Synthetic VGA retraces; physical timing not measured', 'No audio or VGA copying']}
+              'inputProfile': 'keyboard mode, no injected input', 'inputCases': input_cases,
+              'limitations': ['Main palette timeline uses keyboard mode without input; not a universal startup duration', 'Mouse queries can change CX, the loop counter; synthetic return values are not a captured driver', 'Synthetic VGA retraces; physical timing not measured', 'No audio or VGA copying']}
     (root / 'reports/navigation/startup.json').write_text(json.dumps(report, separators=(',', ':')) + '\n')
-    print(json.dumps({'holdTicks': report['holdTicks'], 'durationTicks': machine.ticks, 'paletteEvents': len(core)}))
+    print(json.dumps({'holdTicks': report['holdTicks'], 'durationTicks': machine.ticks, 'paletteEvents': len(core), 'inputCases': input_cases}))
 
 
 if __name__ == '__main__':

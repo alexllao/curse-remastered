@@ -290,7 +290,6 @@ footer {
   font-size: 13px;
 }
 
-body.playing header,
 body.playing footer,
 body.playing .game-actions {
   display: none;
@@ -334,4 +333,75 @@ body.playing canvas {
   #game-toast.show {
     animation: none;
   }
+}
+
+/* Los controles del port quedan fuera de la imagen y del selector DOS. */
+body.playing #toggle-debug {
+  display: none;
+}
+body.playing h1 {
+  font-size: 23px;
+}
+body.playing header {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+main:fullscreen {
+  max-width: none;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #101011;
+  padding: 12px;
+}
+main:fullscreen .stage {
+  flex: 1;
+  min-height: 0;
+}
+main:fullscreen #viewport {
+  height: 100%;
+  aspect-ratio: auto;
+}
+.screen-prompt {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 4px;
+  background: #000c;
+  color: #eae0cd;
+  text-align: center;
+  font-size: 12px;
+  pointer-events: none;
+}
+.hud-note {
+  bottom: 6px;
+  left: 8px;
+  transform: none;
+  font-size: 10px;
+  opacity: 0.65;
+}
+
+/* Ajustar la partida completa a la ventana, con controles fuera del lienzo. */
+body.playing main {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+body.playing header {
+  flex: none;
+}
+body.playing .stage {
+  flex: 1;
+  min-height: 0;
+}
+body.playing #viewport {
+  height: 100%;
+  aspect-ratio: auto;
 }

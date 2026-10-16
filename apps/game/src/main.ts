@@ -26,6 +26,7 @@ import {
   type VisualAsset,
 } from './presentation.js';
 import './style.css';
+import { createOriginalHud, type OriginalHudAssets } from './original-hud.js';
 import { discoverSounds, SoundPlayer } from './sounds.js';
 import { discoverMusic, MusicPlayer, type MusicCatalog } from './music.js';
 
@@ -79,6 +80,7 @@ interface Manifest {
   };
   navigationProfile: WalkProfile;
   actorPrograms: number[];
+  originalHud: OriginalHudAssets;
 }
 const resourceLoading = document.querySelector<HTMLDivElement>('#resource-loading')!;
 function setResourceLoading(message: string | null) {
@@ -90,6 +92,7 @@ function revealGame() {
   document.querySelector('main')!.hidden = false;
   setResourceLoading(null);
 }
+const silentPreview = new URLSearchParams(location.search).get('silent') === '1';
 const viewport = document.querySelector<HTMLDivElement>('#viewport')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;
 const modeLabel = document.querySelector<HTMLParagraphElement>('#mode')!;
@@ -112,6 +115,7 @@ async function start() {
   if (
     manifest.schemaVersion !== 7 ||
     !manifest.title ||
+    !manifest.originalHud?.icons ||
     !manifest.core ||
     !manifest.startupPlayback?.events.length ||
     !manifest.actorPrograms?.length ||
@@ -206,6 +210,7 @@ async function start() {
         : 'none';
   function selectSounds() {
     sounds.select(soundSelect.value);
+    if (silentPreview) sounds.enabled = false;
     const selected = soundVersions.find((v) => v.id === soundSelect.value);
     document.querySelector('#sound-note')!.textContent =
       selected && !Object.keys(selected.events).length
@@ -230,6 +235,7 @@ async function start() {
   const musicAudio = document.createElement('audio');
   musicAudio.id = 'music-output';
   musicAudio.hidden = true;
+  musicAudio.muted = silentPreview;
   document.body.append(musicAudio);
   const music = new MusicPlayer(
     musicCatalog,
@@ -328,6 +334,7 @@ async function start() {
       ? 'La aventura te espera'
       : 'Tu aventura comienza aquí';
     if (open) {
+      originalHud.close();
       sounds.stop();
       (gameStarted ? resumeButton : startButton).focus();
     }
@@ -388,6 +395,8 @@ async function start() {
   );
   const clip = new Graphics().rect(0, 0, 320, 200).fill(0xffffff);
   world.addChild(sceneContent, clip);
+  const originalHud = await createOriginalHud(manifest.originalHud);
+  world.addChild(originalHud.layer);
   world.mask = clip;
   world.eventMode = 'static';
   world.hitArea = new Rectangle(0, 0, 320, 200);
@@ -718,6 +727,18 @@ async function start() {
     assetInfo.textContent = `${asset.file} · Original: ${asset.width} × ${asset.height} · Remaster ×6: ${asset.width * 6} × ${asset.height * 6}`;
     restartButton.textContent = showingStatic ? 'Continuar' : 'Reiniciar';
     modeButton.textContent = `F2 · ${pack.label}`;
+    button('music-mode').textContent =
+      `F3 · ${musicCatalog.versions.find((v) => v.id === musicSelect.value)?.label ?? 'Sin música'}`;
+    button('music-mode').disabled =
+      changing || startingGame || selectingPack || !!startup || debugMode;
+    document.querySelector('#title-prompt')!.toggleAttribute('hidden', !awaitingTitle || menuOpen);
+    document
+      .querySelector('#original-hud-note')!
+      .toggleAttribute(
+        'hidden',
+        showingStatic || menuOpen || originalHud.visible || scene().id !== 0,
+      );
+    if (showingStatic || menuOpen || scene().id !== 0) originalHud.close();
     modeLabel.textContent =
       pack.label +
       (visual.fallback
@@ -831,7 +852,39 @@ async function start() {
     selectingPack
       ? Promise.resolve()
       : show((currentView + direction + screenCount) % screenCount, pack);
+  function openOriginalHud(x: number, y: number) {
+    if (menuOpen || changing || selectingPack || transition || showingStatic || scene().id !== 0)
+      return;
+    if (!animationState?.controls[1]) return;
+    originalHud.open(x, y);
+    sync();
+    elapsed = animationElapsed = 0;
+    app.canvas.focus({ preventScroll: true });
+  }
+  function selectOriginalHud() {
+    const action = originalHud.select();
+    if (action !== null) notifyGame('Esta acción todavía no está disponible.');
+  }
+  app.canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+  world.on('rightclick', (event) => {
+    if (originalHud.visible) {
+      originalHud.close();
+      sync();
+    } else {
+      const local = world.toLocal(event.global);
+      openOriginalHud(local.x, local.y);
+    }
+  });
+  world.on('pointermove', (event) => {
+    if (originalHud.visible) originalHud.move(world.toLocal(event.global).x);
+  });
   world.on('pointertap', (event) => {
+    if (event.button !== 0) return;
+    if (originalHud.visible) {
+      originalHud.move(world.toLocal(event.global).x);
+      selectOriginalHud();
+      return;
+    }
     if (startup) {
       skipStartup();
       return;
@@ -890,6 +943,8 @@ async function start() {
     }
     if (startup) {
       startup.elapsed += ticker.elapsedMS;
+      // El menú ya expresa la intención de jugar: abreviamos la espera del logotipo.
+      if (startup.elapsed >= 2500) skipStartup();
       const timing = manifest.startupPlayback,
         tick = (startup.elapsed * timing.referenceHz) / 1000;
       let index = startup.event;
@@ -903,7 +958,7 @@ async function start() {
       if (tick >= timing.durationTicks) void finishStartup();
       return;
     }
-    if (menuOpen) return;
+    if (menuOpen || originalHud.visible) return;
     if (playback) {
       playback.elapsed += ticker.elapsedMS;
       renderPresentationFrame();
@@ -973,6 +1028,20 @@ async function start() {
   });
   sceneSelect.addEventListener('change', () => void show(Number(sceneSelect.value), pack));
   button('welcome').addEventListener('click', () => void show(0, pack));
+  function nextMusic() {
+    if (startingGame || changing || selectingPack || startup) return;
+    const versions = [{ id: 'none', label: 'Sin música' }, ...musicCatalog.versions];
+    const current = versions.findIndex((v) => v.id === musicSelect.value);
+    const selected = versions[(current + 1) % versions.length];
+    musicSelect.value = selected.id;
+    selectMusic();
+    music.start();
+    savePreferences();
+    sync();
+    notifyGame(`Música · ${selected.label}`);
+    app.canvas.focus({ preventScroll: true });
+  }
+  button('music-mode').addEventListener('click', nextMusic);
   modeButton.addEventListener('click', () => void nextPack());
   nextButton.addEventListener('click', () => void nextScene(1));
   previousButton.addEventListener('click', () => void nextScene(-1));
@@ -1003,6 +1072,15 @@ async function start() {
       return;
     }
     const target = event.target;
+    if (originalHud.visible && ['Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      event.preventDefault();
+      if (event.key === 'Escape') {
+        originalHud.close();
+        sync();
+      } else if (event.key === 'Enter') selectOriginalHud();
+      else originalHud.step(event.key === 'ArrowLeft' ? -1 : 1);
+      return;
+    }
     if (target instanceof HTMLElement && target.matches('input,select,textarea')) return;
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -1051,14 +1129,7 @@ async function start() {
       if (!event.repeat) {
         if (debugMode) void nextScene(event.shiftKey ? -1 : 1);
         else if (gameStarted) {
-          const versions = [{ id: 'none', label: 'Sin música' }, ...musicCatalog.versions];
-          const current = versions.findIndex((v) => v.id === musicSelect.value);
-          const selected = versions[(current + 1) % versions.length];
-          musicSelect.value = selected.id;
-          selectMusic();
-          music.start();
-          savePreferences();
-          notifyGame(`Música · ${selected.label}`);
+          nextMusic();
         }
       }
     }
@@ -1156,6 +1227,7 @@ async function start() {
     selectMusic();
     if (!gameStarted && !document.hidden) music.start();
     savePreferences();
+    sync();
   });
   volume.addEventListener('input', () => {
     music.setVolume((Number(volume.value) / 100) * (!gameStarted ? 0.3 : 1));
@@ -1193,7 +1265,7 @@ async function start() {
     void (
       document.fullscreenElement
         ? document.exitFullscreen()
-        : document.querySelector<HTMLElement>('.stage')!.requestFullscreen()
+        : document.querySelector<HTMLElement>('main')!.requestFullscreen()
     ).catch(() => {
       status.textContent = 'La pantalla completa no está disponible en esta ventana.';
     });

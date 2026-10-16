@@ -23,6 +23,7 @@
         <div class="controls">
           <button id="open-menu" disabled>Menú</button>
           <button id="visual-mode" disabled>F2 · Original</button>
+          <button id="music-mode" disabled>F3 · Sin música</button>
           <button id="fullscreen">Pantalla completa</button>
           <button id="toggle-debug" aria-pressed="false">Depuración</button>
         </div>
@@ -44,6 +45,10 @@
         <p id="asset-info"></p>
       </section>
       <div class="stage">
+        <p id="title-prompt" class="screen-prompt" hidden>
+          Pulsa una tecla o haz clic para continuar
+        </p>
+        <p id="original-hud-note" class="screen-prompt hud-note" hidden>Clic derecho · Acciones</p>
         <div id="game-toast" role="status" hidden></div>
         <div id="music-toast" role="status" hidden></div>
         <div id="viewport"><p id="loading">Cargando CURSE…</p></div>
